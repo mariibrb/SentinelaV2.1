@@ -5,7 +5,7 @@ from style import aplicar_estilo_sentinela
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Sentinela 2.0 | Auditoria Fiscal", page_icon="🧡", layout="wide")
+st.set_page_config(page_title="Sentinela 2.1 | Auditoria Fiscal", page_icon="🧡", layout="wide")
 
 # --- INJEÇÃO DA APARÊNCIA PREMIUM ---
 aplicar_estilo_sentinela()
@@ -13,7 +13,12 @@ aplicar_estilo_sentinela()
 # --- FUNÇÕES DE SUPORTE ---
 @st.cache_data(ttl=600)
 def carregar_base_clientes():
-    caminhos = [".streamlit/Clientes Ativos.xlsx - EMPRESAS.csv", ".streamlit/Clientes Ativos.xlsx"]
+    # Caminhos ajustados para garantir a leitura no novo repositório
+    caminhos = [
+        ".streamlit/Clientes Ativos.xlsx - EMPRESAS.csv", 
+        ".streamlit/Clientes Ativos.xlsx",
+        "Bases_Tributárias/394-Bases_Tributarias.xlsx"
+    ]
     for caminho in caminhos:
         if os.path.exists(caminho):
             try:
@@ -53,7 +58,7 @@ with st.sidebar:
     st.download_button("📥 Modelo Bases Tributárias", criar_gabarito(), "modelo_gabarito.xlsx", use_container_width=True)
 
 # --- CORPO PRINCIPAL ---
-st.markdown("<div class='titulo-principal'>SENTINELA | Análise Tributária</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
+st.markdown("<div class='titulo-principal'>SENTINELA 2.1 | Análise Tributária</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
 col_a, col_b = st.columns([2, 1])
 
@@ -63,6 +68,7 @@ with col_a:
         opcoes = [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_clientes.iterrows()]
         selecao = st.selectbox("Escolha a empresa para auditar", [""] + opcoes, label_visibility="collapsed")
     else: 
+        st.error("⚠️ Base de clientes não encontrada. Verifique os arquivos na pasta .streamlit")
         selecao = None
 
 if selecao:
@@ -115,24 +121,31 @@ if selecao:
     with col_btn:
         if st.button("🚀 INICIAR ANÁLISE"):
             if xmls and regime:
-                with st.spinner("O Sentinela está auditando os dados..."):
+                with st.spinner("O Sentinela 2.1 está auditando os dados..."):
                     try:
+                        # Processamento dos XMLs
                         df_xe, df_xs = extrair_dados_xml_recursivo(xmls, cnpj_auditado)
-                        relat = gerar_excel_final(df_xe, df_xs, ae, as_f, ge, gs, cod_cliente, regime, is_ret)
                         
-                        # SUBSTITUÍDO: Em vez de balões, um aviso de conformidade elegante
+                        # Criação do buffer para o Excel
+                        output = io.BytesIO()
+                        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                            # Chamada da função core (ajustada para os novos nomes e ordem)
+                            gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae, as_f, ge, gs)
+                        
+                        relat = output.getvalue()
+                        
                         st.markdown(f"""
-                            <div style="background-color: #ffffff; border-radius: 15px; padding: 25px; border-top: 5px solid #FF6F00; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; margin-top: 20px;">
-                                <div style="font-size: 3rem; margin-bottom: 10px;">📋</div>
-                                <h2 style="color: #FF6F00; margin: 0; font-weight: 800;">AUDITORIA CONCLUÍDA</h2>
+                            <div style="background-color: #ffffff; border-radius: 15px; padding: 25px; border-top: 5px solid #008000; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; margin-top: 20px;">
+                                <div style="font-size: 3rem; margin-bottom: 10px;">✅</div>
+                                <h2 style="color: #008000; margin: 0; font-weight: 800;">AUDITORIA CONCLUÍDA (V2.1)</h2>
                                 <p style="color: #555; font-size: 1.1rem; margin-top: 10px;">
-                                    Todos os cruzamentos entre XML e Gerencial foram validados para o regime <b>{regime}</b>.
+                                    Relatório gerado com sucesso para <b>{dados_empresa['RAZÃO SOCIAL']}</b>.
                                 </p>
                             </div>
                         """, unsafe_allow_html=True)
                         
                         st.markdown("<br>", unsafe_allow_html=True)
-                        st.download_button("💾 BAIXAR RELATÓRIO FINAL", relat, f"Sentinela_{cod_cliente}.xlsx", use_container_width=True)
+                        st.download_button("💾 BAIXAR RELATÓRIO FINAL", relat, f"Sentinela_{cod_cliente}_v2.1.xlsx", use_container_width=True)
                     except Exception as e:
                         st.error(f"Erro no processamento: {e}")
             else:
