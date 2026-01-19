@@ -17,6 +17,8 @@ try:
     from Auditorias.audit_pis_cofins import processar_pc
     from Auditorias.audit_difal import processar_difal
     from Apuracoes.apuracao_difal import gerar_resumo_uf
+    # Na v2.1 as abas gerenciais foram removidas da planilha final.
+    # A importação permanece apenas para evitar erros de estrutura se o arquivo existir.
     from Gerenciais.audit_gerencial import gerar_abas_gerenciais
 except ImportError as e:
     st.error(f"⚠️ Erro Crítico de Dependência: {e}")
@@ -123,9 +125,9 @@ def gerar_analise_xml(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # 2. Chamada das Gerenciais (Original do seu V2)
-    try: gerar_abas_gerenciais(writer, ge, gs)
-    except: pass
+    # 2. Chamada das Gerenciais (DESATIVADO NA VERSÃO 2.1)
+    # try: gerar_abas_gerenciais(writer, ge, gs)
+    # except: pass
 
     # 3. Processamento de Auditorias XML
     if not df_xs.empty:
