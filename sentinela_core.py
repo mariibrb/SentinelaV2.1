@@ -18,10 +18,9 @@ try:
     from Auditorias.audit_difal import processar_difal
     from Apuracoes.apuracao_difal import gerar_resumo_uf
     # Na v2.1 as abas gerenciais foram removidas da planilha final.
-    # A importação permanece apenas para evitar erros de estrutura se o arquivo existir.
     from Gerenciais.audit_gerencial import gerar_abas_gerenciais
 except ImportError as e:
-    st.error(f"⚠️ Erro Crítico de Dependência: {e}")
+    st.error(f"⚠️ Erro de Dependência: {e}")
 
 # --- UTILITÁRIOS ORIGINAIS V2 ---
 def safe_float(v):
@@ -47,7 +46,7 @@ def tratar_ncm_texto(ncm):
     if pd.isna(ncm) or ncm == "": return ""
     return re.sub(r'\D', '', str(ncm)).strip()
 
-# --- MOTOR DE PROCESSAMENTO XML (V2 ORIGINAL) ---
+# --- MOTOR DE PROCESSAMENTO XML ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -103,7 +102,8 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
             dados_lista.append(linha)
     except: pass
 
-def extrair_xml(files, cnpj_auditado):
+# NOME DA FUNÇÃO CORRIGIDO PARA BATER COM SEU APP PRINCIPAL
+def extrair_dados_xml_recursivo(files, cnpj_auditado):
     dados = []
     if not files: return pd.DataFrame(), pd.DataFrame()
     def ler_zip(zip_data):
@@ -119,17 +119,17 @@ def extrair_xml(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DO EXCEL FINAL (A FUNÇÃO QUE VOCÊ POSTOU, INTEGRADA) ---
-def gerar_analise_xml(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
-    # 1. Aba Resumo (Manual)
+# NOME DA FUNÇÃO CORRIGIDO PARA BATER COM SEU APP PRINCIPAL
+def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
+    # 1. Aba Resumo
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # 2. Chamada das Gerenciais (DESATIVADO NA VERSÃO 2.1)
+    # 2. Chamada das Gerenciais (REMOVIDO NA 2.1)
     # try: gerar_abas_gerenciais(writer, ge, gs)
     # except: pass
 
-    # 3. Processamento de Auditorias XML
+    # 3. Auditorias XML
     if not df_xs.empty:
         st_map = {}
         for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
@@ -150,11 +150,8 @@ def gerar_analise_xml(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         try: gerar_resumo_uf(df_xs, writer, df_xe)
         except: pass
 
-    # Lógica de clonagem para RET MG (Fiel ao seu código)
     if is_ret:
         try:
             caminho_modelo = f"RET/{cod_cliente}-RET_MG.xlsx"
-            if os.path.exists(caminho_modelo):
-                # Aqui o writer precisa ser finalizado em um buffer separado para o openpyxl agir
-                pass 
+            if os.path.exists(caminho_modelo): pass 
         except: pass
