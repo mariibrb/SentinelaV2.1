@@ -2,14 +2,12 @@ import pandas as pd
 import io, zipfile, streamlit as st, xml.etree.ElementTree as ET, re, os
 from datetime import datetime
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
+# --- IMPORTAÇÃO DOS MÓDULOS (DIFAL REMOVIDO TOTALMENTE) ---
 try:
     from audit_resumo import gerar_aba_resumo             
     from Auditorias.audit_icms import processar_icms       
     from Auditorias.audit_ipi import processar_ipi         
     from Auditorias.audit_pis_cofins import processar_pc   
-    from Auditorias.audit_difal import processar_difal     
-    from Apuracoes.apuracao_difal import gerar_resumo_uf   
     from Gerenciais.audit_gerencial import gerar_abas_gerenciais
 except ImportError as e:
     st.error(f"⚠️ Erro de Dependência: {e}")
@@ -88,7 +86,6 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     
-    # Garantia de colunas básicas
     for col in ['VAL-FCP', 'VAL-ICMS-ST', 'IE_SUBST']:
         if col not in df.columns: df[col] = 0.0 if col != 'IE_SUBST' else ""
             
@@ -106,7 +103,7 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         except: continue
     df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
 
-    # CHAMADAS DAS ABAS QUE ESTÃO FUNCIONANDO
+    # CHAMADAS APENAS DO QUE NÃO DÁ ERRO
     try: gerar_aba_resumo(writer)
     except: pass
     
@@ -121,9 +118,3 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     
     try: processar_pc(df_xs, writer, cod_cliente, regime)
     except: pass
-
-    # --- DIFAL DESATIVADO PARA EVITAR O ERRO 'SHEETNAME ALREADY IN USE' ---
-    # try: processar_difal(df_xs, writer)
-    # except: pass
-    # try: gerar_resumo_uf(df_xs, writer, df_xe)
-    # except: pass
