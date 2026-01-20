@@ -8,8 +8,8 @@ try:
     from Auditorias.audit_icms import processar_icms       
     from Auditorias.audit_ipi import processar_ipi         
     from Auditorias.audit_pis_cofins import processar_pc   
-    from Auditorias.audit_difal import processar_difal      # MOTOR 1: Auditoria (audit_Difal)
-    from Apuracoes.apuracao_difal import gerar_resumo_uf    # MOTOR 2: Apuração (DIFAL_ST_FECP)
+    from Auditorias.audit_difal import processar_difal      # ABA: audit_Difal
+    from Apuracoes.apuracao_difal import gerar_resumo_uf    # ABA: DIFAL_ST_FECP
     from Gerenciais.audit_gerencial import gerar_abas_gerenciais
 except ImportError as e:
     st.error(f"⚠️ Erro de Dependência no Core: {e}")
@@ -104,6 +104,7 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None, df_base_emp=None, modo_auditoria=None):
     if df_xs.empty and df_xe.empty: return
 
+    # Mapeamento de Autenticidade
     st_map = {}
     for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
         try:
@@ -114,7 +115,7 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         except: continue
     df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
 
-    # --- EXECUÇÃO DAS ABAS (ORQUESTRAÇÃO ÍNTEGRA) ---
+    # --- ORQUESTRAÇÃO: O CORE APENAS CHAMA, NÃO CRIA AS ABAS ---
     try: gerar_aba_resumo(writer)
     except: pass
     
@@ -130,10 +131,10 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     try: processar_pc(df_xs, writer, cod_cliente, regime)
     except: pass
 
-    # MOTOR 1: AUDITORIA DETALHADA (audit_Difal)
+    # Motor 1: audit_Difal (Este motor cria a própria aba)
     try: processar_difal(df_xs, writer)
     except: pass
 
-    # MOTOR 2: APURAÇÃO RESUMIDA (DIFAL_ST_FECP)
+    # Motor 2: DIFAL_ST_FECP (Este motor cria a própria aba)
     try: gerar_resumo_uf(df_xs, writer, df_xe)
     except: pass
