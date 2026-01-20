@@ -2,13 +2,15 @@ import pandas as pd
 import io, zipfile, streamlit as st, xml.etree.ElementTree as ET, re, os
 from datetime import datetime
 
-# --- IMPORTAÇÃO DOS MÓDULOS (DIFAL REMOVIDO TOTALMENTE) ---
+# --- IMPORTAÇÃO DOS MÓDULOS ---
 try:
     from audit_resumo import gerar_aba_resumo             
     from Auditorias.audit_icms import processar_icms       
     from Auditorias.audit_ipi import processar_ipi         
     from Auditorias.audit_pis_cofins import processar_pc   
     from Gerenciais.audit_gerencial import gerar_abas_gerenciais
+    # Recuperando a auditoria do DIFAL/ST/FECP
+    from Apuracoes.apuracao_difal import processar_difal_st_fecp, gerar_aba_audit_difal 
 except ImportError as e:
     st.error(f"⚠️ Erro de Dependência: {e}")
 
@@ -57,7 +59,8 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
                 "NUM_NF": buscar_tag_recursiva('nNF', ide), "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
                 "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
-                "UF_DEST": buscar_tag_recursiva('UF', dest), "CFOP": buscar_tag_recursiva('CFOP', prod),
+                "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), "UF_DEST": buscar_tag_recursiva('UF', dest), 
+                "CFOP": buscar_tag_recursiva('CFOP', prod),
                 "NCM": tratar_ncm_texto(buscar_tag_recursiva('NCM', prod)),
                 "INDIEDEST": buscar_tag_recursiva('indIEDest', dest), "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)),
                 "ORIGEM": buscar_tag_recursiva('orig', icms_no), "CST-ICMS": buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no),
@@ -86,24 +89,30 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     
+    # Garantir colunas necessárias para o DIFAL
     for col in ['VAL-FCP', 'VAL-ICMS-ST', 'IE_SUBST']:
         if col not in df.columns: df[col] = 0.0 if col != 'IE_SUBST' else ""
             
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None, df_base_emp=None, modo_auditoria=None):
-    if df_xs.empty: return
-    st_map = {}
-    for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
-        try:
-            f_auth.seek(0)
-            df_a = pd.read_excel(f_auth, header=None) if f_auth.name.endswith('.xlsx') else pd.read_csv(f_auth, header=None, sep=None, engine='python')
-            df_a[0] = df_a[0].astype(str).str.replace('NFe', '').str.strip()
-            st_map.update(df_a.set_index(0)[5].to_dict())
-        except: continue
-    df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
+    if df_xs.empty and df_xe.empty: return
 
-    # CHAMADAS APENAS DO QUE NÃO DÁ ERRO
+    # --- PROCESSAMENTO DO DIFAL / ST / FECP ---
+    # Chamamos o processamento ANTES de gerar as abas para que os cálculos ocorram
+    df_calculado = processar_difal_st_fecp(df_xe, df_xs)
+
+    # ABA: audit_Difal (Onde você olha todas as notas)
+    try: gerar_aba_audit_difal(df_xs, df_xe, writer)
+    except Exception as e: st.warning(f"Erro ao gerar audit_Difal: {e}")
+
+    # ABA: difal_st_fecp (Os cálculos prontos)
+    try: 
+        if not df_calculado.empty:
+            df_calculado.to_excel(writer, sheet_name='difal_st_fecp', index=False)
+    except Exception as e: st.warning(f"Erro ao gerar difal_st_fecp: {e}")
+
+    # DEMAIS ABAS
     try: gerar_aba_resumo(writer)
     except: pass
     
