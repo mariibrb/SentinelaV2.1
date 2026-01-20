@@ -4,7 +4,7 @@ from style import aplicar_estilo_sentinela
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 from Apuracoes.apuracao_difal import gerar_resumo_uf 
 
-# --- MOTOR GARIMPEIRO (Lógica Íntegra com Tratamento de Inutilizações) ---
+# --- MOTOR GARIMPEIRO (Lógica Íntegra Original com Filtro de CNPJ) ---
 def identify_xml_info(content_bytes, client_cnpj, file_name):
     client_cnpj_clean = "".join(filter(str.isdigit, str(client_cnpj))) if client_cnpj else ""
     nome_puro = os.path.basename(file_name)
@@ -15,14 +15,14 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
         content_str = content_bytes[:20000].decode('utf-8', errors='ignore')
         tag_l = content_str.lower()
         
-        # Busca CNPJ na tag de emitente e de destinatário para conferência
+        # Filtro de Identidade: Busca CNPJ Emitente e Destinatário
         cnpj_emit = re.search(r'<cnpj>(\d+)</cnpj>', tag_l).group(1) if re.search(r'<cnpj>(\d+)</cnpj>', tag_l) else ""
         cnpj_dest = re.search(r'<dest>.*?<cnpj>(\d+)</cnpj>', tag_l, re.DOTALL).group(1) if re.search(r'<dest>.*?<cnpj>(\d+)</cnpj>', tag_l, re.DOTALL) else ""
         
         match_ch = re.search(r'\d{44}', content_str)
         chave_encontrada = match_ch.group(0) if match_ch else ""
         
-        # Regra de Identidade: É nota do cliente? (Via CNPJ ou miolo da chave)
+        # Regra de Identidade: É nota do cliente?
         is_p = (cnpj_emit == client_cnpj_clean) or (chave_encontrada and client_cnpj_clean in chave_encontrada[6:20])
         is_dest_p = (cnpj_dest == client_cnpj_clean)
         
@@ -30,7 +30,7 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
             return None, False
 
         resumo = {
-            "Arquivo": nome_puro, "Chave": chave_encontrada, "Tipo": "NF-e", "Série": "0",
+            "Arquivo": nome_puro, "Chave": chave_encontrada, "Tipo": "Outros", "Série": "0",
             "Número": 0, "Status": "NORMAIS", "Pasta": "OUTROS", "Valor": 0.0, "Conteúdo": content_bytes
         }
         
@@ -58,10 +58,9 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
         
         resumo["Pasta"] = f"EMITIDOS_CLIENTE/{tipo}/{status}/Serie_{resumo['Série']}" if is_p else f"RECEBIDOS_TERCEIROS/{tipo}"
         return resumo, is_p
-    except: 
-        return None, False
+    except: return None, False
 
-# --- CONFIGURAÇÃO E CARREGAMENTO ---
+# --- CONFIGURAÇÃO E ESTADO ---
 st.set_page_config(page_title="Sentinela 2.1 | Auditoria Fiscal", page_icon="🧡", layout="wide")
 aplicar_estilo_sentinela()
 
@@ -86,38 +85,32 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR (ORGANIZAÇÃO E IDENTIFICAÇÃO DE BASES) ---
+# --- SIDEBAR (AVISOS DE BASE E RET) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
     st.markdown("---")
-    
     emp_sel = st.selectbox("Passo 1: Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
     
     if emp_sel:
-        reg_sel = st.selectbox("Passo 2: Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="f_reg")
-        seg_sel = st.selectbox("Passo 3: Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
+        reg_sel = st.selectbox("Passo 2: Escolha o Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="f_reg")
+        seg_sel = st.selectbox("Passo 3: Escolha o Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
         ret_sel = st.toggle("Passo 4: Habilitar MG (RET)", key="f_ret")
-        
         st.markdown("---")
         cod_c = emp_sel.split(" - ")[0].strip()
         dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
         cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}</div>", unsafe_allow_html=True)
         
-        # Verificação das Bases de Alíquotas e RET
+        # AVISOS DE BASES TRIBUTÁRIAS E RET
         path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
-        if os.path.exists(path_base):
-            st.success("💎 Modo Elite: Base Localizada")
-        else:
-            st.warning("🔍 Modo Cegas: Base não localizada")
+        if os.path.exists(path_base): st.success("💎 Modo Elite: Base Localizada")
+        else: st.warning("🔍 Modo Cegas: Base não localizada")
             
         if ret_sel:
             path_ret = f"RET/{cod_c}-RET_MG.xlsx"
-            if os.path.exists(path_ret):
-                st.success("✅ Base RET (MG) Localizada")
-            else:
-                st.warning("⚠️ Base RET (MG) não localizada")
+            if os.path.exists(path_ret): st.success("✅ Base RET (MG) Localizada")
+            else: st.warning("⚠️ Base RET (MG) não localizada")
         
         st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
         # --- CABEÇALHO ---
@@ -148,7 +141,7 @@ if emp_sel:
                         if not u_xml_validos:
                             st.error("❌ Erro: Nenhum arquivo ZIP válido detectado.")
                         else:
-                            # 1. Localização da Base Específica do Cliente
+                            # 1. Localização da Base Específica (Modo Elite)
                             path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
                             df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
                             modo_auditoria = "ELITE" if df_base_emp is not None else "CEGAS"
@@ -158,14 +151,14 @@ if emp_sel:
                             
                             buf = io.BytesIO()
                             with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
-                                # Orquestração do Relatório (Auditoria Integral)
+                                # Relatório Base (Core chama audit_Difal)
                                 gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, df_base_emp, modo_auditoria)
-                                # Adição da aba de Saldo DIFAL/ST/FECP
+                                # Relatório de Saldos (Apurador gera DIFAL_ST_FECP)
                                 gerar_resumo_uf(xs, writer, xe) 
                             
                             st.session_state['relat_buf'] = buf.getvalue()
 
-                            # 3. Motor do Garimpeiro (Mineração e Organização)
+                            # 3. Mineração do Garimpeiro
                             p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                             b_org, b_todos = io.BytesIO(), io.BytesIO()
                             with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
@@ -190,7 +183,7 @@ if emp_sel:
                                                             seq_map[sk]["nums"].add(res["Número"])
                                                             seq_map[sk]["valor"] += res["Valor"]
 
-                            # Formatação dos Resumos do Garimpeiro
+                            # Formatação de Resultados
                             res_f, fal_f = [], []
                             for (t, s), d in seq_map.items():
                                 ns = d["nums"]
@@ -208,8 +201,7 @@ if emp_sel:
                             })
                             st.rerun()
                     except Exception as e: st.error(f"Erro no Processamento: {e}")
-
-    # --- RESULTADOS E DOWNLOADS ---
+                        # --- EXIBIÇÃO DE RESULTADOS E GARIMPEIRO ---
     if st.session_state.get('executado'):
         st.markdown("---")
         st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
@@ -223,18 +215,54 @@ if emp_sel:
 
         col_res, col_fal = st.columns(2)
         with col_res:
-            st.write("**Resumo por Série:**")
+            st.write("**Resumo por Série e Faixa:**")
             st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
         with col_fal:
-            st.write("**Notas Faltantes (Buracos na Sequência):**")
+            st.write("**Notas Faltantes (Sequência):**")
             st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
 
         st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
         co, ct = st.columns(2)
-        with co: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
-        with ct: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
+        with co: st.download_button("📂 ZIP ORGANIZADO", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+        with ct: st.download_button("📦 TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
 
+    # --- ABA DE CONFORMIDADE DOMÍNIO (SUB-ABAS) ---
     with tab_dominio:
-        st.markdown("### 📉 Módulos de Conformidade Domínio")
+        st.markdown("### 📉 Módulos de Conformidade")
         sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
-        # (Lógica dos tabs de upload de Gerenciais mantida conforme original)
+        
+        with sub_icms:
+            st.markdown("#### 📊 Auditoria ICMS/IPI")
+            c1, c2 = st.columns(2)
+            with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
+            with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
+            st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
+
+        with sub_difal:
+            st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
+            c1, c2, c3 = st.columns(3)
+            with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"dif_s_{v}")
+            with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
+            with c3: st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
+            st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
+
+        with sub_ret:
+            st.markdown("#### 🏨 Auditoria RET")
+            if ret_sel:
+                c1, c2, c3 = st.columns(3)
+                with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"ret_s_{v}")
+                with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"ret_e_{v}")
+                with c3: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"dom_ret_{v}")
+                st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
+            else: 
+                st.warning("⚠️ Habilite o RET na Sidebar para este módulo.")
+
+        with sub_pis:
+            st.markdown("#### 💰 Auditoria PIS/Cofins")
+            c1, c2, c3 = st.columns(3)
+            with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"pis_s_{v}")
+            with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"pis_e_{v}")
+            with c3: st.file_uploader("📄 Demonstrativo PIS/COFINS", type=['xlsx'], key=f"dom_pisc_{v}")
+            st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
+else:
+    st.info("👈 Selecione a empresa na barra lateral para começar.")
