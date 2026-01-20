@@ -2,15 +2,15 @@ import pandas as pd
 import io, zipfile, streamlit as st, xml.etree.ElementTree as ET, re, os
 from datetime import datetime
 
-# --- IMPORTAÇÃO DOS MÓDULOS ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
 try:
     from audit_resumo import gerar_aba_resumo             
     from Auditorias.audit_icms import processar_icms       
     from Auditorias.audit_ipi import processar_ipi         
     from Auditorias.audit_pis_cofins import processar_pc   
+    from Auditorias.audit_difal import processar_difal      # ABA 1: Auditoria (Todas as Notas)
+    from Apuracoes.apuracao_difal import gerar_resumo_uf    # ABA 2: Apuração (Saldo por Estado)
     from Gerenciais.audit_gerencial import gerar_abas_gerenciais
-    from Auditorias.audit_difal import processar_difal      # Aba audit_Difal
-    from Apuracoes.apuracao_difal import gerar_resumo_uf    # Aba DIFAL_ST_FECP (Cálculos)
 except ImportError as e:
     st.error(f"⚠️ Erro de Dependência: {e}")
 
@@ -53,11 +53,10 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
         for det in root.findall('.//det'):
             prod = det.find('prod'); imp = det.find('imposto')
             icms_no = det.find('.//ICMS'); ipi_no = det.find('.//IPI')
-            pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
             
-            # Tags críticas para o cálculo do DIFAL e FCP
-            v_icms_uf_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
-            v_fcp_uf_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
+            # Captura de Tags específicas de DIFAL e FCP (UF Destino)
+            v_icms_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
+            v_fcp_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
 
             linha = {
                 "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
@@ -72,11 +71,9 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)), "BC-ICMS-ST": safe_float(buscar_tag_recursiva('vBCST', icms_no)),
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)), "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
-                "CST-PIS": buscar_tag_recursiva('CST', pis_no), "VLR-PIS": safe_float(buscar_tag_recursiva('vPIS', pis_no)),
-                "CST-COFINS": buscar_tag_recursiva('CST', cof_no), "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no)),
                 "VAL-FCP": safe_float(buscar_tag_recursiva('vFCP', imp)),
-                "VAL-DIFAL": v_icms_uf_dest + v_fcp_uf_dest, 
-                "VAL-FCP-DEST": v_fcp_uf_dest
+                "VAL-DIFAL": v_icms_dest + v_fcp_dest, 
+                "VAL-FCP-DEST": v_fcp_dest
             }
             dados_lista.append(linha)
     except: pass
@@ -105,7 +102,7 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None, df_base_emp=None, modo_auditoria=None):
     if df_xs.empty and df_xe.empty: return
 
-    # --- HIERARQUIA DE GERAÇÃO DAS ABAS ---
+    # --- HIERARQUIA DE ABAS (ORDEM DE ESCRITA) ---
     try: gerar_aba_resumo(writer)
     except: pass
     
@@ -121,10 +118,10 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     try: processar_pc(df_xs, writer, cod_cliente, regime)
     except: pass
 
-    # Aba 5: Listagem Audit_Difal (Todas as notas)
+    # 1. ABA DE AUDITORIA: "audit_Difal" (Visão detalhada de todas as notas)
     try: processar_difal(df_xs, writer)
     except: pass
 
-    # Aba 6: DIFAL_ST_FECP (Resumo e Cálculos de Saldo)
+    # 2. ABA DE APURAÇÃO: "DIFAL_ST_FECP" (Resumo por UF e Saldo devedor)
     try: gerar_resumo_uf(df_xs, writer, df_xe)
     except: pass
