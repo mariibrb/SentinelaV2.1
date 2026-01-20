@@ -5,39 +5,41 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
-        /* BLINDAGEM CONTRA ÍCONES FANTASMAS */
-        span[data-testid="stHeaderActionElements"], 
-        .st-emotion-cache-10oheav, 
-        #keyboard_double,
-        button[title="View keyboard shortcuts"],
-        .stAppDeployButton {
+        /* BLINDAGEM TOTAL */
+        span[data-testid="stHeaderActionElements"], .st-emotion-cache-10oheav, 
+        #keyboard_double, button[title="View keyboard shortcuts"], .stAppDeployButton {
             display: none !important;
             visibility: hidden !important;
         }
 
         html, body, [class*="st-"] { font-family: 'Inter', sans-serif; }
 
-        .titulo-principal { color: #1E1E1E; font-size: 2.5rem; font-weight: 800; margin-bottom: 5px; }
-        .barra-laranja { width: 80px; height: 6px; background: linear-gradient(90deg, #FF8C00, #FF4500); border-radius: 10px; margin-bottom: 30px; }
-
-        /* ESTILO DAS ABAS */
+        /* ESTILO DAS ABAS COM BRILHO METALIZADO */
         .stTabs [data-baseweb="tab"] {
             height: 70px !important;
-            background: #f8f9fa !important;
+            background: #f0f2f6 !important;
             border-radius: 15px 15px 0px 0px !important;
             padding: 10px 40px !important;
             font-size: 20px !important; 
             font-weight: 600 !important;
+            transition: all 0.3s ease-in-out !important;
+        }
+
+        /* Efeito de brilho ao passar o mouse nas abas */
+        .stTabs [data-baseweb="tab"]:hover {
+            background: #e1e4e8 !important;
+            filter: brightness(1.1) !important;
+            transform: translateY(-2px);
         }
 
         .stTabs [aria-selected="true"] {
             background: linear-gradient(180deg, #FF9D26 0%, #FF6F00 50%, #E65C00 100%) !important;
             color: white !important;
             font-weight: 800 !important;
-            box-shadow: 0 -5px 15px rgba(230, 92, 0, 0.2) !important;
+            box-shadow: 0 -5px 15px rgba(230, 92, 0, 0.3) !important;
         }
 
-        /* BOTÃO METALIZADO COM EFEITO BRILHO AO PASSAR O MOUSE */
+        /* BOTÃO METALIZADO COM EFEITO BRILHO LUXO */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
             background: linear-gradient(180deg, #FF9D26 0%, #FF6F00 50%, #E65C00 100%) !important;
@@ -53,7 +55,7 @@ def aplicar_estilo_sentinela():
         .stButton > button:hover, .stDownloadButton > button:hover {
             transform: translateY(-2px) !important;
             box-shadow: 0 8px 20px rgba(230, 92, 0, 0.4) !important;
-            filter: brightness(1.1) !important; /* EFEITO DE BRILHO */
+            filter: brightness(1.2) !important;
         }
 
         .status-container {
