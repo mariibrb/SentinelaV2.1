@@ -113,7 +113,7 @@ with st.sidebar:
             else: st.warning("⚠️ Base RET (MG) não localizada")
         
         st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
-        # --- CABEÇALHO ---
+       # --- CABEÇALHO ---
 c_t, c_r = st.columns([4, 1])
 with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with c_r:
@@ -141,24 +141,21 @@ if emp_sel:
                         if not u_xml_validos:
                             st.error("❌ Erro: Nenhum arquivo ZIP válido detectado.")
                         else:
-                            # 1. Localização da Base Específica (Modo Elite)
                             path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
                             df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
                             modo_auditoria = "ELITE" if df_base_emp is not None else "CEGAS"
 
-                            # 2. Extração via Core
                             xe, xs = extrair_dados_xml_recursivo(u_xml_validos, cnpj_limpo)
                             
                             buf = io.BytesIO()
                             with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
-                                # Relatório Base (Core chama audit_Difal)
+                                # ESTA FUNÇÃO JÁ CHAMA O DIFAL INTERNAMENTE! 
+                                # NÃO PRECISAMOS CHAMAR MAIS NADA DEPOIS DELA.
                                 gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, df_base_emp, modo_auditoria)
-                                # Relatório de Saldos (Apurador gera DIFAL_ST_FECP)
-                                gerar_resumo_uf(xs, writer, xe) 
                             
                             st.session_state['relat_buf'] = buf.getvalue()
 
-                            # 3. Mineração do Garimpeiro
+                            # --- MOTOR DO GARIMPEIRO ---
                             p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                             b_org, b_todos = io.BytesIO(), io.BytesIO()
                             with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
@@ -183,14 +180,10 @@ if emp_sel:
                                                             seq_map[sk]["nums"].add(res["Número"])
                                                             seq_map[sk]["valor"] += res["Valor"]
 
-                            # Formatação de Resultados
                             res_f, fal_f = [], []
                             for (t, s), d in seq_map.items():
                                 ns = d["nums"]
-                                res_f.append({
-                                    "Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), 
-                                    "Qtd": len(ns), "Valor": round(d["valor"], 2)
-                                })
+                                res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
                                 buracos = sorted(list(set(range(min(ns), max(ns) + 1)) - ns))
                                 for b in buracos: fal_f.append({"Série": s, "Nº Faltante": b})
                                 
