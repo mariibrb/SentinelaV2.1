@@ -36,7 +36,6 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
             v_match = re.search(r'<(?:vnf|vtprest)>([\d.]+)</', tag_l)
             resumo["Valor"] = float(v_match.group(1)) if v_match else 0.0
         
-        # Identificação de Emissão Própria
         cnpj_emit = re.search(r'<cnpj>(\d+)</cnpj>', tag_l).group(1) if re.search(r'<cnpj>(\d+)</cnpj>', tag_l) else ""
         is_p = (cnpj_emit == client_cnpj_clean) or (resumo["Chave"] and client_cnpj_clean in resumo["Chave"][6:20])
         resumo["Pasta"] = f"EMITIDOS_CLIENTE/{tipo}/{status}/Serie_{resumo['Série']}" if is_p else f"RECEBIDOS_TERCEIROS/{tipo}"
@@ -69,7 +68,7 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR ORIGINAL ---
+# --- SIDEBAR ORIGINAL (RESTAURADA 100%) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
@@ -84,11 +83,27 @@ with st.sidebar:
         cod_c = emp_sel.split(" - ")[0].strip()
         dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
         cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
+        
+        # Cartão de Status
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
         
+        # VERIFICAÇÃO DE BASE DE IMPOSTOS
         path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
-        if os.path.exists(path_base): st.success("✅ Base de Impostos Localizada")
-        else: st.warning("⚠️ Base de Impostos não localizada")
+        if os.path.exists(path_base): 
+            st.success("✅ Base de Impostos Localizada")
+        else: 
+            st.warning("⚠️ Base de Impostos não localizada")
+            
+        # AVISO RET RESTAURADO
+        if ret_sel:
+            path_ret = f"RET/{cod_c}-RET_MG.xlsx"
+            if os.path.exists(path_ret): 
+                st.success("✅ Base RET (MG) Localizada")
+            else: 
+                st.warning("⚠️ Base RET (MG) não localizada")
+        
+        # BOTÃO DE MODELO RESTAURADO
+        st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
 
 # --- CABEÇALHO ---
 c_t, c_r = st.columns([4, 1])
@@ -96,7 +111,7 @@ with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div cla
 with c_r:
     if st.button("🔄 LIMPAR TUDO"): limpar_central()
 
-# --- CONTEÚDO ---
+# --- CONTEÚDO PRINCIPAL ---
 if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
@@ -109,7 +124,7 @@ if emp_sel:
         
         if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True):
             if u_xml:
-                with st.spinner("Processando..."):
+                with st.spinner("Auditando e Garimpando..."):
                     try:
                         xe, xs = extrair_dados_xml_recursivo(u_xml, cnpj_limpo)
                         buf = io.BytesIO()
@@ -117,10 +132,8 @@ if emp_sel:
                             gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, None)
                         st.session_state['relat_buf'] = buf.getvalue()
 
-                        # Garimpeiro com Auditoria Restrita à Emissão Própria
                         p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                         b_org, b_todos = io.BytesIO(), io.BytesIO()
-                        
                         with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
                             for zip_file in u_xml:
                                 with zipfile.ZipFile(zip_file) as z_in:
@@ -132,38 +145,27 @@ if emp_sel:
                                                 key = res["Chave"] if res["Chave"] else name
                                                 if key not in p_keys:
                                                     p_keys.add(key); z_org.writestr(f"{res['Pasta']}/{name}", xml_data); z_todos.writestr(name, xml_data); rel_list.append(res)
-                                                    
-                                                    # Auditoria de Sequência APENAS para notas da empresa (is_p == True)
                                                     if is_p:
                                                         if res["Status"] in st_counts: st_counts[res["Status"]] += 1
                                                         sk = (res["Tipo"], res["Série"])
                                                         if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
                                                         seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
                         
-                        # Montagem de Relatórios
                         res_f, fal_f, nums_s = [], [], {}
                         for (t, s), d in seq_map.items():
                             ns = d["nums"]
                             res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
                             if s not in nums_s: nums_s[s] = set()
                             nums_s[s].update(ns)
-                        
                         for s, ns in nums_s.items():
                             if len(ns) > 1:
                                 buracos = sorted(list(set(range(min(ns), max(ns) + 1)) - ns))
                                 for b in buracos: fal_f.append({"Série": s, "Nº Faltante": b})
-                        
-                        st.session_state.update({
-                            'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 
-                            'relatorio': rel_list, 'df_resumo': pd.DataFrame(res_f), 
-                            'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 
-                            'executado': True
-                        })
+                        st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'relatorio': rel_list, 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'executado': True})
                         st.rerun()
                     except Exception as e: st.error(f"Erro: {e}")
 
-        # --- EXIBIÇÃO ---
-        if st.session_state['executado'] and st.session_state.get('relat_buf'):
+        if st.session_state.get('executado') and st.session_state.get('relat_buf'):
             st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
             st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
             
@@ -176,10 +178,10 @@ if emp_sel:
 
             col_res, col_fal = st.columns(2)
             with col_res:
-                st.write("**Resumo de Emissão Própria por Série:**")
+                st.write("**Resumo por Série:**")
                 st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
             with col_fal:
-                st.write("**Buracos na Sequência (Emissão Própria):**")
+                st.write("**Notas Faltantes:**")
                 st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
 
             st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
