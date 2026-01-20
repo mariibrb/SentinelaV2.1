@@ -86,6 +86,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)),
                 "BC-ICMS-ST": safe_float(buscar_tag_recursiva('vBCST', icms_no)),
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
+                "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
@@ -97,12 +98,12 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "CST-COFINS": buscar_tag_recursiva('CST', cof_no),
                 "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no)),
                 "VAL-FCP": safe_float(buscar_tag_recursiva('vFCP', imp)),
-                "VAL-DIFAL": v_icms_uf_dest + v_fcp_uf_dest, "VAL-FCP-DEST": v_fcp_uf_dest
+                "VAL-DIFAL": v_icms_uf_dest + v_fcp_uf_dest, 
+                "VAL-FCP-DEST": v_fcp_uf_dest
             }
             dados_lista.append(linha)
     except: pass
 
-# NOME DA FUNÇÃO CORRIGIDO PARA BATER COM SEU APP PRINCIPAL
 def extrair_dados_xml_recursivo(files, cnpj_auditado):
     dados = []
     if not files: return pd.DataFrame(), pd.DataFrame()
@@ -119,17 +120,12 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# NOME DA FUNÇÃO CORRIGIDO PARA BATER COM SEU APP PRINCIPAL
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
     # 1. Aba Resumo
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # 2. Chamada das Gerenciais (REMOVIDO NA 2.1)
-    # try: gerar_abas_gerenciais(writer, ge, gs)
-    # except: pass
-
-    # 3. Auditorias XML
+    # 2. Auditorias XML
     if not df_xs.empty:
         st_map = {}
         for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
@@ -143,15 +139,22 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         
         df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
         
+        # Chamada dos módulos especialistas
         processar_icms(df_xs, writer, cod_cliente, df_xe)
         processar_ipi(df_xs, writer, cod_cliente)
         processar_pc(df_xs, writer, cod_cliente, regime)
+        
+        # Módulo Audit Difal (Aba de detalhamento de itens)
         processar_difal(df_xs, writer)
-        try: gerar_resumo_uf(df_xs, writer, df_xe)
-        except: pass
+        
+        # Módulo Apuração Difal (Aba de Saldo por UF)
+        # IMPORTANTE: No arquivo apuracao_difal.py, mude o nome da aba para 'SALDO_DIFAL_UF' 
+        # para que as duas convivam em paz no mesmo arquivo.
+        try: 
+            gerar_resumo_uf(df_xs, writer, df_xe)
+        except Exception as e:
+            st.warning(f"Aviso na Apuração DIFAL: {e}")
 
     if is_ret:
-        try:
-            caminho_modelo = f"RET/{cod_cliente}-RET_MG.xlsx"
-            if os.path.exists(caminho_modelo): pass 
-        except: pass
+        # Lógica de processamento RET MG aqui
+        pass
