@@ -54,23 +54,14 @@ with st.sidebar:
         st.markdown("---")
         cod_c = emp_sel.split(" - ")[0].strip()
         dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
-        
-        # Cartão de Status
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
-        
-        # Localização da Base de Impostos
         c_base = localizar_base_impostos(cod_c)
         if c_base: st.success("✅ Base de Impostos Localizada")
         else: st.warning("⚠️ Base não localizada")
-        
-        # AVISO RET (MG)
         if ret_sel:
             path_ret = f"RET/{cod_c}-RET_MG.xlsx"
-            if os.path.exists(path_ret): 
-                st.success("✅ Base RET (MG) Localizada")
-            else: 
-                st.warning("⚠️ Base RET (MG) não localizada")
-        
+            if os.path.exists(path_ret): st.success("✅ Base RET (MG) Localizada")
+            else: st.warning("⚠️ Base RET (MG) não localizada")
         st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
 
 # --- CABEÇALHO ---
@@ -80,40 +71,50 @@ with c_r:
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔄 LIMPAR TUDO", use_container_width=True, key=f"reset_{v}"): limpar_central()
 
-# --- CONTEÚDO COM ABAS ---
+# --- CONTEÚDO PRINCIPAL ---
 if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
     with tab_xml:
         st.markdown("### 📥 Passo 5: Central de Arquivos")
         c1, c2, c3 = st.columns(3)
-        with c1: 
-            u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
-        with c2: 
-            u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
-        with c3:
-            u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
-
-        st.markdown("<br>", unsafe_allow_html=True)
+        with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
+        with c2: u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
+        with c3: u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
+        
         if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True, key=f"run_{v}"):
             if u_xml and reg_sel and seg_sel:
-                with st.spinner("Auditando XMLs e Autenticidades..."):
+                with st.spinner("Auditando..."):
                     try:
                         xe, xs = extrair_dados_xml_recursivo(u_xml, str(dados_e['CNPJ']).strip())
                         buf = io.BytesIO()
                         with pd.ExcelWriter(buf, engine='openpyxl') as writer:
-                            # Integridade: Passando None para os campos gerenciais removidos da tela
                             gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, None)
                         st.session_state['relat_buf'] = buf.getvalue()
                     except Exception as e: st.error(f"Erro: {e}")
-            else: st.warning("⚠️ Verifique a Sidebar e certifique-se de subir o arquivo XML.")
-
+            else: st.warning("⚠️ Verifique a Sidebar e os arquivos.")
         if st.session_state.get('relat_buf'):
-            st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ ANÁLISE XML CONCLUÍDA</h2></div>", unsafe_allow_html=True)
             st.download_button("💾 BAIXAR RELATÓRIO", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, key=f"dl_{v}")
 
     with tab_dominio:
-        st.markdown("### 📉 Conformidade Domínio")
-        st.info("Aqui você poderá realizar o cruzamento com os relatórios gerenciais do Domínio Sistemas.")
+        st.markdown("### 📉 Módulos de Conformidade")
+        # --- CRIAÇÃO DAS SUB-ABAS ---
+        sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
+        
+        with sub_icms:
+            st.markdown("#### 📊 Auditoria ICMS/IPI")
+            st.info("Aguardando upload dos relatórios gerenciais do Domínio.")
+            
+        with sub_difal:
+            st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
+            st.info("Aguardando upload dos relatórios gerenciais do Domínio.")
+            
+        with sub_ret:
+            st.markdown("#### 🏨 Auditoria RET (Regime Especial de Tributação)")
+            st.info("Aguardando upload dos relatórios gerenciais do Domínio.")
+            
+        with sub_pis:
+            st.markdown("#### 💰 Auditoria PIS/Cofins")
+            st.info("Aguardando upload dos relatórios gerenciais do Domínio.")
 else:
-    st.info("👈 Selecione a empresa na barra lateral para liberar as ferramentas.")
+    st.info("👈 Selecione a empresa na barra lateral.")
