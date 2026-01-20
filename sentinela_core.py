@@ -7,7 +7,7 @@ import re
 import os
 from datetime import datetime
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (TODOS OS 6) ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (6 ABAS) ---
 try:
     from audit_resumo import gerar_aba_resumo             # Aba: RESUMO
     from Auditorias.audit_icms import processar_icms       # Aba: ICMS_AUDIT
@@ -84,17 +84,20 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
         if f.name.endswith('.xml'): processar_conteudo_xml(f.read(), dados, cnpj_auditado)
         elif f.name.endswith('.zip'): ler_zip(f)
     df = pd.DataFrame(dados)
+    if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- ORQUESTRAÇÃO DAS 6 ABAS ---
+# --- ORQUESTRAÇÃO OBRIGATÓRIA DAS 6 ABAS ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo_auditoria=None):
     
     # 1. RESUMO
-    try: gerar_aba_resumo(writer)
-    except: pass
+    try:
+        gerar_aba_resumo(writer)
+    except Exception as e:
+        st.warning(f"Erro na aba RESUMO: {e}")
     
     if not df_xs.empty:
-        # Mapeamento de Situação
+        # Puxa situação para auditoria
         st_map = {}
         for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
             try:
@@ -105,20 +108,21 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
             except: continue
         df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
         
-        # 2. ICMS_AUDIT
-        processar_icms(df_xs, writer, cod_cliente, df_xe)
+        # Chamada sequencial garantida de todas as auditorias
+        try: processar_icms(df_xs, writer, cod_cliente, df_xe)      # Aba: ICMS_AUDIT
+        except Exception as e: st.error(f"Erro em ICMS_AUDIT: {e}")
+
+        try: processar_ipi(df_xs, writer, cod_cliente)              # Aba: IPI_AUDIT
+        except Exception as e: st.error(f"Erro em IPI_AUDIT: {e}")
+
+        try: processar_pc(df_xs, writer, cod_cliente, regime)       # Aba: PIS_COFINS_AUDIT
+        except Exception as e: st.error(f"Erro em PIS_COFINS_AUDIT: {e}")
+
+        try: processar_difal(df_xs, writer)                         # Aba: DIFAL_AUDIT
+        except Exception as e: st.error(f"Erro em DIFAL_AUDIT: {e}")
         
-        # 3. IPI_AUDIT
-        processar_ipi(df_xs, writer, cod_cliente)
-        
-        # 4. PIS_COFINS_AUDIT
-        processar_pc(df_xs, writer, cod_cliente, regime)
-        
-        # 5. DIFAL_AUDIT
-        processar_difal(df_xs, writer)
-        
-        # 6. DIFAL_ST_FECP
+        # Aba 6: DIFAL_ST_FECP (Módulo de Apuração de Saldo)
         try:
             gerar_resumo_uf(df_xs, writer, df_xe)
         except Exception as e:
-            st.error(f"Erro na aba de Apuração: {e}")
+            st.error(f"Erro em DIFAL_ST_FECP: {e}")
