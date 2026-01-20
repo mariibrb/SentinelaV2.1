@@ -35,6 +35,8 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
         if status == "NORMAIS":
             v_match = re.search(r'<(?:vnf|vtprest)>([\d.]+)</', tag_l)
             resumo["Valor"] = float(v_match.group(1)) if v_match else 0.0
+        
+        # Identificação de Emissão Própria
         cnpj_emit = re.search(r'<cnpj>(\d+)</cnpj>', tag_l).group(1) if re.search(r'<cnpj>(\d+)</cnpj>', tag_l) else ""
         is_p = (cnpj_emit == client_cnpj_clean) or (resumo["Chave"] and client_cnpj_clean in resumo["Chave"][6:20])
         resumo["Pasta"] = f"EMITIDOS_CLIENTE/{tipo}/{status}/Serie_{resumo['Série']}" if is_p else f"RECEBIDOS_TERCEIROS/{tipo}"
@@ -45,22 +47,15 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
 st.set_page_config(page_title="Sentinela 2.1 | Auditoria Fiscal", page_icon="🧡", layout="wide")
 aplicar_estilo_sentinela()
 
-# INICIALIZAÇÃO SEGURA
 if 'v_ver' not in st.session_state: st.session_state['v_ver'] = 0
-if 'relatorio' not in st.session_state: st.session_state['relatorio'] = []
-for k in ['df_resumo', 'df_faltantes']:
-    if k not in st.session_state: st.session_state[k] = pd.DataFrame()
-for k in ['garimpo_ok', 'z_org', 'z_todos', 'st_counts', 'relat_buf']:
-    if k not in st.session_state: st.session_state[k] = None
+if 'executado' not in st.session_state: st.session_state['executado'] = False
 
 def limpar_central():
     st.session_state.clear()
     st.rerun()
 
-# --- CARREGAMENTO DE EMPRESAS ---
 @st.cache_data(ttl=600)
 def carregar_clientes():
-    # Tenta vários caminhos possíveis
     caminhos = [".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx", "Clientes Ativos.xlsx"]
     for p in caminhos:
         if os.path.exists(p):
@@ -79,13 +74,8 @@ with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
     st.markdown("---")
+    emp_sel = st.selectbox("Passo 1: Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
     
-    if not df_cli.empty:
-        emp_sel = st.selectbox("Passo 1: Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
-    else:
-        st.error("❌ Lista de empresas não encontrada.")
-        emp_sel = ""
-
     if emp_sel:
         reg_sel = st.selectbox("Passo 2: Escolha o Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="f_reg")
         seg_sel = st.selectbox("Passo 3: Escolha o Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
@@ -94,19 +84,11 @@ with st.sidebar:
         cod_c = emp_sel.split(" - ")[0].strip()
         dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
         cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
-        
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
         
         path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
         if os.path.exists(path_base): st.success("✅ Base de Impostos Localizada")
         else: st.warning("⚠️ Base de Impostos não localizada")
-            
-        if ret_sel:
-            path_ret = f"RET/{cod_c}-RET_MG.xlsx"
-            if os.path.exists(path_ret): st.success("✅ Base RET (MG) Localizada")
-            else: st.warning("⚠️ Base RET (MG) não localizada")
-        
-        st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary")
 
 # --- CABEÇALHO ---
 c_t, c_r = st.columns([4, 1])
@@ -135,9 +117,10 @@ if emp_sel:
                             gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, None)
                         st.session_state['relat_buf'] = buf.getvalue()
 
-                        # Processamento Garimpeiro
+                        # Garimpeiro com Auditoria Restrita à Emissão Própria
                         p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                         b_org, b_todos = io.BytesIO(), io.BytesIO()
+                        
                         with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
                             for zip_file in u_xml:
                                 with zipfile.ZipFile(zip_file) as z_in:
@@ -149,26 +132,38 @@ if emp_sel:
                                                 key = res["Chave"] if res["Chave"] else name
                                                 if key not in p_keys:
                                                     p_keys.add(key); z_org.writestr(f"{res['Pasta']}/{name}", xml_data); z_todos.writestr(name, xml_data); rel_list.append(res)
+                                                    
+                                                    # Auditoria de Sequência APENAS para notas da empresa (is_p == True)
                                                     if is_p:
                                                         if res["Status"] in st_counts: st_counts[res["Status"]] += 1
                                                         sk = (res["Tipo"], res["Série"])
                                                         if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
                                                         seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
                         
-                        # Resultados Garimpeiro
+                        # Montagem de Relatórios
                         res_f, fal_f, nums_s = [], [], {}
                         for (t, s), d in seq_map.items():
-                            ns = d["nums"]; res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
+                            ns = d["nums"]
+                            res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
                             if s not in nums_s: nums_s[s] = set()
                             nums_s[s].update(ns)
+                        
                         for s, ns in nums_s.items():
                             if len(ns) > 1:
                                 buracos = sorted(list(set(range(min(ns), max(ns) + 1)) - ns))
                                 for b in buracos: fal_f.append({"Série": s, "Nº Faltante": b})
-                        st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'relatorio': rel_list, 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'garimpo_ok': True})
+                        
+                        st.session_state.update({
+                            'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 
+                            'relatorio': rel_list, 'df_resumo': pd.DataFrame(res_f), 
+                            'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 
+                            'executado': True
+                        })
+                        st.rerun()
                     except Exception as e: st.error(f"Erro: {e}")
 
-        if st.session_state.get('relat_buf'):
+        # --- EXIBIÇÃO ---
+        if st.session_state['executado'] and st.session_state.get('relat_buf'):
             st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
             st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
             
@@ -176,16 +171,15 @@ if emp_sel:
             st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
             sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
             c1, c2, c3 = st.columns(3)
-            vol = len(st.session_state['relatorio']) if isinstance(st.session_state['relatorio'], list) else 0
-            c1.metric("📦 VOLUME TOTAL", vol)
-            c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
+            c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
+            c2.metric("❌ EMISSÕES CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 EMISSÕES INUTILIZADAS", sc.get("INUTILIZADOS", 0))
 
             col_res, col_fal = st.columns(2)
             with col_res:
-                st.write("**Resumo por Série:**")
+                st.write("**Resumo de Emissão Própria por Série:**")
                 st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
             with col_fal:
-                st.write("**Notas Faltantes:**")
+                st.write("**Buracos na Sequência (Emissão Própria):**")
                 st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
 
             st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
@@ -194,12 +188,6 @@ if emp_sel:
             with c_todos: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
 
     with tab_dominio:
-        st.markdown("### 📉 Conformidade Domínio")
-        sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
-        msg = "⚙️ **Módulo em Construção**"
-        with sub_icms: st.info(msg)
-        with sub_difal: st.info(msg)
-        with sub_ret: st.info(msg)
-        with sub_pis: st.info(msg)
+        st.info("📉 Módulo Conformidade Domínio em desenvolvimento.")
 else:
     st.info("👈 Selecione a empresa na barra lateral.")
