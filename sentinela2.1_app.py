@@ -3,7 +3,7 @@ import os, io, pandas as pd, zipfile, re, random
 from style import aplicar_estilo_sentinela
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 
-# --- MOTOR GARIMPEIRO ---
+# --- MOTOR GARIMPEIRO (Lógica Íntegra Original) ---
 def identify_xml_info(content_bytes, client_cnpj, file_name):
     client_cnpj_clean = "".join(filter(str.isdigit, str(client_cnpj))) if client_cnpj else ""
     nome_puro = os.path.basename(file_name)
@@ -101,8 +101,7 @@ c_t, c_r = st.columns([4, 1])
 with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with c_r:
     if st.button("🔄 LIMPAR TUDO"): limpar_central()
-
-# --- CONTEÚDO PRINCIPAL ---
+        # --- CONTEÚDO PRINCIPAL ---
 if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
@@ -137,12 +136,16 @@ if emp_sel:
                                             if res:
                                                 key = res["Chave"] if res["Chave"] else name
                                                 if key not in p_keys:
-                                                    p_keys.add(key); z_org.writestr(f"{res['Pasta']}/{name}", xml_data); z_todos.writestr(name, xml_data); rel_list.append(res)
+                                                    p_keys.add(key)
+                                                    z_org.writestr(f"{res['Pasta']}/{name}", xml_data)
+                                                    z_todos.writestr(name, xml_data)
+                                                    rel_list.append(res)
                                                     if is_p:
                                                         if res["Status"] in st_counts: st_counts[res["Status"]] += 1
                                                         sk = (res["Tipo"], res["Série"])
                                                         if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
-                                                        seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
+                                                        seq_map[sk]["nums"].add(res["Número"])
+                                                        seq_map[sk]["valor"] += res["Valor"]
                         
                         res_f, fal_f, nums_s = [], [], {}
                         for (t, s), d in seq_map.items():
@@ -154,111 +157,50 @@ if emp_sel:
                             if len(ns) > 1:
                                 buracos = sorted(list(set(range(min(ns), max(ns) + 1)) - ns))
                                 for b in buracos: fal_f.append({"Série": s, "Nº Faltante": b})
-                        st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'relatorio': rel_list, 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'executado': True})
+                                
+                        st.session_state.update({
+                            'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 
+                            'relatorio': rel_list, 'df_resumo': pd.DataFrame(res_f), 
+                            'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'executado': True
+                        })
                         st.rerun()
                     except Exception as e: st.error(f"Erro: {e}")
 
-        if st.session_state.get('executado') and st.session_state.get('relat_buf'):
-            st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
-            st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
-            
-            st.markdown("---")
-            st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
-            sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
-            c1, c2, c3 = st.columns(3)
-            c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
-            c2.metric("❌ EMISSÕES CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 EMISSÕES INUTILIZADAS", sc.get("INUTILIZADOS", 0))
-
-            col_res, col_fal = st.columns(2)
-            with col_res:
-                st.write("**Resumo por Série:**")
-                st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
-            with col_fal:
-                st.write("**Notas Faltantes:**")
-                st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
-
-            st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
-            c_org, c_todos = st.columns(2)
-            with c_org: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
-            with c_todos: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
-
     with tab_dominio:
         st.markdown("### 📉 Módulos de Conformidade")
-        # SUB-ABAS RESTAURADAS AQUI
         sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
-        msg = "⚙️ **Módulo em Construção** | Integração com Domínio Sistemas."
         
         with sub_icms:
             st.markdown("#### 📊 Auditoria ICMS/IPI")
-            st.info(msg)
-        with sub_difal:
-            st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
-            st.info(msg)
-        with sub_ret:
-            st.markdown("#### 🏨 Auditoria RET (Regime Especial)")
-            st.info(msg)
-        with sub_pis:
-            st.markdown("#### 💰 Auditoria PIS/Cofins")
-            st.info(msg)
-else:
-    st.info("👈 Selecione a empresa na barra lateral.")
-with tab_dominio:
-        st.markdown("### 📉 Módulos de Conformidade")
-        sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
-        
-        # --- SUB-ABA ICMS/IPI ---
-        with sub_icms:
-            st.markdown("#### 📊 Auditoria ICMS/IPI")
             c1, c2 = st.columns(2)
-            with c1:
-                st.file_uploader("📑 Gerencial de Saídas (Domínio)", type=['xlsx', 'xls'], key=f"dom_icms_s_{v}")
-            with c2:
-                st.file_uploader("📑 Gerencial de Entradas (Domínio)", type=['xlsx', 'xls'], key=f"dom_icms_e_{v}")
-            
-            if st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True):
-                st.info("Pronto para conciliação XML vs Gerenciais Domínio.")
+            with c1: st.file_uploader("📑 Gerencial Saídas (ICMS)", type=['xlsx'], key=f"icms_s_{v}")
+            with c2: st.file_uploader("📑 Gerencial Entradas (ICMS)", type=['xlsx'], key=f"icms_e_{v}")
+            st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
 
-        # --- SUB-ABA DIFAL ---
         with sub_difal:
             st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
             c1, c2 = st.columns(2)
-            with c1:
-                st.file_uploader("📑 Gerencial de Saídas (DIFAL/ST)", type=['xlsx'], key=f"dom_difal_s_{v}")
-            with c2:
-                st.file_uploader("📑 Gerencial de Entradas (DIFAL/ST)", type=['xlsx'], key=f"dom_difal_e_{v}")
-            
-            if st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True):
-                st.info("Aguardando motor de cálculo para conferência de alíquotas interestaduais.")
+            with c1: st.file_uploader("📑 Gerencial Saídas (DIFAL)", type=['xlsx'], key=f"dif_s_{v}")
+            with c2: st.file_uploader("📑 Gerencial Entradas (DIFAL)", type=['xlsx'], key=f"dif_e_{v}")
+            st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
 
-        # --- SUB-ABA RET ---
         with sub_ret:
-            st.markdown("#### 🏨 Auditoria RET (Regime Especial)")
+            st.markdown("#### 🏨 Auditoria RET")
             if ret_sel:
-                st.write(f"✅ **Modo RET Ativo para {dados_e['RAZÃO SOCIAL']}**")
                 c1, c2 = st.columns(2)
-                with c1:
-                    st.file_uploader("📑 Gerencial de Saídas (Faturamento RET)", type=['xlsx'], key=f"dom_ret_s_{v}")
-                with c2:
-                    st.file_uploader("📑 Gerencial de Entradas (Insumos RET)", type=['xlsx'], key=f"dom_ret_e_{v}")
-                
-                if st.button("⚖️ VALIDAR RET", use_container_width=True):
-                    st.info("Módulo de conferência de tributação monofásica/especial.")
-            else:
-                st.warning("⚠️ O Passo 4 (Habilitar RET) precisa estar ativo na Sidebar para esta auditoria.")
+                with c1: st.file_uploader("📑 Gerencial Saídas (RET)", type=['xlsx'], key=f"ret_s_{v}")
+                with c2: st.file_uploader("📑 Gerencial Entradas (RET)", type=['xlsx'], key=f"ret_e_{v}")
+                st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
+            else: st.warning("⚠️ Habilite o RET na Sidebar para este módulo.")
 
-        # --- SUB-ABA PIS/COFINS ---
         with sub_pis:
             st.markdown("#### 💰 Auditoria PIS/Cofins")
             c1, c2 = st.columns(2)
-            with c1:
-                st.file_uploader("📑 Gerencial de Saídas (PIS/COFINS)", type=['xlsx'], key=f"dom_pis_s_{v}")
-            with c2:
-                st.file_uploader("📑 Gerencial de Entradas (PIS/COFINS)", type=['xlsx'], key=f"dom_pis_e_{v}")
-            
-            if st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True):
-                st.info("Pronto para validar créditos e débitos de PIS/COFINS.")
+            with c1: st.file_uploader("📑 Gerencial Saídas (PIS)", type=['xlsx'], key=f"pis_s_{v}")
+            with c2: st.file_uploader("📑 Gerencial Entradas (PIS)", type=['xlsx'], key=f"pis_e_{v}")
+            st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
 
-    # --- FINAL DO CÓDIGO (EXIBIÇÃO DOS RESULTADOS DO GARIMPEIRO) ---
+    # --- RESULTADOS DO GARIMPEIRO (DENTRO DO IF EMP_SEL) ---
     if st.session_state.get('executado') and st.session_state.get('relat_buf'):
         st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
         st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
@@ -280,8 +222,8 @@ with tab_dominio:
             st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
 
         st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
-        c_org, c_todos = st.columns(2)
-        with c_org: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
-        with c_todos: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
+        co, ct = st.columns(2)
+        with co: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+        with ct: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
 else:
-    st.info("👈 Selecione a empresa na barra lateral.")
+    st.info("👈 Selecione a empresa na barra lateral para começar.")
