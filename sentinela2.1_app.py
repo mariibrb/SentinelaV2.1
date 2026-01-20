@@ -45,9 +45,13 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
 st.set_page_config(page_title="Sentinela 2.1 | Auditoria Fiscal", page_icon="🧡", layout="wide")
 aplicar_estilo_sentinela()
 
+# INICIALIZAÇÃO SEGURA (Formatos Corretos)
 if 'v_ver' not in st.session_state: st.session_state['v_ver'] = 0
-for k in ['garimpo_ok', 'relatorio', 'df_resumo', 'df_faltantes', 'st_counts', 'z_org', 'z_todos']:
-    if k not in st.session_state: st.session_state[k] = pd.DataFrame() if 'df' in k else None
+if 'relatorio' not in st.session_state: st.session_state['relatorio'] = [] # DEVE SER LISTA
+for k in ['df_resumo', 'df_faltantes']:
+    if k not in st.session_state: st.session_state[k] = pd.DataFrame()
+for k in ['garimpo_ok', 'z_org', 'z_todos', 'st_counts']:
+    if k not in st.session_state: st.session_state[k] = None
 
 def limpar_central():
     st.session_state.clear()
@@ -56,7 +60,7 @@ def limpar_central():
 # --- CARREGAMENTO ---
 @st.cache_data(ttl=600)
 def carregar_clientes():
-    caminhos = [".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx", "Clientes Ativos.xlsx"]
+    caminhos = [".streamlit/Clientes Ativos.xlsx", "Clientes Ativos.xlsx"]
     for p in caminhos:
         if os.path.exists(p):
             try:
@@ -69,7 +73,7 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR ORIGINAL (COM CAMINHO DA PASTA CORRIGIDO) ---
+# --- SIDEBAR ORIGINAL ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
@@ -85,22 +89,16 @@ with st.sidebar:
         dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
         cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
         
-        # Cartão de Status
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
         
-        # VERIFICAÇÃO DE BASE DE IMPOSTOS (CAMINHO SEM ACENTO CORRIGIDO)
         path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
-        if os.path.exists(path_base): 
-            st.success("✅ Base de Impostos Localizada")
-        else: 
-            st.warning("⚠️ Base de Impostos não localizada")
+        if os.path.exists(path_base): st.success("✅ Base de Impostos Localizada")
+        else: st.warning("⚠️ Base de Impostos não localizada")
             
         if ret_sel:
             path_ret = f"RET/{cod_c}-RET_MG.xlsx"
-            if os.path.exists(path_ret): 
-                st.success("✅ Base RET (MG) Localizada")
-            else: 
-                st.warning("⚠️ Base RET (MG) não localizada")
+            if os.path.exists(path_ret): st.success("✅ Base RET (MG) Localizada")
+            else: st.warning("⚠️ Base RET (MG) não localizada")
         
         st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
 
@@ -110,20 +108,20 @@ with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div cla
 with c_r:
     if st.button("🔄 LIMPAR TUDO", use_container_width=True): limpar_central()
 
-# --- CONTEÚDO PRINCIPAL ---
+# --- CONTEÚDO ---
 if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
     with tab_xml:
         st.markdown("### 📥 Central de Importação")
         c1, c2, c3 = st.columns(3)
-        with c1: u_xml = st.file_uploader("📁 XML das Notas (ZIP)", accept_multiple_files=True, key=f"x_{v}")
+        with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
         with c2: u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
         with c3: u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
         
-        if st.button("🚀 INICIAR PROCESSAMENTO DOS XMLS", use_container_width=True, key=f"run_{v}"):
+        if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True, key=f"run_{v}"):
             if u_xml:
-                with st.spinner("Auditando e Garimpando..."):
+                with st.spinner("Processando..."):
                     try:
                         xe, xs = extrair_dados_xml_recursivo(u_xml, cnpj_limpo)
                         buf = io.BytesIO()
@@ -168,24 +166,26 @@ if emp_sel:
             st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
             
             st.markdown("---")
-            st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO (Resultado da Extração)</h2>", unsafe_allow_html=True)
-            sc = st.session_state.get('st_counts', {"CANCELADOS": 0, "INUTILIZADOS": 0})
+            st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
+            sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
             c1, c2, c3 = st.columns(3)
-            c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
+            # SEGURO: Garante que relatorio é tratado como lista para o len()
+            vol = len(st.session_state['relatorio']) if isinstance(st.session_state['relatorio'], list) else 0
+            c1.metric("📦 VOLUME TOTAL", vol)
             c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
 
             col_res, col_fal = st.columns(2)
             with col_res:
                 st.write("**Resumo por Série:**")
-                st.dataframe(st.session_state.get('df_resumo'), use_container_width=True, hide_index=True)
+                st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
             with col_fal:
                 st.write("**Notas Faltantes:**")
-                st.dataframe(st.session_state.get('df_faltantes'), use_container_width=True, hide_index=True)
+                st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
 
             st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
             c_org, c_todos = st.columns(2)
-            with c_org: st.download_button("📂 BAIXAR XMLs ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
-            with c_todos: st.download_button("📦 BAIXAR TODOS XMLs", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
+            with c_org: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+            with c_todos: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
 
     with tab_dominio:
         st.markdown("### 📉 Conformidade Domínio")
