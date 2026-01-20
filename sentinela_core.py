@@ -7,7 +7,7 @@ import re
 import os
 from datetime import datetime
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (6 ABAS) ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (TODOS OS 6) ---
 try:
     from audit_resumo import gerar_aba_resumo             # Aba: RESUMO
     from Auditorias.audit_icms import processar_icms       # Aba: ICMS_AUDIT
@@ -18,7 +18,6 @@ try:
 except ImportError as e:
     st.error(f"⚠️ Erro de Dependência: {e}")
 
-# --- UTILITÁRIOS DE CONVERSÃO ---
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -37,7 +36,6 @@ def buscar_tag_recursiva(tag_alvo, no):
         if tag_nome == tag_alvo: return elemento.text if elemento.text else ""
     return ""
 
-# --- MOTOR DE PROCESSAMENTO XML ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -45,7 +43,6 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
         root = ET.fromstring(xml_str)
         inf = root.find('.//infNFe')
         if inf is None: return 
-        
         ide = root.find('.//ide'); emit = root.find('.//emit'); dest = root.find('.//dest')
         cnpj_emit = re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', emit))
         cnpj_alvo = re.sub(r'\D', '', str(cnpj_empresa_auditada))
@@ -55,9 +52,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
 
         for det in root.findall('.//det'):
             prod = det.find('prod'); imp = det.find('imposto')
-            icms_no = det.find('.//ICMS'); ipi_no = det.find('.//IPI')
-            pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
-            
+            icms_no = det.find('.//ICMS')
             v_icms_uf_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
             v_fcp_uf_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
 
@@ -67,7 +62,6 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
                 "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
                 "UF_DEST": buscar_tag_recursiva('UF', dest), "CFOP": buscar_tag_recursiva('CFOP', prod),
-                "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)),
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
@@ -90,18 +84,17 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
         if f.name.endswith('.xml'): processar_conteudo_xml(f.read(), dados, cnpj_auditado)
         elif f.name.endswith('.zip'): ler_zip(f)
     df = pd.DataFrame(dados)
-    if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERADOR DE EXCEL (6 ABAS SOLICITADAS) ---
+# --- ORQUESTRAÇÃO DAS 6 ABAS ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo_auditoria=None):
     
-    # Aba 1: RESUMO
+    # 1. RESUMO
     try: gerar_aba_resumo(writer)
     except: pass
     
     if not df_xs.empty:
-        # Puxa situação para auditoria
+        # Mapeamento de Situação
         st_map = {}
         for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
             try:
@@ -112,20 +105,20 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
             except: continue
         df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
         
-        # Aba 2: ICMS_AUDIT
+        # 2. ICMS_AUDIT
         processar_icms(df_xs, writer, cod_cliente, df_xe)
         
-        # Aba 3: IPI_AUDIT
+        # 3. IPI_AUDIT
         processar_ipi(df_xs, writer, cod_cliente)
         
-        # Aba 4: PIS_COFINS_AUDIT
+        # 4. PIS_COFINS_AUDIT
         processar_pc(df_xs, writer, cod_cliente, regime)
         
-        # Aba 5: DIFAL_AUDIT
+        # 5. DIFAL_AUDIT
         processar_difal(df_xs, writer)
         
-        # Aba 6: DIFAL_ST_FECP (Módulo de Apuração de Saldo)
+        # 6. DIFAL_ST_FECP
         try:
             gerar_resumo_uf(df_xs, writer, df_xe)
         except Exception as e:
-            st.error(f"Erro ao gerar aba DIFAL_ST_FECP: {e}")
+            st.error(f"Erro na aba de Apuração: {e}")
