@@ -3,7 +3,7 @@ import os, io, pandas as pd, zipfile, re, random
 from style import aplicar_estilo_sentinela
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 
-# --- MOTOR GARIMPEIRO (Lógica Íntegra Original) ---
+# --- MOTOR GARIMPEIRO ---
 def identify_xml_info(content_bytes, client_cnpj, file_name):
     client_cnpj_clean = "".join(filter(str.isdigit, str(client_cnpj))) if client_cnpj else ""
     nome_puro = os.path.basename(file_name)
@@ -45,22 +45,23 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
 st.set_page_config(page_title="Sentinela 2.1 | Auditoria Fiscal", page_icon="🧡", layout="wide")
 aplicar_estilo_sentinela()
 
-# INICIALIZAÇÃO SEGURA (Formatos Corretos)
+# INICIALIZAÇÃO SEGURA
 if 'v_ver' not in st.session_state: st.session_state['v_ver'] = 0
-if 'relatorio' not in st.session_state: st.session_state['relatorio'] = [] # DEVE SER LISTA
+if 'relatorio' not in st.session_state: st.session_state['relatorio'] = []
 for k in ['df_resumo', 'df_faltantes']:
     if k not in st.session_state: st.session_state[k] = pd.DataFrame()
-for k in ['garimpo_ok', 'z_org', 'z_todos', 'st_counts']:
+for k in ['garimpo_ok', 'z_org', 'z_todos', 'st_counts', 'relat_buf']:
     if k not in st.session_state: st.session_state[k] = None
 
 def limpar_central():
     st.session_state.clear()
     st.rerun()
 
-# --- CARREGAMENTO ---
+# --- CARREGAMENTO DE EMPRESAS ---
 @st.cache_data(ttl=600)
 def carregar_clientes():
-    caminhos = [".streamlit/Clientes Ativos.xlsx", "Clientes Ativos.xlsx"]
+    # Tenta vários caminhos possíveis
+    caminhos = [".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx", "Clientes Ativos.xlsx"]
     for p in caminhos:
         if os.path.exists(p):
             try:
@@ -78,8 +79,13 @@ with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
     st.markdown("---")
-    emp_sel = st.selectbox("Passo 1: Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
     
+    if not df_cli.empty:
+        emp_sel = st.selectbox("Passo 1: Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
+    else:
+        st.error("❌ Lista de empresas não encontrada.")
+        emp_sel = ""
+
     if emp_sel:
         reg_sel = st.selectbox("Passo 2: Escolha o Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="f_reg")
         seg_sel = st.selectbox("Passo 3: Escolha o Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
@@ -100,13 +106,13 @@ with st.sidebar:
             if os.path.exists(path_ret): st.success("✅ Base RET (MG) Localizada")
             else: st.warning("⚠️ Base RET (MG) não localizada")
         
-        st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
+        st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary")
 
 # --- CABEÇALHO ---
 c_t, c_r = st.columns([4, 1])
 with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with c_r:
-    if st.button("🔄 LIMPAR TUDO", use_container_width=True): limpar_central()
+    if st.button("🔄 LIMPAR TUDO"): limpar_central()
 
 # --- CONTEÚDO ---
 if emp_sel:
@@ -119,7 +125,7 @@ if emp_sel:
         with c2: u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
         with c3: u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
         
-        if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True, key=f"run_{v}"):
+        if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True):
             if u_xml:
                 with st.spinner("Processando..."):
                     try:
@@ -149,6 +155,7 @@ if emp_sel:
                                                         if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
                                                         seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
                         
+                        # Resultados Garimpeiro
                         res_f, fal_f, nums_s = [], [], {}
                         for (t, s), d in seq_map.items():
                             ns = d["nums"]; res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
@@ -169,7 +176,6 @@ if emp_sel:
             st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
             sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
             c1, c2, c3 = st.columns(3)
-            # SEGURO: Garante que relatorio é tratado como lista para o len()
             vol = len(st.session_state['relatorio']) if isinstance(st.session_state['relatorio'], list) else 0
             c1.metric("📦 VOLUME TOTAL", vol)
             c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
