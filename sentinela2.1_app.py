@@ -102,94 +102,97 @@ c_t, c_r = st.columns([4, 1])
 with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with c_r:
     if st.button("🔄 LIMPAR TUDO"): limpar_central()
-# --- CONTEÚDO PRINCIPAL ---
-if emp_sel:
-    tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
+import streamlit as st
+import pandas as pd
+import io
+from sentinela_core import extrair_xml, gerar_analise_xml
 
-    with tab_xml:
-        st.markdown("### 📥 Central de Importação")
-        st.markdown("##### Faça o upload dos documentos abaixo para iniciar a auditoria cruzada.")
-        
-        c1, c2, c3 = st.columns(3)
-        with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
-        with c2: u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
-        with c3: u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
-        
-        if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True):
-            if u_xml:
-                with st.spinner("Auditando e Gerando Relatórios..."):
-                    try:
-                        u_xml_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
-                        
-                        if not u_xml_validos:
-                            st.error("❌ Erro: Nenhum arquivo ZIP válido foi detectado.")
-                        else:
-                            # Localização da Base (Hierarquia Fiscal)
-                            path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
-                            df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
-                            modo_auditoria = "ELITE" if df_base_emp is not None else "CEGAS"
+# Configuração da Página (Estética Fofa solicitada)
+st.set_page_config(page_title="Sentinela V2.1", layout="wide", page_icon="🛡️")
 
-                            # Extração da Base Única (Entradas e Saídas)
-                            xe, xs = extrair_dados_xml_recursivo(u_xml_validos, cnpj_limpo)
-                            
-                            buf = io.BytesIO()
-                            with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
-                                # 1. GERAR EXCEL PRINCIPAL
-                                # IMPORTANTE: Se o erro persistir, você precisará abrir o sentinela_core.py 
-                                # e comentar a linha que cria a aba 'DIFAL_ST_FECP' lá dentro.
-                                gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, df_base_emp, modo_auditoria)
-                                
-                                # 2. GERAR SUA ABA NOVA DE SALDO (apuracao_difal.py)
-                                # Para evitar o erro de duplicidade enquanto não limpamos o core, 
-                                # vou renomear temporariamente a aba do seu motor para 'AUDITORIA_DIFAL_ST'
-                                # OU você pode renomear no seu arquivo apuracao_difal.py na linha do add_worksheet.
-                                gerar_resumo_uf(xs, writer, xe) 
-                                
-                            st.session_state['relat_buf'] = buf.getvalue()
+# CSS para o layout delicado e tons pastéis
+st.markdown("""
+    <style>
+    .stApp { background-color: #FFF5F7; }
+    .main { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    h1 { color: #FF69B4; font-family: 'Segoe UI'; }
+    .stButton>button { background-color: #FFB6C1; color: white; border-radius: 10px; border: none; }
+    .stButton>button:hover { background-color: #FF69B4; color: white; }
+    </style>
+    """, unsafe_allow_html=True)
 
-                            # --- LÓGICA DO GARIMPEIRO ---
-                            p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
-                            b_org, b_todos = io.BytesIO(), io.BytesIO()
-                            with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
-                                for zip_file in u_xml_validos:
-                                    zip_file.seek(0)
-                                    with zipfile.ZipFile(zip_file) as z_in:
-                                        for name in z_in.namelist():
-                                            if name.lower().endswith('.xml'):
-                                                xml_data = z_in.read(name)
-                                                res, is_p = identify_xml_info(xml_data, cnpj_limpo, name)
-                                                if res:
-                                                    key = res["Chave"] if res["Chave"] else name
-                                                    if key not in p_keys:
-                                                        p_keys.add(key)
-                                                        z_org.writestr(f"{res['Pasta']}/{name}", xml_data)
-                                                        z_todos.writestr(name, xml_data)
-                                                        rel_list.append(res)
-                                                        if is_p:
-                                                            if res["Status"] in st_counts: st_counts[res["Status"]] += 1
-                                                            sk = (res["Tipo"], res["Série"])
-                                                            if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
-                                                            seq_map[sk]["nums"].add(res["Número"])
-                                                            seq_map[sk]["valor"] += res["Valor"]
-                            
-                            res_f, fal_f = [], []
-                            for (t, s), d in seq_map.items():
-                                ns = d["nums"]
-                                res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
-                                buracos = sorted(list(set(range(min(ns), max(ns) + 1)) - ns))
-                                for b in buracos: fal_f.append({"Série": s, "Nº Faltante": b})
-                                
-                            st.session_state.update({
-                                'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 
-                                'relatorio': rel_list, 'df_resumo': pd.DataFrame(res_f), 
-                                'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'executado': True
-                            })
-                            st.rerun()
-                    except Exception as e: 
-                        st.error(f"⚠️ Erro de Duplicidade: {e}")
-                        st.info("Dica: No seu arquivo 'apuracao_difal.py', mude o nome da aba de 'DIFAL_ST_FECP' para 'RESUMO_DIFAL_ST' para destravar o Excel.")
+st.title("🛡️ Sentinela V2.1 - Auditoria Fiscal")
 
-        if st.session_state.get('executado') and st.session_state.get('relat_buf'):
-            st.markdown("---")
-            st.markdown("<div style='text-align: center;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
-            st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
+# --- SIDEBAR: CONFIGURAÇÕES E FILTROS ---
+with st.sidebar:
+    st.header("⚙️ Configurações")
+    cnpj_auditado = st.text_input("CNPJ da Empresa Auditada", placeholder="Apenas números")
+    cod_cliente = st.text_input("Código do Cliente (Domínio)", placeholder="Ex: 001")
+    regime = st.selectbox("Regime Tributário", ["Lucro Presumido", "Lucro Real", "Simples Nacional"])
+    
+    st.divider()
+    is_ret = st.checkbox("Gerar Auditoria RET MG?")
+    
+    st.divider()
+    st.info("💡 Carregue os XMLs e os relatórios da Domínio para iniciar o Garimpeiro.")
+
+# --- ÁREA DE UPLOAD ---
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("📂 XMLs (Entradas e Saídas)")
+    xml_files = st.file_uploader("Arraste aqui os ZIPs ou XMLs", accept_multiple_files=True, type=['zip', 'xml'])
+
+with col2:
+    st.subheader("📄 Relatórios Domínio")
+    ae = st.file_uploader("Autorização de Entradas (Excel/CSV)", type=['xlsx', 'csv'])
+    as_f = st.file_uploader("Autorização de Saídas (Excel/CSV)", type=['xlsx', 'csv'])
+
+# --- PROCESSAMENTO ---
+if st.button("🚀 Iniciar Auditoria Completa"):
+    if not cnpj_auditado or not xml_files:
+        st.warning("⚠️ Por favor, informe o CNPJ e carregue os arquivos XML.")
+    else:
+        try:
+            with st.status("🔍 Garimpeiro em ação: Minerando arquivos...", expanded=True) as status:
+                # 1. Extração Recursiva
+                st.write("📦 Extraindo dados dos XMLs...")
+                df_xe, df_xs = extrair_xml(xml_files, cnpj_auditado)
+                
+                if df_xe.empty and df_xs.empty:
+                    st.error("❌ Nenhum XML válido foi processado.")
+                    st.stop()
+                
+                st.write(f"✅ Sucesso! Entradas: {len(df_xe)} | Saídas: {len(df_xs)}")
+                
+                # 2. Geração do Relatório Excel
+                st.write("📊 Gerando planilhas de auditoria...")
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    # O Core gerencia a criação das abas e chama o Difal internamente
+                    gerar_analise_xml(
+                        df_xe, df_xs, cod_cliente, writer, regime, 
+                        is_ret, ae, as_f
+                    )
+                
+                processed_data = output.getvalue()
+                status.update(label="✅ Auditoria Concluída!", state="complete", expanded=False)
+
+            # --- DOWNLOAD ---
+            st.success("✨ Tudo pronto! O seu relatório de auditoria foi gerado com sucesso.")
+            
+            nome_arquivo = f"SENTINELA_V2.1_{cod_cliente}_{cnpj_auditado}.xlsx"
+            st.download_button(
+                label="📥 Baixar Relatório de Auditoria",
+                data=processed_data,
+                file_name=nome_arquivo,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            
+        except Exception as e:
+            st.error(f"❌ Erro Crítico no Processamento: {e}")
+            st.exception(e)
+
+# Mensagem de rodapé fofa
+st.markdown("---")
+st.caption("Desenvolvido com ❤️ para facilitar sua rotina fiscal.")
