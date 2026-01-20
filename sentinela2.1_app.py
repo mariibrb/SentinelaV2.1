@@ -136,16 +136,12 @@ if emp_sel:
                                             if res:
                                                 key = res["Chave"] if res["Chave"] else name
                                                 if key not in p_keys:
-                                                    p_keys.add(key)
-                                                    z_org.writestr(f"{res['Pasta']}/{name}", xml_data)
-                                                    z_todos.writestr(name, xml_data)
-                                                    rel_list.append(res)
+                                                    p_keys.add(key); z_org.writestr(f"{res['Pasta']}/{name}", xml_data); z_todos.writestr(name, xml_data); rel_list.append(res)
                                                     if is_p:
                                                         if res["Status"] in st_counts: st_counts[res["Status"]] += 1
                                                         sk = (res["Tipo"], res["Série"])
                                                         if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
-                                                        seq_map[sk]["nums"].add(res["Número"])
-                                                        seq_map[sk]["valor"] += res["Valor"]
+                                                        seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
                         
                         res_f, fal_f, nums_s = [], [], {}
                         for (t, s), d in seq_map.items():
@@ -197,10 +193,9 @@ if emp_sel:
         
         with sub_icms:
             st.markdown("#### 📊 Auditoria ICMS/IPI")
-            c1, c2, c3 = st.columns(3)
+            c1, c2 = st.columns(2) # Ajustado para 2 colunas
             with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
             with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
-            with c3: st.file_uploader("📄 Demonstrativo IPI", type=['xlsx'], key=f"dom_ipi_{v}")
             st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
 
         with sub_difal:
