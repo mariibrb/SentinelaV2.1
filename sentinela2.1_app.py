@@ -44,7 +44,7 @@ def localizar_base_impostos(cod_cliente):
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR ---
+# --- SIDEBAR (PAINEL DE CONTROLE FIXO) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path):
@@ -80,36 +80,47 @@ with col_t:
     st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with col_r:
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🔄 LIMPAR ARQUIVOS", use_container_width=True, key=f"reset_{v}"):
+    if st.button("🔄 LIMPAR TUDO", use_container_width=True, key=f"reset_{v}"):
         limpar_central()
 
-# --- CORPO PRINCIPAL ---
+# --- CORPO PRINCIPAL COM ABAS ---
 if emp_sel:
-    st.markdown("### 📥 Passo 5: Central de Arquivos")
-    c1, c2, c3 = st.columns(3)
-    with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
-    with c2: 
-        u_ge = st.file_uploader("📥 Gerencial Entradas", accept_multiple_files=True, key=f"ge_{v}")
-        u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
-    with c3:
-        u_gs = st.file_uploader("📤 Gerencial Saídas", accept_multiple_files=True, key=f"gs_{v}")
-        u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
+    tab_xml, tab_dominio = st.tabs(["📂 Análise XML", "📉 Conformidade Domínio"])
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🚀 INICIAR ANÁLISE", use_container_width=True, key=f"run_{v}"):
-        if u_xml and reg_sel and seg_sel:
-            with st.spinner("Auditando..."):
-                try:
-                    xe, xs = extrair_dados_xml_recursivo(u_xml, str(dados_e['CNPJ']).strip())
-                    buf = io.BytesIO()
-                    with pd.ExcelWriter(buf, engine='openpyxl') as writer:
-                        gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, u_ge, u_gs)
-                    st.session_state['relat_buf'] = buf.getvalue()
-                except Exception as e: st.error(f"Erro: {e}")
-        else: st.warning("⚠️ Preencha os campos obrigatórios.")
+    # --- ABA 1: ANÁLISE XML (Onde fica o Passo 5) ---
+    with tab_xml:
+        st.markdown("### 📥 Passo 5: Central de Arquivos")
+        c1, c2, c3 = st.columns(3)
+        with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
+        with c2: 
+            u_ge = st.file_uploader("📥 Gerencial Entradas", accept_multiple_files=True, key=f"ge_{v}")
+            u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
+        with c3:
+            u_gs = st.file_uploader("📤 Gerencial Saídas", accept_multiple_files=True, key=f"gs_{v}")
+            u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
 
-    if st.session_state.get('relat_buf'):
-        st.markdown("<div style='text-align: center;'><h2>✅ AUDITORIA CONCLUÍDA</h2></div>", unsafe_allow_html=True)
-        st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, key=f"dl_{v}")
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True, key=f"run_{v}"):
+            if u_xml and reg_sel and seg_sel:
+                with st.spinner("Auditando XMLs..."):
+                    try:
+                        xe, xs = extrair_dados_xml_recursivo(u_xml, str(dados_e['CNPJ']).strip())
+                        buf = io.BytesIO()
+                        with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+                            gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, u_ge, u_gs)
+                        st.session_state['relat_buf'] = buf.getvalue()
+                    except Exception as e: st.error(f"Erro: {e}")
+            else: st.warning("⚠️ Preencha os campos da Sidebar (Regime e Segmento) e suba os XMLs.")
+
+        if st.session_state.get('relat_buf'):
+            st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ ANÁLISE XML CONCLUÍDA</h2></div>", unsafe_allow_html=True)
+            st.download_button("💾 BAIXAR RELATÓRIO XML", st.session_state['relat_buf'], f"Sentinela_XML_{cod_c}.xlsx", use_container_width=True, key=f"dl_{v}")
+
+    # --- ABA 2: CONFORMIDADE DOMÍNIO ---
+    with tab_dominio:
+        st.markdown("### 📉 Módulo de Conformidade Domínio")
+        st.info("Este módulo está sendo preparado para realizar o cruzamento com os relatórios do Domínio Sistemas.")
+        # Aqui você poderá adicionar os campos específicos para a conformidade domínio futuramente
+        
 else:
-    st.info("👈 Selecione a empresa na barra lateral.")
+    st.info("👈 Selecione a empresa na barra lateral para liberar as abas de análise.")
