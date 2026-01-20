@@ -1,7 +1,9 @@
 import streamlit as st
 import os, io, pandas as pd, zipfile, re, random
 from style import aplicar_estilo_sentinela
+# Importamos agora o seu novo motor de apuração
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
+from Apuracoes.apuracao_difal import gerar_resumo_uf 
 
 # --- MOTOR GARIMPEIRO (Lógica Íntegra Original) ---
 def identify_xml_info(content_bytes, client_cnpj, file_name):
@@ -72,6 +74,7 @@ v = st.session_state['v_ver']
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
+    st.markdown("<style>#keyboard_double {display:none !important;}</style>", unsafe_allow_html=True)
     st.markdown("---")
     emp_sel = st.selectbox("Passo 1: Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
     
@@ -83,27 +86,13 @@ with st.sidebar:
         cod_c = emp_sel.split(" - ")[0].strip()
         dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
         cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
-        st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}</div>", unsafe_allow_html=True)
         
         path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
-        base_encontrada = os.path.exists(path_base)
-        
-        if base_encontrada: st.success("💎 Modo Elite: Base Localizada")
+        modo_elite = os.path.exists(path_base)
+        if modo_elite: st.success("💎 Modo Elite: Base Localizada")
         else: st.warning("🔍 Modo Cegas: Base não localizada")
-            
-        if ret_sel:
-            path_ret = f"RET/{cod_c}-RET_MG.xlsx"
-            if os.path.exists(path_ret): st.success("✅ Base RET (MG) Localizada")
-            else: st.warning("⚠️ Base RET (MG) não localizada")
-        
-        st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
-
-# --- CABEÇALHO ---
-c_t, c_r = st.columns([4, 1])
-with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
-with c_r:
-    if st.button("🔄 LIMPAR TUDO"): limpar_central()
-        # --- CONTEÚDO PRINCIPAL ---
+            # --- CONTEÚDO PRINCIPAL ---
 if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
@@ -118,25 +107,33 @@ if emp_sel:
         
         if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True):
             if u_xml:
-                with st.spinner("Auditando e Garimpando..."):
+                with st.spinner("Auditando e Gerando Relatórios..."):
                     try:
-                        # Proteção contra erro de ZIP e arquivos fantasmas
                         u_xml_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
                         
                         if not u_xml_validos:
-                            st.error("❌ Erro: Nenhum arquivo ZIP válido foi detectado.")
+                            st.error("❌ Nenhum arquivo ZIP válido foi detectado.")
                         else:
-                            # Tenta carregar a base para decidir o modo de auditoria
+                            # Carregamento da Base (Modo Elite vs Cegas)
                             path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
                             df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
                             modo_auditoria = "ELITE" if df_base_emp is not None else "CEGAS"
 
+                            # Extração Core
                             xe, xs = extrair_dados_xml_recursivo(u_xml_validos, cnpj_limpo)
+                            
                             buf = io.BytesIO()
-                            with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+                            with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
+                                # 1. Geração do Relatório Principal
                                 gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, df_base_emp, modo_auditoria)
+                                
+                                # 2. Integração do seu motor de DIFAL/ST/FECP
+                                # Nota: Passamos as bases de dados extraídas para a sua função
+                                gerar_resumo_uf(xs, writer, xe) 
+                                
                             st.session_state['relat_buf'] = buf.getvalue()
 
+                            # Lógica do Garimpeiro para resumo visual e ZIPs
                             p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                             b_org, b_todos = io.BytesIO(), io.BytesIO()
                             with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
@@ -161,17 +158,14 @@ if emp_sel:
                                                             seq_map[sk]["nums"].add(res["Número"])
                                                             seq_map[sk]["valor"] += res["Valor"]
                             
-                            res_f, fal_f, nums_s = [], [], {}
+                            # Preparação das tabelas de resumo para o Streamlit
+                            res_f, fal_f = [], []
                             for (t, s), d in seq_map.items():
                                 ns = d["nums"]
                                 res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
-                                if s not in nums_s: nums_s[s] = set()
-                                nums_s[s].update(ns)
-                            for s, ns in nums_s.items():
-                                if len(ns) > 1:
-                                    buracos = sorted(list(set(range(min(ns), max(ns) + 1)) - ns))
-                                    for b in buracos: fal_f.append({"Série": s, "Nº Faltante": b})
-                                    
+                                buracos = sorted(list(set(range(min(ns), max(ns) + 1)) - ns))
+                                for b in buracos: fal_f.append({"Série": s, "Nº Faltante": b})
+                                
                             st.session_state.update({
                                 'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 
                                 'relatorio': rel_list, 'df_resumo': pd.DataFrame(res_f), 
@@ -180,9 +174,9 @@ if emp_sel:
                             st.rerun()
                     except Exception as e: st.error(f"Erro no Processamento: {e}")
 
-        if st.session_state.get('executado') and st.session_state.get('relat_buf'):
+        if st.session_state.get('executado'):
             st.markdown("---")
-            st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
+            st.markdown("<div style='text-align: center;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
             st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
             
             st.markdown("---")
