@@ -3,24 +3,25 @@ import os, io, pandas as pd
 from style import aplicar_estilo_sentinela
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 
-# --- CONFIGURAÇÃO ---
-st.set_page_config(page_title="Sentinela 2.1", page_icon="🧡", layout="wide")
+# --- CONFIGURAÇÃO E ESTILO ---
+st.set_page_config(page_title="Sentinela 2.1 | Auditoria Fiscal", page_icon="🧡", layout="wide")
 aplicar_estilo_sentinela()
 
-# --- GESTÃO DE LIMPEZA ---
-if 'v' not in st.session_state:
-    st.session_state['v'] = 0
+# --- LÓGICA DE LIMPEZA (PRESERVA A SIDEBAR) ---
+if 'v_ver' not in st.session_state:
+    st.session_state['v_ver'] = 0
 
-def limpar_campos_upload():
-    st.session_state['v'] += 1
-    if 'res_final' in st.session_state:
-        st.session_state['res_final'] = None
+def limpar_central():
+    st.session_state['v_ver'] += 1
+    if 'relat_buf' in st.session_state:
+        st.session_state['relat_buf'] = None
     st.rerun()
 
-# --- CARREGAMENTO DE DADOS ---
+# --- CARREGAMENTO DE CLIENTES ---
 @st.cache_data(ttl=600)
 def carregar_clientes():
-    for p in [".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx", "Clientes Ativos.xlsx"]:
+    caminhos_clientes = [".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx", "Clientes Ativos.xlsx"]
+    for p in caminhos_clientes:
         if os.path.exists(p):
             try:
                 df = pd.read_excel(p).dropna(subset=['CÓD', 'RAZÃO SOCIAL'])
@@ -29,73 +30,86 @@ def carregar_clientes():
             except: continue
     return pd.DataFrame()
 
-df_cli = carregar_clientes()
-versao = st.session_state['v']
+# --- LOCALIZAÇÃO ROBUSTA DA BASE ---
+def localizar_base_impostos(cod_cliente):
+    pastas = ["Bases_Tributárias", "Bases_Tributarias", "bases_tributarias", "Bases"]
+    arquivos = [f"{cod_cliente}-Bases_Tributarias.xlsx", f"{cod_cliente}-Bases_Tributárias.xlsx"]
+    for pasta in pastas:
+        for arquivo in arquivos:
+            caminho_teste = os.path.join(pasta, arquivo)
+            if os.path.exists(caminho_teste):
+                return caminho_teste
+    return None
 
-# --- SIDEBAR (CONFIGURAÇÕES FIXAS) ---
+df_cli = carregar_clientes()
+v = st.session_state['v_ver']
+
+# --- SIDEBAR ---
 with st.sidebar:
-    logo = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
-    if os.path.exists(logo):
-        st.image(logo, use_container_width=True)
+    logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
+    if os.path.exists(logo_path):
+        st.image(logo_path, use_container_width=True)
     
     st.markdown("---")
-    # Keys fixas para garantir que os dados não sumam ao limpar arquivos
     emp_sel = st.selectbox("Passo 1: Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
     
     if emp_sel:
-        reg_sel = st.selectbox("Passo 2: Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="f_reg")
-        seg_sel = st.selectbox("Passo 3: Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
-        ret_sel = st.toggle("Passo 4: Habilitar RET", key="f_ret")
+        reg_sel = st.selectbox("Passo 2: Escolha o Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="f_reg")
+        seg_sel = st.selectbox("Passo 3: Escolha o Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
+        ret_sel = st.toggle("Passo 4: Habilitar MG (RET)", key="f_ret")
         
         st.markdown("---")
         cod_c = emp_sel.split(" - ")[0].strip()
-        emp_dados = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
+        dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
+        st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
         
-        st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{emp_dados['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {emp_dados['CNPJ']}</div>", unsafe_allow_html=True)
+        caminho_base = localizar_base_impostos(cod_c)
+        if caminho_base: st.success("✅ Base de Impostos Localizada")
+        else: st.warning("⚠️ Base não localizada")
+            
+        if ret_sel:
+            if os.path.exists(f"RET/{cod_c}-RET_MG.xlsx"): st.success("✅ Base RET Localizada")
+            else: st.warning("⚠️ Base RET não localizada")
         
-        if os.path.exists(f"Bases_Tributárias/{cod_c}-Bases_Tributarias.xlsx"):
-            st.success("✅ Base Localizada")
-        else:
-            st.warning("⚠️ Base não localizada")
-
+        st.markdown("---")
         st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
 
-# --- CORPO PRINCIPAL ---
-c_t, c_r = st.columns([4, 1])
-with c_t:
+# --- CABEÇALHO ---
+col_t, col_r = st.columns([4, 1])
+with col_t:
     st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
-with c_r:
-    if st.button("🔄 LIMPAR ARQUIVOS", use_container_width=True, key=f"r_{versao}"):
-        limpar_campos_upload()
+with col_r:
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🔄 LIMPAR ARQUIVOS", use_container_width=True, key=f"reset_{v}"):
+        limpar_central()
 
+# --- CORPO PRINCIPAL ---
 if emp_sel:
     st.markdown("### 📥 Passo 5: Central de Arquivos")
     c1, c2, c3 = st.columns(3)
-    # Keys dinâmicas baseadas na versão para permitir a limpeza sem erro de duplicidade
-    with c1: up_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{versao}")
+    with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
     with c2: 
-        up_ge = st.file_uploader("📥 Gerencial E", accept_multiple_files=True, key=f"ge_{versao}")
-        up_ae = st.file_uploader("📥 Autenticidade E", accept_multiple_files=True, key=f"ae_{versao}")
+        u_ge = st.file_uploader("📥 Gerencial Entradas", accept_multiple_files=True, key=f"ge_{v}")
+        u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
     with c3:
-        up_gs = st.file_uploader("📤 Gerencial S", accept_multiple_files=True, key=f"gs_{versao}")
-        up_as = st.file_uploader("📤 Autenticidade S", accept_multiple_files=True, key=f"as_{versao}")
+        u_gs = st.file_uploader("📤 Gerencial Saídas", accept_multiple_files=True, key=f"gs_{v}")
+        u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
 
-    if st.button("🚀 INICIAR ANÁLISE", use_container_width=True, key=f"run_{versao}"):
-        if up_xml and reg_sel and seg_sel:
-            with st.spinner("Realizando auditoria fiscal..."):
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🚀 INICIAR ANÁLISE", use_container_width=True, key=f"run_{v}"):
+        if u_xml and reg_sel and seg_sel:
+            with st.spinner("Auditando..."):
                 try:
-                    # Lógica de cruzamento e auditoria mantida íntegra
-                    xe, xs = extrair_dados_xml_recursivo(up_xml, str(emp_dados['CNPJ']).strip())
+                    xe, xs = extrair_dados_xml_recursivo(u_xml, str(dados_e['CNPJ']).strip())
                     buf = io.BytesIO()
                     with pd.ExcelWriter(buf, engine='openpyxl') as writer:
-                        gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, up_ae, up_as, up_ge, up_gs)
-                    st.session_state['res_final'] = buf.getvalue()
+                        gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, u_ge, u_gs)
+                    st.session_state['relat_buf'] = buf.getvalue()
                 except Exception as e: st.error(f"Erro: {e}")
-        else:
-            st.warning("⚠️ Preencha o Regime, o Segmento e suba os XMLs.")
+        else: st.warning("⚠️ Preencha os campos obrigatórios.")
 
-    if st.session_state.get('res_final'):
+    if st.session_state.get('relat_buf'):
         st.markdown("<div style='text-align: center;'><h2>✅ AUDITORIA CONCLUÍDA</h2></div>", unsafe_allow_html=True)
-        st.download_button("💾 BAIXAR RELATÓRIO", st.session_state['res_final'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, key=f"dl_{versao}")
+        st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, key=f"dl_{v}")
 else:
-    st.info("👈 Utilize a barra lateral para configurar a empresa.")
+    st.info("👈 Selecione a empresa na barra lateral.")
