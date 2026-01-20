@@ -24,10 +24,17 @@ def aplicar_estilo_sentinela():
             margin-bottom: 30px;
         }
 
-        div[data-baseweb="select"] {
+        /* Correção completa para o formato pílula em todas as camadas */
+        div[data-baseweb="select"], 
+        div[data-baseweb="select"] > div,
+        div[data-baseweb="select"] [role="combobox"] {
             border-radius: 50px !important;
             border: 1px solid #d1d1d1 !important;
-            padding-left: 10px !important;
+        }
+
+        /* Ajuste do preenchimento interno para não cortar o texto */
+        div[data-baseweb="select"] [data-testid="stSelectboxVirtualFocusContainer"] {
+            padding-left: 15px !important;
         }
 
         .status-container {
