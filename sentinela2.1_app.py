@@ -103,9 +103,6 @@ with c_r:
     if st.button("🔄 LIMPAR TUDO"): limpar_central()
        # --- CONTEÚDO PRINCIPAL ---
 if emp_sel:
-    # Blindagem extra contra o texto "keyboard_double" que apareceu na imagem
-    st.markdown("<style>#keyboard_double, .st-emotion-cache-10oheav { display: none !important; }</style>", unsafe_allow_html=True)
-    
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
     with tab_xml:
@@ -175,7 +172,7 @@ if emp_sel:
             sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
             c1, c2, c3 = st.columns(3)
             c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
-            c2.metric("❌ EMISSÕES CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 EMISSÕES INUTILIZADAS", sc.get("INUTILIZADOS", 0))
+            c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
 
             col_res, col_fal = st.columns(2)
             with col_res:
@@ -187,7 +184,7 @@ if emp_sel:
 
             st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
             co, ct = st.columns(2)
-            with co: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+            with co: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo.zip", use_container_width=True)
             with ct: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
 
     with tab_dominio:
