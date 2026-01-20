@@ -5,8 +5,12 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@900&display=swap');
 
-        /* Blindagem contra ícones fantasmas */
-        span[data-testid="stHeaderActionElements"], .st-emotion-cache-10oheav, #keyboard_double {
+        /* BLINDAGEM TOTAL: Remove ícone de teclado e botões fantasmas do Streamlit */
+        span[data-testid="stHeaderActionElements"], 
+        .st-emotion-cache-10oheav, 
+        #keyboard_double,
+        button[title="View keyboard shortcuts"],
+        .stAppDeployButton {
             display: none !important;
             visibility: hidden !important;
         }
@@ -32,16 +36,6 @@ def aplicar_estilo_sentinela():
             color: white !important;
             font-weight: 800 !important;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 -5px 15px rgba(230, 92, 0, 0.3) !important;
-        }
-
-        /* --- ESTILO GARIMPEIRO --- */
-        .titulo-garimpeiro { font-family: 'Playfair Display', serif; color: #2b1e16; font-weight: 900; text-align: center; font-size: 2.5rem; margin-bottom: 20px; }
-        
-        [data-testid="stMetric"] {
-            background: linear-gradient(135deg, #ffffff 0%, #fff9e6 100%);
-            border: 2px solid #d4af37;
-            border-radius: 20px;
-            padding: 15px;
         }
 
         /* BOTÃO METALIZADO */
