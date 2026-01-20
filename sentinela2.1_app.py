@@ -136,12 +136,16 @@ if emp_sel:
                                             if res:
                                                 key = res["Chave"] if res["Chave"] else name
                                                 if key not in p_keys:
-                                                    p_keys.add(key); z_org.writestr(f"{res['Pasta']}/{name}", xml_data); z_todos.writestr(name, xml_data); rel_list.append(res)
+                                                    p_keys.add(key)
+                                                    z_org.writestr(f"{res['Pasta']}/{name}", xml_data)
+                                                    z_todos.writestr(name, xml_data)
+                                                    rel_list.append(res)
                                                     if is_p:
                                                         if res["Status"] in st_counts: st_counts[res["Status"]] += 1
                                                         sk = (res["Tipo"], res["Série"])
                                                         if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
-                                                        seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
+                                                        seq_map[sk]["nums"].add(res["Número"])
+                                                        seq_map[sk]["valor"] += res["Valor"]
                         
                         res_f, fal_f, nums_s = [], [], {}
                         for (t, s), d in seq_map.items():
@@ -193,32 +197,36 @@ if emp_sel:
         
         with sub_icms:
             st.markdown("#### 📊 Auditoria ICMS/IPI")
-            c1, c2 = st.columns(2)
-            with c1: st.file_uploader("📑 Gerencial Saídas (ICMS)", type=['xlsx'], key=f"icms_s_{v}")
-            with c2: st.file_uploader("📑 Gerencial Entradas (ICMS)", type=['xlsx'], key=f"icms_e_{v}")
+            c1, c2, c3 = st.columns(3)
+            with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
+            with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
+            with c3: st.file_uploader("📄 Demonstrativo IPI", type=['xlsx'], key=f"dom_ipi_{v}")
             st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
 
         with sub_difal:
             st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
-            c1, c2 = st.columns(2)
-            with c1: st.file_uploader("📑 Gerencial Saídas (DIFAL)", type=['xlsx'], key=f"dif_s_{v}")
-            with c2: st.file_uploader("📑 Gerencial Entradas (DIFAL)", type=['xlsx'], key=f"dif_e_{v}")
+            c1, c2, c3 = st.columns(3)
+            with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"dif_s_{v}")
+            with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
+            with c3: st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
             st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
 
         with sub_ret:
             st.markdown("#### 🏨 Auditoria RET")
             if ret_sel:
-                c1, c2 = st.columns(2)
-                with c1: st.file_uploader("📑 Gerencial Saídas (RET)", type=['xlsx'], key=f"ret_s_{v}")
-                with c2: st.file_uploader("📑 Gerencial Entradas (RET)", type=['xlsx'], key=f"ret_e_{v}")
+                c1, c2, c3 = st.columns(3)
+                with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"ret_s_{v}")
+                with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"ret_e_{v}")
+                with c3: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"dom_ret_{v}")
                 st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
             else: st.warning("⚠️ Habilite o RET na Sidebar para este módulo.")
 
         with sub_pis:
             st.markdown("#### 💰 Auditoria PIS/Cofins")
-            c1, c2 = st.columns(2)
-            with c1: st.file_uploader("📑 Gerencial Saídas (PIS)", type=['xlsx'], key=f"pis_s_{v}")
-            with c2: st.file_uploader("📑 Gerencial Entradas (PIS)", type=['xlsx'], key=f"pis_e_{v}")
+            c1, c2, c3 = st.columns(3)
+            with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"pis_s_{v}")
+            with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"pis_e_{v}")
+            with c3: st.file_uploader("📄 Demonstrativo PIS/COFINS", type=['xlsx'], key=f"dom_pisc_{v}")
             st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
 else:
     st.info("👈 Selecione a empresa na barra lateral para começar.")
