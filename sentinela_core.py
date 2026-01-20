@@ -80,7 +80,7 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None):
+def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo_auditoria=None):
     try: gerar_aba_resumo(writer)
     except: pass
     
@@ -90,7 +90,7 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         processar_pc(df_xs, writer, cod_cliente, regime)
         
         workbook = writer.book
-        nome_guia = 'DIFAL_ST_FECP'
+        nome_guia = 'RESUMO_DIFAL_ST'
         worksheet = workbook.add_worksheet(nome_guia)
         writer.sheets[nome_guia] = worksheet
         
