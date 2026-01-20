@@ -69,7 +69,7 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR ORIGINAL (RESTAURADA) ---
+# --- SIDEBAR ORIGINAL (NOMES E PASSOS RESTAURADOS) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
@@ -85,16 +85,22 @@ with st.sidebar:
         dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
         cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
         
-        # Cartão de Status Aprovado
+        # Cartão de Status Original
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
         
-        # Verificação de Bases
-        if os.path.exists(f"Bases_Tributárias/{cod_c}-Bases_Tributarias.xlsx"): st.success("✅ Base de Impostos Localizada")
-        else: st.warning("⚠️ Base não localizada")
+        # VERIFICAÇÃO DE BASE DE IMPOSTOS (NOME CORRIGIDO)
+        path_base = f"Bases_Tributárias/{cod_c}-Bases_Tributarias.xlsx"
+        if os.path.exists(path_base): 
+            st.success("✅ Base de Impostos Localizada")
+        else: 
+            st.warning("⚠️ Base de Impostos não localizada")
             
         if ret_sel:
-            if os.path.exists(f"RET/{cod_c}-RET_MG.xlsx"): st.success("✅ Base RET (MG) Localizada")
-            else: st.warning("⚠️ Base RET (MG) não localizada")
+            path_ret = f"RET/{cod_c}-RET_MG.xlsx"
+            if os.path.exists(path_ret): 
+                st.success("✅ Base RET (MG) Localizada")
+            else: 
+                st.warning("⚠️ Base RET (MG) não localizada")
         
         st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
 
@@ -117,7 +123,7 @@ if emp_sel:
         
         if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True, key=f"run_{v}"):
             if u_xml:
-                with st.spinner("Realizando auditoria fiscal e garimpo..."):
+                with st.spinner("Auditando..."):
                     try:
                         xe, xs = extrair_dados_xml_recursivo(u_xml, cnpj_limpo)
                         buf = io.BytesIO()
