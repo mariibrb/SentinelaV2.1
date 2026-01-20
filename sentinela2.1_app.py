@@ -68,7 +68,7 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR ORIGINAL (RESTAURADA 100%) ---
+# --- SIDEBAR ORIGINAL ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
@@ -83,26 +83,17 @@ with st.sidebar:
         cod_c = emp_sel.split(" - ")[0].strip()
         dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
         cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
-        
-        # Cartão de Status
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
         
-        # VERIFICAÇÃO DE BASE DE IMPOSTOS
         path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
-        if os.path.exists(path_base): 
-            st.success("✅ Base de Impostos Localizada")
-        else: 
-            st.warning("⚠️ Base de Impostos não localizada")
+        if os.path.exists(path_base): st.success("✅ Base de Impostos Localizada")
+        else: st.warning("⚠️ Base de Impostos não localizada")
             
-        # AVISO RET RESTAURADO
         if ret_sel:
             path_ret = f"RET/{cod_c}-RET_MG.xlsx"
-            if os.path.exists(path_ret): 
-                st.success("✅ Base RET (MG) Localizada")
-            else: 
-                st.warning("⚠️ Base RET (MG) não localizada")
+            if os.path.exists(path_ret): st.success("✅ Base RET (MG) Localizada")
+            else: st.warning("⚠️ Base RET (MG) não localizada")
         
-        # BOTÃO DE MODELO RESTAURADO
         st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
 
 # --- CABEÇALHO ---
@@ -116,7 +107,10 @@ if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
     with tab_xml:
+        # AQUI ESTÁ A INSTRUÇÃO RESTAURADA
         st.markdown("### 📥 Central de Importação")
+        st.markdown("##### Faça o upload dos documentos abaixo para iniciar a auditoria cruzada.")
+        
         c1, c2, c3 = st.columns(3)
         with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
         with c2: u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
@@ -124,7 +118,7 @@ if emp_sel:
         
         if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True):
             if u_xml:
-                with st.spinner("Auditando e Garimpando..."):
+                with st.spinner("Processando..."):
                     try:
                         xe, xs = extrair_dados_xml_recursivo(u_xml, cnpj_limpo)
                         buf = io.BytesIO()
