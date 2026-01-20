@@ -53,15 +53,15 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
 
         for det in root.findall('.//det'):
             prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
-            
-            # Captura da IEST (Inscrição de Substituto)
             ie_st = buscar_tag_recursiva('IEST', icms_no)
 
             linha = {
                 "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
-                "NUM_NF": buscar_tag_recursiva('nNF', ide), "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
+                "NUM_NF": buscar_tag_recursiva('nNF', ide), 
+                "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
                 "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
-                "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), "UF_DEST": buscar_tag_recursiva('UF', dest), 
+                "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), 
+                "UF_DEST": buscar_tag_recursiva('UF', dest), 
                 "CFOP": buscar_tag_recursiva('CFOP', prod),
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
                 "IE_SUBST": str(ie_st).strip() if ie_st else "",
@@ -81,16 +81,30 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
                 if n.lower().endswith('.xml'):
                     with z.open(n) as xml: processar_conteudo_xml(xml.read(), dados, cnpj_auditado)
     df = pd.DataFrame(dados)
+    if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None, df_base_emp=None, modo_auditoria=None):
     if df_xs.empty and df_xe.empty: return
     
-    # Execução sequencial para garantir as abas de volta
-    gerar_aba_resumo(writer)
-    processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo_auditoria)
-    processar_ipi(df_xs, writer, df_xe)
-    processar_pc(df_xs, writer, df_xe)
-    processar_difal(df_xs, writer)
-    gerar_resumo_uf(df_xs, writer, df_xe) # Aba de Apuração com Laranja/Abatimento
-    gerar_abas_gerenciais(writer, ae, as_f, ge, gs)
+    # ORDEM RÍGIDA DAS ABAS
+    try: gerar_aba_resumo(writer)
+    except: pass
+    
+    try: processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo_auditoria)
+    except: pass
+    
+    try: processar_ipi(df_xs, writer, df_xe)
+    except: pass
+    
+    try: processar_pc(df_xs, writer, df_xe)
+    except: pass
+    
+    try: processar_difal(df_xs, writer)
+    except: pass
+    
+    try: gerar_resumo_uf(df_xs, writer, df_xe) # ABA DE SALDOS COM LARANJA E ABATIMENTO
+    except: pass
+    
+    try: gerar_abas_gerenciais(writer, ae, as_f, ge, gs)
+    except: pass
