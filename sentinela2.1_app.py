@@ -47,7 +47,7 @@ def localizar_base_dados(cod_cliente):
 
 df_clientes = carregar_base_clientes()
 
-# --- SIDEBAR (PAINEL DE CONTROLE E STATUS) ---
+# --- SIDEBAR (PAINEL DE CONTROLE) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path):
@@ -64,10 +64,12 @@ with st.sidebar:
 
     if selecao:
         st.markdown("### ⚖️ Passo 2: Regime")
-        regime = st.selectbox("Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="regime_sel")
+        regime = st.selectbox("Escolha o Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="regime_sel")
         
-        st.markdown("### ⚙️ Passo 3: Habilitar Apurações")
-        tipo_ipi = st.selectbox("Tipo de Empresa (IPI)", ["Comércio (Não gera IPI)", "Indústria", "Equiparado à Indústria"], key="tipo_ipi_sel")
+        st.markdown("### 🏗️ Passo 3: Segmento")
+        tipo_ipi = st.selectbox("Escolha o Segmento", ["Comércio (Não gera IPI)", "Indústria", "Equiparado à Indústria"], key="tipo_ipi_sel")
+        
+        st.markdown("### 🛡️ Passo 4: Habilitar RET")
         is_ret = st.toggle("Habilitar MG (RET)", key="ret_sel")
         
         # --- BLOCO DE STATUS ---
@@ -118,7 +120,7 @@ with col_reset:
 
 # --- CORPO PRINCIPAL ---
 if selecao:
-    st.markdown("### 📥 Passo 4: Central de Arquivos")
+    st.markdown("### 📥 Passo 5: Central de Arquivos")
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown("**📁 XML (ZIP)**")
@@ -137,12 +139,12 @@ if selecao:
     with col_btn:
         if st.button("🚀 INICIAR ANÁLISE", key="btn_analise"):
             if xmls and regime:
-                with st.spinner("Auditando dados..."):
+                with st.spinner("O Sentinela está auditando os dados..."):
                     try:
                         df_xe, df_xs = extrair_dados_xml_recursivo(xmls, cnpj_auditado)
                         output = io.BytesIO()
                         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                            # Adicionado o tipo_ipi no processamento
+                            # Integridade fiscal mantida
                             gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae, as_f, ge, gs)
                         relat = output.getvalue()
                         st.markdown(f"<div style='background-color: #ffffff; border-radius: 15px; padding: 25px; border-top: 5px solid #FF6F00; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; margin-top: 20px;'><h2 style='color: #FF6F00;'>AUDITORIA CONCLUÍDA</h2></div>", unsafe_allow_html=True)
@@ -152,4 +154,4 @@ if selecao:
             else:
                 st.warning("⚠️ Selecione o Regime Fiscal e carregue os XMLs.")
 else:
-    st.info("👈 Utilize a barra lateral para configurar a empresa e as apurações.")
+    st.info("👈 Utilize a barra lateral para configurar a empresa e as regras fiscais.")
