@@ -11,8 +11,9 @@ try:
     from Auditorias.audit_difal import processar_difal     
     from Apuracoes.apuracao_difal import gerar_resumo_uf   
 except ImportError as e:
-    st.error(f"⚠️ Erro de Dependência: {e}")
+    st.error(f"⚠️ Erro de Dependência no Core: {e}")
 
+# --- UTILITÁRIOS DE TRATAMENTO ---
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -35,6 +36,7 @@ def tratar_ncm_texto(ncm):
     if pd.isna(ncm) or ncm == "": return ""
     return re.sub(r'\D', '', str(ncm)).strip()
 
+# --- MOTOR DE PROCESSAMENTO XML ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -49,6 +51,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
         tipo_nf = buscar_tag_recursiva('tpNF', ide)
         tipo_operacao = "SAIDA" if (cnpj_emit == cnpj_alvo and tipo_nf == '1') else "ENTRADA"
         chave = inf.attrib.get('Id', '')[3:]
+        ind_ie_dest = buscar_tag_recursiva('indIEDest', dest)
 
         for det in root.findall('.//det'):
             prod = det.find('prod'); imp = det.find('imposto')
@@ -65,7 +68,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
                 "UF_DEST": buscar_tag_recursiva('UF', dest), "CFOP": buscar_tag_recursiva('CFOP', prod),
                 "NCM": tratar_ncm_texto(buscar_tag_recursiva('NCM', prod)),
-                "INDIEDEST": buscar_tag_recursiva('indIEDest', dest),
+                "INDIEDEST": ind_ie_dest,
                 "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)),
                 "ORIGEM": buscar_tag_recursiva('orig', icms_no),
                 "CST-ICMS": buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no),
@@ -112,9 +115,11 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
+# --- GERADOR DE EXCEL (O ORQUESTRADOR FINAL) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo_auditoria=None):
     if df_xs.empty: return
     
+    # Mapeamento de Situação das Notas
     st_map = {}
     for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
         try:
@@ -125,7 +130,7 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         except: continue
     df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
 
-    # Cada especialista cria sua aba internamente
+    # CHAMADA DOS ESPECIALISTAS: Cada função abaixo cria sua própria aba internamente
     try: gerar_aba_resumo(writer)
     except: pass
     try: processar_icms(df_xs, writer, cod_cliente, df_xe)
