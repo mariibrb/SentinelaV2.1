@@ -2,18 +2,18 @@ import pandas as pd
 import io, zipfile, streamlit as st, xml.etree.ElementTree as ET, re, os
 from datetime import datetime
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
+# --- IMPORTAÇÃO DOS SEUS MÓDULOS ESPECIALISTAS ---
 try:
-    from audit_resumo import gerar_aba_resumo             
-    from Auditorias.audit_icms import processar_icms       
-    from Auditorias.audit_ipi import processar_ipi         
-    from Auditorias.audit_pis_cofins import processar_pc   
-    from Auditorias.audit_difal import processar_difal     
-    from Apuracoes.apuracao_difal import gerar_resumo_uf   
+    from audit_resumo import gerar_aba_resumo             # Aba 1
+    from Auditorias.audit_icms import processar_icms       # Aba 2
+    from Auditorias.audit_ipi import processar_ipi         # Aba 3
+    from Auditorias.audit_pis_cofins import processar_pc   # Aba 4
+    from Auditorias.audit_difal import processar_difal     # Aba 5
+    from Apuracoes.apuracao_difal import gerar_resumo_uf   # Aba 6
 except ImportError as e:
-    st.error(f"⚠️ Erro de Dependência: {e}")
+    st.error(f"⚠️ Erro ao localizar módulos de auditoria: {e}")
 
-# --- UTILITÁRIOS (Lógica de tratamento mantida) ---
+# --- UTILITÁRIOS DE CONVERSÃO E LIMPEZA ---
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -36,7 +36,7 @@ def tratar_ncm_texto(ncm):
     if pd.isna(ncm) or ncm == "": return ""
     return re.sub(r'\D', '', str(ncm)).strip()
 
-# --- MOTOR DE PROCESSAMENTO XML ---
+# --- MOTOR DE MINERAÇÃO (ALIMENTA TODOS OS AUDITS) ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -57,8 +57,9 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
             icms_no = det.find('.//ICMS'); ipi_no = det.find('.//IPI')
             pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
             
-            v_icms_uf_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
-            v_fcp_uf_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
+            # Tags críticas capturadas uma única vez
+            v_ic_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
+            v_fc_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
 
             linha = {
                 "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
@@ -69,6 +70,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "NCM": tratar_ncm_texto(buscar_tag_recursiva('NCM', prod)),
                 "INDIEDEST": buscar_tag_recursiva('indIEDest', dest),
                 "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)),
+                "ORIGEM": buscar_tag_recursiva('orig', icms_no),
                 "CST-ICMS": buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no),
                 "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)),
                 "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)),
@@ -83,14 +85,13 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
-                "VAL-DIFAL": v_icms_uf_dest + v_fcp_uf_dest, 
-                "VAL-FCP-DEST": v_fcp_uf_dest,
-                "VAL-FCP": safe_float(buscar_tag_recursiva('vFCP', imp))
+                "VAL-FCP": safe_float(buscar_tag_recursiva('vFCP', imp)),
+                "VAL-DIFAL": v_ic_dest + v_fc_dest, 
+                "VAL-FCP-DEST": v_fc_dest
             }
             dados_lista.append(linha)
     except: pass
 
-# --- EXTRAÇÃO RECURSIVA ---
 def extrair_dados_xml_recursivo(files, cnpj_auditado):
     dados = []
     if not files: return pd.DataFrame(), pd.DataFrame()
@@ -105,19 +106,18 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
         elif f.name.endswith('.zip'): ler_zip(f)
     
     df = pd.DataFrame(dados)
-    # Trava para garantir que colunas de cálculo sempre existam
-    colunas_fiscais = ['VAL-FCP', 'VAL-FCP-ST', 'VAL-ICMS-ST', 'VAL-DIFAL', 'VAL-FCP-DEST']
-    for col in colunas_fiscais:
+    # BLINDAGEM: Garante que as colunas existam para os Audits não quebrarem
+    for col in ['VAL-FCP', 'VAL-FCP-ST', 'VAL-ICMS-ST', 'VAL-DIFAL', 'VAL-FCP-DEST', 'INDIEDEST']:
         if col not in df.columns: df[col] = 0.0
 
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- ORQUESTRADOR FINAL (SEM COMANDOS DE CRIAÇÃO) ---
+# --- GERADOR DE EXCEL (O MAESTRO) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo_auditoria=None):
     if df_xs.empty: return
 
-    # Mapeamento de Situação
+    # Mapeamento de Situação para todos os Audits
     st_map = {}
     for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
         try:
@@ -128,7 +128,8 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         except: continue
     df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
 
-    # CHAMADAS DOS ESPECIALISTAS (Eles mesmos criam suas abas)
+    # CHAMADA SEQUENCIAL DOS SEUS 6 ARQUIVOS .PY
+    # (Cada um criará sua aba conforme o comando interno que você já colocou neles)
     try: gerar_aba_resumo(writer)
     except: pass
 
