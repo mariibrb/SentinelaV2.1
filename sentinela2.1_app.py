@@ -3,11 +3,10 @@ import os, io, pandas as pd, zipfile, re, random
 from style import aplicar_estilo_sentinela
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 
-# --- MOTOR GARIMPEIRO (Lógica Íntegra Original com Proteção contra Erros) ---
+# --- MOTOR GARIMPEIRO (Lógica Íntegra Original) ---
 def identify_xml_info(content_bytes, client_cnpj, file_name):
     client_cnpj_clean = "".join(filter(str.isdigit, str(client_cnpj))) if client_cnpj else ""
     nome_puro = os.path.basename(file_name)
-    # Ignora arquivos temporários e ocultos que costumam causar erro de ZIP
     if nome_puro.startswith('.') or nome_puro.startswith('~') or not nome_puro.lower().endswith('.xml'):
         return None, False
     resumo = {
@@ -69,7 +68,7 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR ORIGINAL ---
+# --- SIDEBAR ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
@@ -87,8 +86,10 @@ with st.sidebar:
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
         
         path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
-        if os.path.exists(path_base): st.success("✅ Base de Impostos Localizada")
-        else: st.warning("⚠️ Base de Impostos não localizada")
+        base_encontrada = os.path.exists(path_base)
+        
+        if base_encontrada: st.success("💎 Modo Elite: Base Localizada")
+        else: st.warning("🔍 Modo Cegas: Base não localizada")
             
         if ret_sel:
             path_ret = f"RET/{cod_c}-RET_MG.xlsx"
@@ -119,23 +120,28 @@ if emp_sel:
             if u_xml:
                 with st.spinner("Auditando e Garimpando..."):
                     try:
-                        # Filtrar apenas arquivos que são ZIPs válidos para evitar o erro fatal
+                        # Proteção contra erro de ZIP e arquivos fantasmas
                         u_xml_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
                         
                         if not u_xml_validos:
-                            st.error("❌ Nenhum arquivo ZIP válido foi detectado. Verifique os arquivos enviados.")
+                            st.error("❌ Erro: Nenhum arquivo ZIP válido foi detectado.")
                         else:
+                            # Tenta carregar a base para decidir o modo de auditoria
+                            path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
+                            df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
+                            modo_auditoria = "ELITE" if df_base_emp is not None else "CEGAS"
+
                             xe, xs = extrair_dados_xml_recursivo(u_xml_validos, cnpj_limpo)
                             buf = io.BytesIO()
                             with pd.ExcelWriter(buf, engine='openpyxl') as writer:
-                                gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, None)
+                                gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, df_base_emp, modo_auditoria)
                             st.session_state['relat_buf'] = buf.getvalue()
 
                             p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                             b_org, b_todos = io.BytesIO(), io.BytesIO()
                             with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
                                 for zip_file in u_xml_validos:
-                                    zip_file.seek(0) # Reseta o ponteiro do arquivo
+                                    zip_file.seek(0)
                                     with zipfile.ZipFile(zip_file) as z_in:
                                         for name in z_in.namelist():
                                             if name.lower().endswith('.xml'):
@@ -172,8 +178,7 @@ if emp_sel:
                                 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'executado': True
                             })
                             st.rerun()
-                    except Exception as e: 
-                        st.error(f"Erro Crítico no Processamento: {e}")
+                    except Exception as e: st.error(f"Erro no Processamento: {e}")
 
         if st.session_state.get('executado') and st.session_state.get('relat_buf'):
             st.markdown("---")
@@ -185,7 +190,7 @@ if emp_sel:
             sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
             c1, c2, c3 = st.columns(3)
             c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
-            c2.metric("❌ EMISSÕES CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 EMISSÕES INUTILIZADAS", sc.get("INUTILIZADOS", 0))
+            c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
 
             col_res, col_fal = st.columns(2)
             with col_res:
