@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (HIERARQUIA FISCAL) ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
 try:
     from audit_resumo import gerar_aba_resumo             
     from Auditorias.audit_icms import processar_icms       
@@ -53,6 +53,13 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
 
         for det in root.findall('.//det'):
             prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
+            v_prod = safe_float(buscar_tag_recursiva('vProd', prod))
+            ncm = buscar_tag_recursiva('NCM', prod)
+            
+            # Captura de valores de ICMS para a Auditoria
+            bc_icms = safe_float(buscar_tag_recursiva('vBC', icms_no))
+            alq_icms = safe_float(buscar_tag_recursiva('pICMS', icms_no))
+            vlr_icms = safe_float(buscar_tag_recursiva('vICMS', icms_no))
             ie_st = buscar_tag_recursiva('IEST', icms_no)
 
             linha = {
@@ -63,6 +70,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), 
                 "UF_DEST": buscar_tag_recursiva('UF', dest), 
                 "CFOP": buscar_tag_recursiva('CFOP', prod),
+                "NCM": ncm, "VPROD": v_prod, "BC-ICMS": bc_icms, "ALQ-ICMS": alq_icms, "VLR-ICMS": vlr_icms,
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
                 "IE_SUBST": str(ie_st).strip() if ie_st else "",
                 "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
@@ -86,14 +94,19 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None, df_base_emp=None, modo_auditoria=None):
+    """
+    GERADOR DE ABAS INTEGRAL: 
+    Garante que TODAS as abas sejam processadas na ordem fiscal correta.
+    """
     if df_xs.empty and df_xe.empty: return
     
     # 1. ABA RESUMO
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # 2. ABA AUDITORIA ICMS
-    try: processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo_auditoria)
+    # 2. ABA AUDITORIA ICMS (Aba Solicitada)
+    try: 
+        processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo_auditoria)
     except: pass
     
     # 3. ABA AUDITORIA IPI
@@ -108,7 +121,7 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     try: processar_difal(df_xs, writer)
     except: pass
     
-    # 6. ABA APURAÇÃO DIFAL_ST_FECP (Saldos com Abatimento e Pintura Laranja)
+    # 6. ABA APURAÇÃO DIFAL_ST_FECP (Saldos com Abatimento IEST)
     try: gerar_resumo_uf(df_xs, writer, df_xe)
     except: pass
     
