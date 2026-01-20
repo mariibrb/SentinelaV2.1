@@ -1,109 +1,100 @@
 import pandas as pd
-import os
-import streamlit as st
-import re
 
-def processar_icms(df_saidas, writer, cod_cliente, df_entradas=pd.DataFrame()):
+def processar_icms(df_xs, writer, cod_cliente, df_xe=None, df_base_emp=None, modo_auditoria="CEGAS"):
     """
-    Auditoria de ICMS Próprio e ST baseada em Gabarito e Regras Fiscais.
-    Gera a aba ICMS_AUDIT no Excel.
+    AUDITORIA INTEGRAL DE ICMS:
+    Realiza o cruzamento item a item, valida alíquotas internas/externas 
+    e identifica divergências entre o XML e a Base Tributária do Cliente.
     """
-    colunas_xml_originais = list(df_saidas.columns)
-    df_i = df_saidas.copy()
+    if df_xs.empty:
+        return
 
-    # --- 1. CARREGAMENTO DO GABARITO (PREMISSA MÁXIMA) ---
-    caminho_base = os.path.join("Bases_Tributárias", f"{cod_cliente}-Bases_Tributarias.xlsx")
-    base_gabarito = pd.DataFrame()
-    if os.path.exists(caminho_base):
-        try:
-            # Lemos como texto puro para match exato
-            base_gabarito = pd.read_excel(caminho_base, dtype=str)
-            base_gabarito.columns = [str(c).strip().upper() for c in base_gabarito.columns]
-            
-            col_ncm_gab = [c for c in base_gabarito.columns if 'NCM' in c]
-            if col_ncm_gab:
-                base_gabarito['NCM_KEY'] = base_gabarito[col_ncm_gab[0]].apply(lambda x: re.sub(r'\D', '', str(x)).strip())
-        except Exception as e:
-            st.error(f"Erro ao ler Gabarito Tributário: {e}")
+    # 1. PREPARAÇÃO DOS DADOS
+    audit_df = df_xs.copy()
+    
+    # Tratamento de NCM para garantir o cruzamento (Join)
+    audit_df['NCM'] = audit_df['NCM'].astype(str).str.replace(r'\D', '', regex=True).str.strip()
 
-    # --- 2. MAPEAMENTO DE ST NAS ENTRADAS ---
-    ncms_com_st_na_compra = []
-    if not df_entradas.empty:
-        df_entradas['NCM_LIMP'] = df_entradas['NCM'].apply(lambda x: re.sub(r'\D', '', str(x)).strip())
-        mask_st = (df_entradas['VAL-ICMS-ST'] > 0) | (df_entradas['CST-ICMS'].isin(['10', '60', '70']))
-        ncms_com_st_na_compra = df_entradas[mask_st]['NCM_LIMP'].unique().tolist()
-
-    def audit_icms_linha(r):
-        uf_orig = str(r.get('UF_EMIT', '')).strip().upper()
-        uf_dest = str(r.get('UF_DEST', '')).strip().upper()
-        cfop = str(r.get('CFOP', '')).strip()
-        ncm_xml = str(r.get('NCM', '')).strip()
+    # 2. MODO ELITE: CRUZAMENTO COM A BASE DE ALÍQUOTAS DO CLIENTE
+    if modo_auditoria == "ELITE" and df_base_emp is not None:
+        df_base_emp['NCM'] = df_base_emp['NCM'].astype(str).str.replace(r'\D', '', regex=True).str.strip()
         
-        cst_xml = str(r.get('CST-ICMS', '00')).zfill(2)
-        alq_xml = float(r.get('ALQ-ICMS', 0.0))
-        bc_icms_xml = float(r.get('BC-ICMS', 0.0))
-        vlr_icms_xml = float(r.get('VLR-ICMS', 0.0))
+        # Traz as regras específicas da sua planilha Bases_Tributarias
+        audit_df = pd.merge(
+            audit_df, 
+            df_base_emp[['NCM', 'ALQ_INTERNA', 'ALQ_EXTERNA', 'REDUCAO_BC', 'EXCECAO_NCM']], 
+            on='NCM', 
+            how='left'
+        )
+    else:
+        # Modo Cegas: Preenche com valores zerados para não quebrar o cálculo
+        audit_df['ALQ_INTERNA'] = 0.0
+        audit_df['ALQ_EXTERNA'] = 0.0
+        audit_df['REDUCAO_BC'] = 0.0
+        audit_df['EXCECAO_NCM'] = ""
 
-        alq_esp = None
-        cst_esp = None
-        fundamentacao = ""
+    # 3. CÁLCULOS DE AUDITORIA (HIERARQUIA FISCAL)
+    # Define a alíquota de referência baseada na operação (Interna vs Interestadual)
+    audit_df['ALQ_REFERENCIA'] = audit_df.apply(
+        lambda x: x['ALQ_INTERNA'] if x['UF_EMIT'] == x['UF_DEST'] else x['ALQ_EXTERNA'], 
+        axis=1
+    )
 
-        # PASSO 1: BASE DE DADOS (PRIORIDADE ABSOLUTA)
-        if not base_gabarito.empty and 'NCM_KEY' in base_gabarito.columns:
-            if ncm_xml in base_gabarito['NCM_KEY'].values:
-                g = base_gabarito[base_gabarito['NCM_KEY'] == ncm_xml].iloc[0]
-                
-                # Busca ALIQ (INTERNA) e CST (INTERNA)
-                col_alq = [c for c in base_gabarito.columns if 'ALIQ' in c and ('INTERNA' in c or ' IN' in c)]
-                col_cst = [c for c in base_gabarito.columns if 'CST' in c and ('INTERNA' in c or ' IN' in c)]
-                
-                if col_alq: alq_esp = float(g[col_alq[0]])
-                if col_cst: cst_esp = str(g[col_cst[0]]).strip().split('.')[0].zfill(2)
-                fundamentacao = f"Puxado da Base de Dados (NCM {ncm_xml})."
+    # Cálculo do ICMS Esperado (Considerando Redução de BC se houver)
+    audit_df['BC-ICMS-CALC'] = audit_df.apply(
+        lambda x: x['VPROD'] * (1 - (x['REDUCAO_BC'] / 100)) if x['REDUCAO_BC'] > 0 else x['VPROD'],
+        axis=1
+    )
+    
+    audit_df['VLR-ICMS-CALC'] = audit_df.apply(
+        lambda x: round(x['BC-ICMS-CALC'] * (x['ALQ_REFERENCIA'] / 100), 2) if x['ALQ_REFERENCIA'] > 0 else 0.0,
+        axis=1
+    )
 
-        # PASSO 2: REGRAS DE ST (FALHA DE GABARITO OU CFOP)
-        if alq_esp is None:
-            if cfop in ['5405', '6405', '6404', '5667', '5403', '6403'] or ncm_xml in ncms_com_st_na_compra:
-                cst_esp = "60"; alq_esp = 0.0
-                fundamentacao = "Validado como ST por CFOP ou Compra."
+    # Identificação de Diferenças
+    audit_df['DIFERENCA-ICMS'] = round(audit_df['VLR-ICMS'] - audit_df['VLR-ICMS-CALC'], 2)
+    
+    # Status da Auditoria
+    audit_df['STATUS_AUDIT'] = audit_df.apply(
+        lambda x: "OK" if abs(x['DIFERENCA-ICMS']) <= 0.01 else "DIVERGENTE",
+        axis=1
+    )
 
-        # PASSO 3: REGRAS GERAIS TRIBUTÁRIAS
-        if alq_esp is None:
-            if uf_orig == uf_dest:
-                alq_esp = 18.0
+    # 4. ESCRITA E FORMATAÇÃO RÍGIDA NO EXCEL
+    workbook = writer.book
+    worksheet = workbook.add_worksheet('AUDIT_ICMS')
+    
+    # Paleta de Cores e Estilos
+    f_header = workbook.add_format({'bold': True, 'bg_color': '#FF8C00', 'font_color': 'white', 'border': 1, 'align': 'center'})
+    f_divergente = workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006', 'border': 1})
+    f_ok = workbook.add_format({'bg_color': '#C6EFCE', 'font_color': '#006100', 'border': 1})
+    f_num = workbook.add_format({'num_format': '#,##0.00', 'border': 1})
+    f_text = workbook.add_format({'border': 1})
+
+    # Cabeçalhos
+    for col_num, value in enumerate(audit_df.columns.values):
+        worksheet.write(0, col_num, value, f_header)
+
+    # Escrita das linhas com validação de status
+    for row_num, row_data in enumerate(audit_df.values):
+        status_linha = audit_df.iloc[row_num]['STATUS_AUDIT']
+        
+        for col_num, cell_value in enumerate(row_data):
+            col_name = audit_df.columns[col_num]
+            
+            # Formatação baseada no status da auditoria para a coluna de Status
+            if col_name == 'STATUS_AUDIT':
+                fmt = f_divergente if status_linha == "DIVERGENTE" else f_ok
+                worksheet.write(row_num + 1, col_num, cell_value, fmt)
+            # Formatação numérica
+            elif isinstance(cell_value, (int, float)):
+                worksheet.write(row_num + 1, col_num, cell_value, f_num)
+            # Formatação de texto padrão
             else:
-                sul_sudeste = ['SP', 'RJ', 'MG', 'PR', 'RS', 'SC']
-                # Regra de 7% (Sul/Sudeste para Norte/Nordeste/Centro-Oeste/ES)
-                if (uf_orig in sul_sudeste and uf_dest not in sul_sudeste + ['ES']):
-                    alq_esp = 7.0
-                else:
-                    alq_esp = 12.0
-            
-            cst_esp = "00" if cst_esp is None else cst_esp
-            fundamentacao = "Aplicada Regra Geral de Alíquotas."
+                worksheet.write(row_num + 1, col_num, str(cell_value) if not pd.isna(cell_value) else "", f_text)
 
-        # --- CÁLCULOS E DIAGNÓSTICOS ---
-        vlr_icms_devido = round(bc_icms_xml * (alq_esp / 100), 2)
-        vlr_comp_final = max(0.0, round(vlr_icms_devido - vlr_icms_xml, 2))
-
-        diag_alq = "✅ OK" if abs(alq_xml - alq_esp) < 0.01 else f"❌ Erro (XML:{alq_xml}%|Esp:{alq_esp}%)"
-        diag_cst = "✅ OK" if cst_xml == cst_esp else f"❌ Divergente (XML:{cst_xml}|Esp:{cst_esp})"
-        
-        status_base = "✅ Integral"
-        if cst_xml in ['60', '10', '70', '500']: status_base = "✅ ST/Retido"
-        elif cst_xml == '20' or cst_esp == '20': status_base = "✅ Redução Base (CST 20)"
-        
-        return pd.Series([cst_esp, alq_esp, diag_cst, diag_alq, status_base, vlr_comp_final, fundamentacao])
-
-    # --- MONTAGEM FINAL DO DATAFRAME ---
-    analises_nomes = ['CST_ESPERADA', 'ALQ_ESPERADA', 'DIAG_CST', 'DIAG_ALQUOTA', 'STATUS_BASE', 'ICMS_COMPLEMENTAR', 'FUNDAMENTAÇÃO']
-    df_analise = df_i.apply(audit_icms_linha, axis=1)
-    df_analise.columns = analises_nomes
+    # Ajuste automático de largura (Média de 15)
+    worksheet.set_column(0, len(audit_df.columns) - 1, 15)
     
-    cols_xml = [c for c in colunas_xml_originais if c != 'Situação Nota']
-    cols_aut = ['Situação Nota'] if 'Situação Nota' in colunas_xml_originais else []
-    
-    df_final = pd.concat([df_i[cols_xml], df_i[cols_aut], df_analise], axis=1)
-
-    # --- COMANDO DE ESCRITA NO EXCEL (FUNDAMENTAL PARA A ABA APARECER) ---
-    df_final.to_excel(writer, sheet_name='ICMS_AUDIT', index=False)
+    # Congelar painel no cabeçalho e chaves
+    worksheet.freeze_panes(1, 4)
