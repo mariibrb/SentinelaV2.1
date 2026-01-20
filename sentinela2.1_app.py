@@ -69,7 +69,7 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR ORIGINAL (ESTÁVEL E APROVADA) ---
+# --- SIDEBAR ORIGINAL (COM CAMINHO DA PASTA CORRIGIDO) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
@@ -88,8 +88,8 @@ with st.sidebar:
         # Cartão de Status
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
         
-        # VERIFICAÇÃO DE BASE DE IMPOSTOS
-        path_base = f"Bases_Tributárias/{cod_c}-Bases_Tributarias.xlsx"
+        # VERIFICAÇÃO DE BASE DE IMPOSTOS (CAMINHO SEM ACENTO CORRIGIDO)
+        path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
         if os.path.exists(path_base): 
             st.success("✅ Base de Impostos Localizada")
         else: 
@@ -116,8 +116,6 @@ if emp_sel:
 
     with tab_xml:
         st.markdown("### 📥 Central de Importação")
-        st.caption("Faça o upload dos documentos abaixo para iniciar a auditoria cruzada.")
-        
         c1, c2, c3 = st.columns(3)
         with c1: u_xml = st.file_uploader("📁 XML das Notas (ZIP)", accept_multiple_files=True, key=f"x_{v}")
         with c2: u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
@@ -133,7 +131,7 @@ if emp_sel:
                             gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, None)
                         st.session_state['relat_buf'] = buf.getvalue()
 
-                        # Processamento Garimpeiro Integrado
+                        # Processamento Garimpeiro
                         p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                         b_org, b_todos = io.BytesIO(), io.BytesIO()
                         with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
