@@ -102,7 +102,7 @@ c_t, c_r = st.columns([4, 1])
 with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with c_r:
     if st.button("🔄 LIMPAR TUDO"): limpar_central()
-        # --- CONTEÚDO PRINCIPAL ---
+# --- CONTEÚDO PRINCIPAL ---
 if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
@@ -124,23 +124,29 @@ if emp_sel:
                         if not u_xml_validos:
                             st.error("❌ Erro: Nenhum arquivo ZIP válido foi detectado.")
                         else:
+                            # 1. BUSCA DE BASE (Prioridade Máxima / Hierarquia Fiscal)
                             path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
                             df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
                             modo_auditoria = "ELITE" if df_base_emp is not None else "CEGAS"
 
+                            # 2. EXTRAÇÃO DE TODOS OS XMLS (Base Única para todos os tributos)
+                            # xe = Entradas (Terceiros + Próprias), xs = Saídas (Próprias)
                             xe, xs = extrair_dados_xml_recursivo(u_xml_validos, cnpj_limpo)
                             
                             buf = io.BytesIO()
-                            # Importante: Usamos xlsxwriter para suportar as formatações do seu motor de DIFAL
+                            # Usamos xlsxwriter para suportar as formatações de cor e bordas do motor de DIFAL
                             with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
-                                # 1. Gera as abas principais (XML, Resumos, etc)
+                                # A função gerar_excel_final gera as abas PIS, COFINS, ICMS e Resumos
+                                # Internamente ela NÃO deve mais criar a aba 'DIFAL_ST_FECP' para evitar o erro de duplicidade
                                 gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, df_base_emp, modo_auditoria)
                                 
-                                # 2. Chama o seu motor personalizado (Ele criará a aba 'DIFAL_ST_FECP' do zero)
+                                # 3. CHAMADA DO MOTOR DE DIFAL/ST (Apuracoes/apuracao_difal.py)
+                                # Este motor cria a aba exclusiva 'DIFAL_ST_FECP' usando a mesma base de dados
                                 gerar_resumo_uf(xs, writer, xe) 
                                 
                             st.session_state['relat_buf'] = buf.getvalue()
 
+                            # --- LÓGICA DO GARIMPEIRO (Para visualização no Streamlit) ---
                             p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                             b_org, b_todos = io.BytesIO(), io.BytesIO()
                             with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
@@ -179,7 +185,7 @@ if emp_sel:
                             })
                             st.rerun()
                     except Exception as e: 
-                        st.error(f"Erro Crítico: {e}")
+                        st.error(f"Erro Crítico de Processamento: {e}")
 
         if st.session_state.get('executado') and st.session_state.get('relat_buf'):
             st.markdown("---")
@@ -191,8 +197,7 @@ if emp_sel:
             sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
             c1, c2, c3 = st.columns(3)
             c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
-            c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0))
-            c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
+            c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
 
             col_res, col_fal = st.columns(2)
             with col_res:
@@ -204,20 +209,19 @@ if emp_sel:
 
             st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
             co, ct = st.columns(2)
-            with co: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+            with co: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo.zip", use_container_width=True)
             with ct: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
 
     with tab_dominio:
         st.markdown("### 📉 Módulos de Conformidade")
         sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
         
-        # Módulos mantidos conforme original para preenchimento futuro
         with sub_icms:
             st.markdown("#### 📊 Auditoria ICMS/IPI")
             c1, c2 = st.columns(2)
             with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
             with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
-            st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
+            st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True)
 
         with sub_difal:
             st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
@@ -225,7 +229,7 @@ if emp_sel:
             with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"dif_s_{v}")
             with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
             with c3: st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
-            st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
+            st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True)
 
         with sub_ret:
             st.markdown("#### 🏨 Auditoria RET")
@@ -234,7 +238,7 @@ if emp_sel:
                 with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"ret_s_{v}")
                 with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"ret_e_{v}")
                 with c3: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"dom_ret_{v}")
-                st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
+                st.button("⚖️ VALIDAR RET", use_container_width=True)
             else: st.warning("⚠️ Habilite o RET na Sidebar para este módulo.")
 
         with sub_pis:
@@ -243,6 +247,6 @@ if emp_sel:
             with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"pis_s_{v}")
             with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"pis_e_{v}")
             with c3: st.file_uploader("📄 Demonstrativo PIS/COFINS", type=['xlsx'], key=f"dom_pisc_{v}")
-            st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
+            st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True)
 else:
     st.info("👈 Selecione a empresa na barra lateral para começar.")
