@@ -9,6 +9,7 @@ ALIQUOTAS_INTERNAS = {
 }
 
 def processar_difal(df, writer):
+    # Criamos uma cópia para não afetar o DataFrame original do Core
     df_d = df.copy()
 
     def audit_difal_detalhada(r):
@@ -20,10 +21,10 @@ def processar_difal(df, writer):
         alq_inter_xml = float(r.get('ALQ-ICMS', 0.0))
         
         # O indicador de Inscrição Estadual (9 = Não Contribuinte)
-        # O Core precisa extrair essa tag, se não existir, usamos a lógica de UF
+        # Extraído pelo Core e validado aqui
         ind_ie_dest = str(r.get('INDIEDEST', '1')).strip() 
 
-        # --- TRAVA DE SEGURANÇA (O CORAÇÃO DA MUDANÇA) ---
+        # --- TRAVA DE SEGURANÇA ---
         # Só há DIFAL se: For interestadual E Destinatário for Não Contribuinte (9)
         e_interestadual = (uf_orig != uf_dest) and (uf_orig != "") and (uf_dest != "")
         e_nao_contribuinte = (ind_ie_dest == '9')
@@ -91,4 +92,5 @@ def processar_difal(df, writer):
     else:
         df_export = pd.DataFrame(columns=list(df.columns) + analises_nomes)
 
+    # --- COMANDO DE ESCRITA (CRIAÇÃO DA ABA NO EXCEL) ---
     df_export.to_excel(writer, sheet_name='DIFAL_AUDIT', index=False)
