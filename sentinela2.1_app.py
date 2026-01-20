@@ -1,136 +1,178 @@
-import pandas as pd
-import io, zipfile, streamlit as st, xml.etree.ElementTree as ET, re, os
-from datetime import datetime
+import streamlit as st
+import os, io, pandas as pd, zipfile, re, random
+from style import aplicar_estilo_sentinela
+from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
-try:
-    from audit_resumo import gerar_aba_resumo             
-    from Auditorias.audit_icms import processar_icms       
-    from Auditorias.audit_ipi import processar_ipi         
-    from Auditorias.audit_pis_cofins import processar_pc   
-    from Auditorias.audit_difal import processar_difal      # ESTA É A QUE VOCÊ PRECISA
-    from Gerenciais.audit_gerencial import gerar_abas_gerenciais
-except ImportError as e:
-    st.error(f"⚠️ Erro de Dependência no Core: {e}")
-
-def safe_float(v):
-    if v is None or pd.isna(v): return 0.0
-    txt = str(v).strip().upper()
-    if txt in ['NT', '', 'N/A', 'ISENTO', 'NULL', 'ZERO', '-', ' ']: return 0.0
+# --- MOTOR GARIMPEIRO (Lógica Íntegra com Trava de CNPJ) ---
+def identify_xml_info(content_bytes, client_cnpj, file_name):
+    """
+    Identifica o tipo de XML e filtra RIGOROSAMENTE pelo CNPJ do cliente selecionado.
+    """
+    client_cnpj_clean = "".join(filter(str.isdigit, str(client_cnpj))) if client_cnpj else ""
+    nome_puro = os.path.basename(file_name)
+    if nome_puro.startswith('.') or nome_puro.startswith('~') or not nome_puro.lower().endswith('.xml'):
+        return None, False
+    
     try:
-        txt = txt.replace('R$', '').replace(' ', '').replace('%', '').strip()
-        if ',' in txt and '.' in txt: txt = txt.replace('.', '').replace(',', '.')
-        elif ',' in txt: txt = txt.replace(',', '.')
-        return round(float(txt), 4)
-    except: return 0.0
-
-def buscar_tag_recursiva(tag_alvo, no):
-    if no is None: return ""
-    for elemento in no.iter():
-        tag_nome = elemento.tag.split('}')[-1]
-        if tag_nome == tag_alvo: return elemento.text if elemento.text else ""
-    return ""
-
-def tratar_ncm_texto(ncm):
-    if pd.isna(ncm) or ncm == "": return ""
-    return re.sub(r'\D', '', str(ncm)).strip()
-
-def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
-    try:
-        xml_str = content.decode('utf-8', errors='replace')
-        xml_str = re.sub(r'\sxmlns(:\w+)?="[^"]+"', '', xml_str) 
-        root = ET.fromstring(xml_str)
-        inf = root.find('.//infNFe')
-        if inf is None: return 
+        content_str = content_bytes[:20000].decode('utf-8', errors='ignore')
+        tag_l = content_str.lower()
         
-        ide = root.find('.//ide'); emit = root.find('.//emit'); dest = root.find('.//dest')
-        cnpj_emit = re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', emit))
-        cnpj_alvo = re.sub(r'\D', '', str(cnpj_empresa_auditada))
-        tipo_nf = buscar_tag_recursiva('tpNF', ide)
-        tipo_operacao = "SAIDA" if (cnpj_emit == cnpj_alvo and tipo_nf == '1') else "ENTRADA"
-        chave = inf.attrib.get('Id', '')[3:]
-        ind_ie_dest = buscar_tag_recursiva('indIEDest', dest)
+        # Filtro de Identidade: Busca CNPJ Emitente e Destinatário
+        cnpj_emit = re.search(r'<cnpj>(\d+)</cnpj>', tag_l).group(1) if re.search(r'<cnpj>(\d+)</cnpj>', tag_l) else ""
+        cnpj_dest = re.search(r'<dest>.*?<cnpj>(\d+)</cnpj>', tag_l, re.DOTALL).group(1) if re.search(r'<dest>.*?<cnpj>(\d+)</cnpj>', tag_l, re.DOTALL) else ""
+        
+        # Só prossegue se o cliente selecionado for parte da nota
+        is_p = (cnpj_emit == client_cnpj_clean)
+        is_dest_p = (cnpj_dest == client_cnpj_clean)
+        
+        if not (is_p or is_dest_p):
+            return None, False
 
-        for det in root.findall('.//det'):
-            prod = det.find('prod'); imp = det.find('imposto')
-            icms_no = det.find('.//ICMS')
+        resumo = {
+            "Arquivo": nome_puro, "Chave": "", "Tipo": "Outros", "Série": "0",
+            "Número": 0, "Status": "NORMAIS", "Pasta": "RECEBIDOS_TERCEIROS/OUTROS",
+            "Valor": 0.0, "Conteúdo": content_bytes
+        }
+        
+        match_ch = re.search(r'\d{44}', content_str)
+        resumo["Chave"] = match_ch.group(0) if match_ch else ""
+        
+        tipo = "NF-e"
+        if '<mod>65</mod>' in tag_l: tipo = "NFC-e"
+        elif '<infcte' in tag_l: tipo = "CT-e"
+        elif '<infmdfe' in tag_l: tipo = "MDF-e"
+        
+        status = "NORMAIS"
+        if '110111' in tag_l: status = "CANCELADOS"
+        elif '110110' in tag_l: status = "CARTA_CORRECAO"
+        elif '<inutnfe' in tag_l or '<procinut' in tag_l:
+            status = "INUTILIZADOS"; tipo = "Inutilizacoes"
             
-            v_ic_uf_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
-            v_fc_uf_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
+        resumo["Tipo"] = tipo; resumo["Status"] = status
+        resumo["Série"] = re.search(r'<(?:serie)>(\d+)</', tag_l).group(1) if re.search(r'<(?:serie)>(\d+)</', tag_l) else "0"
+        
+        n_match = re.search(r'<(?:nnf|nct|nmdf|nnfini)>(\d+)</', tag_l)
+        resumo["Número"] = int(n_match.group(1)) if n_match else 0
+        
+        if status == "NORMAIS":
+            v_match = re.search(r'<(?:vnf|vtprest)>([\d.]+)</', tag_l)
+            resumo["Valor"] = float(v_match.group(1)) if v_match else 0.0
+        
+        resumo["Pasta"] = f"EMITIDOS_CLIENTE/{tipo}/{status}/Serie_{resumo['Série']}" if is_p else f"RECEBIDOS_TERCEIROS/{tipo}"
+        return resumo, is_p
+    except: 
+        return None, False
 
-            linha = {
-                "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
-                "NUM_NF": buscar_tag_recursiva('nNF', ide), 
-                "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
-                "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
-                "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), "UF_DEST": buscar_tag_recursiva('UF', dest), 
-                "CFOP": buscar_tag_recursiva('CFOP', prod),
-                "NCM": tratar_ncm_texto(buscar_tag_recursiva('NCM', prod)),
-                "INDIEDEST": ind_ie_dest, "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)),
-                "ORIGEM": buscar_tag_recursiva('orig', icms_no), 
-                "CST-ICMS": buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no),
-                "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)), "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)),
-                "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)), "BC-ICMS-ST": safe_float(buscar_tag_recursiva('vBCST', icms_no)),
-                "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)), "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
-                "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
-                "VAL-FCP": safe_float(buscar_tag_recursiva('vFCP', imp)),
-                "VAL-DIFAL": v_ic_uf_dest + v_fc_uf_dest, "VAL-FCP-DEST": v_fc_uf_dest
-            }
-            dados_lista.append(linha)
-    except: pass
+# --- CONFIGURAÇÃO ---
+st.set_page_config(page_title="Sentinela 2.1 | Auditoria Fiscal", page_icon="🧡", layout="wide")
+aplicar_estilo_sentinela()
 
-def extrair_dados_xml_recursivo(files, cnpj_auditado):
-    dados = []
-    if not files: return pd.DataFrame(), pd.DataFrame()
-    def ler_zip(zip_data):
-        with zipfile.ZipFile(zip_data) as z:
-            for n in z.namelist():
-                if n.lower().endswith('.xml'):
-                    with z.open(n) as f: processar_conteudo_xml(f.read(), dados, cnpj_auditado)
-    for f in files:
-        f.seek(0)
-        if f.name.endswith('.xml'): processar_conteudo_xml(f.read(), dados, cnpj_auditado)
-        elif f.name.endswith('.zip'): ler_zip(f)
-    df = pd.DataFrame(dados)
-    if df.empty: return pd.DataFrame(), pd.DataFrame()
+if 'executado' not in st.session_state: st.session_state['executado'] = False
+
+def limpar_central():
+    st.session_state.clear()
+    st.rerun()
+
+@st.cache_data(ttl=600)
+def carregar_clientes():
+    caminhos = [".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx", "Clientes Ativos.xlsx"]
+    for p in caminhos:
+        if os.path.exists(p):
+            try:
+                df = pd.read_excel(p).dropna(subset=['CÓD', 'RAZÃO SOCIAL'])
+                df['CÓD'] = df['CÓD'].apply(lambda x: str(int(float(x))))
+                return df
+            except: continue
+    return pd.DataFrame()
+
+df_cli = carregar_clientes()
+
+# --- SIDEBAR ---
+with st.sidebar:
+    logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
+    if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
+    st.markdown("---")
+    emp_sel = st.selectbox("Passo 1: Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
     
-    cols_fix = ['VAL-FCP', 'VAL-FCP-ST', 'VAL-ICMS-ST', 'VAL-DIFAL', 'VAL-FCP-DEST', 'IE_SUBST']
-    for col in cols_fix:
-        if col not in df.columns: df[col] = 0.0 if col != 'IE_SUBST' else ""
-            
-    return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
+    if emp_sel:
+        reg_sel = st.selectbox("Passo 2: Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="f_reg")
+        ret_sel = st.toggle("Habilitar MG (RET)", key="f_ret")
+        cod_c = emp_sel.split(" - ")[0].strip()
+        dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
+        cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
+        st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}</div>", unsafe_allow_html=True)
 
-def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None, df_base_emp=None, modo_auditoria=None):
-    if df_xs.empty and df_xe.empty: return
+# --- CABEÇALHO ---
+c_t, c_r = st.columns([4, 1])
+with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div>", unsafe_allow_html=True)
+with c_r:
+    if st.button("🔄 LIMPAR TUDO"): limpar_central()
 
-    st_map = {}
-    for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
-        try:
-            f_auth.seek(0)
-            df_a = pd.read_excel(f_auth, header=None) if f_auth.name.endswith('.xlsx') else pd.read_csv(f_auth, header=None, sep=None, engine='python')
-            df_a[0] = df_a[0].astype(str).str.replace('NFe', '').str.strip()
-            st_map.update(df_a.set_index(0)[5].to_dict())
-        except: continue
-    df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
+if emp_sel:
+    tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE"])
 
-    # --- EXECUÇÃO DAS ABAS (MANTENDO APENAS A AUDIT_DIFAL) ---
-    try: gerar_aba_resumo(writer)
-    except: pass
-    
-    try: gerar_abas_gerenciais(writer, ge, gs)
-    except: pass
-    
-    try: processar_icms(df_xs, writer, cod_cliente, df_xe)
-    except: pass
-    
-    try: processar_ipi(df_xs, writer, cod_cliente)
-    except: pass
-    
-    try: processar_pc(df_xs, writer, cod_cliente, regime)
-    except: pass
+    with tab_xml:
+        u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True)
+        u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True)
+        u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True)
+        
+        if st.button("🚀 INICIAR ANÁLISE", use_container_width=True):
+            if u_xml:
+                with st.spinner("Processando..."):
+                    try:
+                        u_xml_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
+                        xe, xs = extrair_dados_xml_recursivo(u_xml_validos, cnpj_limpo)
+                        
+                        buf = io.BytesIO()
+                        with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
+                            # Chama apenas esta. Ela já orquestra audit_Difal e DIFAL_ST_FECP internamente
+                            gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as)
+                        
+                        # Guardar no estado para não perder após o rerun
+                        st.session_state['relat_buf'] = buf.getvalue()
 
-    # ESTA É A ABA QUE VOCÊ QUER (Todas as notas e diagnósticos)
-    try: processar_difal(df_xs, writer)
-    except: pass
+                        # Garimpeiro
+                        p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
+                        b_org, b_todos = io.BytesIO(), io.BytesIO()
+                        with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
+                            for zip_file in u_xml_validos:
+                                zip_file.seek(0)
+                                with zipfile.ZipFile(zip_file) as z_in:
+                                    for name in z_in.namelist():
+                                        if name.lower().endswith('.xml'):
+                                            xml_data = z_in.read(name)
+                                            res, is_p = identify_xml_info(xml_data, cnpj_limpo, name)
+                                            if res:
+                                                key = res["Chave"] if res["Chave"] else name
+                                                if key not in p_keys:
+                                                    p_keys.add(key)
+                                                    z_org.writestr(f"{res['Pasta']}/{name}", xml_data)
+                                                    z_todos.writestr(name, xml_data)
+                                                    rel_list.append(res)
+                                                    if is_p:
+                                                        if res["Status"] in st_counts: st_counts[res["Status"]] += 1
+                                                        sk = (res["Tipo"], res["Série"])
+                                                        if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
+                                                        seq_map[sk]["nums"].add(res["Número"])
+                                                        seq_map[sk]["valor"] += res["Valor"]
 
-    # A OUTRA ABA (DIFAL_ST_FECP) FOI REMOVIDA PARA PARAR O ERRO
+                        st.session_state.update({
+                            'z_org': b_org.getvalue(), 
+                            'z_todos': b_todos.getvalue(), 
+                            'relatorio': rel_list, 
+                            'df_resumo': pd.DataFrame([{"Doc": k[0], "Série": k[1], "Qtd": len(v["nums"]), "Valor": v["valor"]} for k, v in seq_map.items()]), 
+                            'st_counts': st_counts, 
+                            'executado': True
+                        })
+                        st.rerun()
+                    except Exception as e: st.error(f"Erro: {e}")
+
+    if st.session_state.get('executado'):
+        st.markdown("---")
+        st.download_button("💾 BAIXAR RELATÓRIO", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
+        st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
+        st.metric("📦 VOLUME DO CLIENTE", len(st.session_state.get('relatorio', [])))
+        st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
+        co, ct = st.columns(2)
+        with co: st.download_button("📂 ZIP ORGANIZADO", st.session_state['z_org'], "garimpo.zip", use_container_width=True)
+        with ct: st.download_button("📦 TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
