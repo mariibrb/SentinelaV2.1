@@ -84,8 +84,8 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
             dados_lista.append(linha)
     except: pass
 
-# Nome da função restaurado para bater com a linha 108 do seu app.py
-def extrair_xml(files, cnpj_auditado):
+# Nome da função restaurado para bater com a linha 4 do seu app.py
+def extrair_dados_xml_recursivo(files, cnpj_auditado):
     dados = []
     if not files: return pd.DataFrame(), pd.DataFrame()
     def ler_zip(zip_data):
@@ -101,8 +101,8 @@ def extrair_xml(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# Nome da função restaurado para bater com a linha 108 do seu app.py
-def gerar_analise_xml(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
+# Nome da função restaurado para bater com a linha 4 do seu app.py
+def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
     try: gerar_aba_resumo(writer)
     except: pass
     
@@ -125,7 +125,7 @@ def gerar_analise_xml(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         processar_ipi(df_xs, writer, cod_cliente)
         processar_pc(df_xs, writer, cod_cliente, regime)
         
-        # A aba DIFAL_ST_FECP é criada dentro desta função no apuracao_difal.py
+        # Chama a sua apuração das três tabelas que cria a aba 'DIFAL_ST_FECP'
         try:
             gerar_resumo_uf(df_xs, writer, df_xe)
         except Exception as e:
