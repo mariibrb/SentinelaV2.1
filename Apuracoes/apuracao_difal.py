@@ -3,16 +3,11 @@ import pandas as pd
 UFS_BRASIL = ['AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO']
 
 def gerar_resumo_uf(df_saida, writer, df_entrada=None):
-    """
-    Esta função agora atua como preenchedora da aba criada pelo Core.
-    Mantém toda a lógica de saldo e cores laranjas original.
-    """
     if df_entrada is None: df_entrada = pd.DataFrame()
     
-    # Une saídas e entradas para capturar devoluções de emissão própria
+    # Consolidação para cálculo de saldo
     df_total = pd.concat([df_saida, df_entrada], ignore_index=True)
     
-    # FILTRO: Somente notas autorizadas
     if 'Situação Nota' in df_total.columns:
         df_total = df_total[df_total['Situação Nota'].astype(str).str.upper().str.contains('AUTORIZAD', na=False)]
 
@@ -26,22 +21,15 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
             col_uf_final = 'UF_DEST'
         else:
             df_filtro = df_temp[df_temp['PREFIXO'].isin(['1', '2', '3'])]
-            # Lógica de Devolução Própria
             df_filtro['UF_AGRUPAR'] = df_filtro.apply(
                 lambda x: x['UF_DEST'] if x['UF_EMIT'] == 'SP' else x['UF_EMIT'], axis=1
             )
             col_uf_final = 'UF_AGRUPAR'
 
-        if df_filtro.empty:
-            for c in ['VAL-ICMS-ST', 'DIFAL_PURO', 'VAL-FCP-DEST', 'VAL-FCP-ST']: base[c] = 0.0
-            base['IE_SUBST'] = ""
-            return base
-
         agrupado = df_filtro.groupby([col_uf_final]).agg({
             'VAL-ICMS-ST': 'sum', 
             'VAL-DIFAL': 'sum',      
             'VAL-FCP-DEST': 'sum',   
-            'VAL-FCP': 'sum', 
             'VAL-FCP-ST': 'sum'
         }).reset_index().rename(columns={col_uf_final: 'UF_DEST'})
         
@@ -55,38 +43,33 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
     res_s = preparar_tabela('saida')
     res_e = preparar_tabela('entrada')
 
-    # SALDO
+    # Tabela de Saldo (Lógica de abatimento baseada na IEST)
     res_saldo = pd.DataFrame({'UF': UFS_BRASIL})
     res_saldo['IE_SUBST'] = res_s['IE_SUBST']
     
-    colunas_imposto = [
-        ('VAL-ICMS-ST', 'ST LÍQUIDO'), 
-        ('DIFAL_PURO', 'DIFAL LÍQUIDO'), 
-        ('VAL-FCP-DEST', 'FCP LÍQUIDO'), 
-        ('VAL-FCP-ST', 'FCP-ST LÍQUIDO')
-    ]
-
-    for c_xml, c_fin in colunas_imposto:
+    for c_xml, c_fin in [('VAL-ICMS-ST', 'ST LÍQUIDO'), ('DIFAL_PURO', 'DIFAL LÍQUIDO'), ('VAL-FCP-DEST', 'FCP LÍQUIDO'), ('VAL-FCP-ST', 'FCP-ST LÍQUIDO')]:
         valores_saldo = []
         for i in range(len(res_s)):
             tem_ie = res_s.iloc[i]['IE_SUBST'] != ""
-            valor_saida = res_s.iloc[i][c_xml]
-            valor_entrada = res_e.iloc[i][c_xml]
-            valores_saldo.append(valor_saida - valor_entrada if tem_ie else valor_saida)
+            v_s = res_s.iloc[i][c_xml]
+            v_e = res_e.iloc[i][c_xml]
+            valores_saldo.append(v_s - v_e if tem_ie else v_s)
         res_saldo[c_fin] = valores_saldo
 
-    # --- ESCRITA (A ABA JÁ FOI CRIADA PELO CORE) ---
+    # --- EXCEL (USANDO O NOVO NOME DA ABA PARA DESTRAVAR) ---
     workbook = writer.book
-    # Tenta pegar a aba já existente; se não existir por erro do Core, ele avisa
-    try:
-        worksheet = writer.sheets['DIFAL_ST_FECP']
-    except KeyError:
-        # Fallback caso o core não tenha criado
-        worksheet = workbook.add_worksheet('DIFAL_ST_FECP')
-        writer.sheets['DIFAL_ST_FECP'] = worksheet
+    nome_aba = 'RESUMO_DIFAL_ST'
+    
+    # Se o Core já criou, acessamos; se não, criamos aqui para garantir
+    if nome_aba in writer.sheets:
+        worksheet = writer.sheets[nome_aba]
+    else:
+        worksheet = workbook.add_worksheet(nome_aba)
+        writer.sheets[nome_aba] = worksheet
 
     worksheet.hide_gridlines(2)
     
+    # Estilização Profissional
     f_title = workbook.add_format({'bold': True, 'align': 'center', 'font_color': '#FF6F00', 'border': 1})
     f_head = workbook.add_format({'bold': True, 'border': 1, 'bg_color': '#E0E0E0', 'align': 'center'})
     f_num = workbook.add_format({'num_format': '#,##0.00', 'border': 1})
@@ -100,15 +83,19 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
     for df_t, start_c, title in [(res_s, 0, "1. SAÍDAS"), (res_e, 7, "2. ENTRADAS"), (res_saldo, 14, "3. SALDO")]:
         worksheet.merge_range(0, start_c, 0, start_c + 5, title, f_title)
         for i, h in enumerate(heads): worksheet.write(2, start_c + i, h, f_head)
+        
         for r_idx, row in enumerate(df_t.values):
             uf = str(row[0]).strip()
             tem_ie = res_s.loc[res_s['UF_DEST'] == uf, 'IE_SUBST'].values[0] != ""
+            
             for c_idx, val in enumerate(row):
                 fmt = f_orange_num if tem_ie and isinstance(val, (int, float)) else f_orange_fill if tem_ie else f_num if isinstance(val, (int, float)) else f_border
-                if c_idx == 1: worksheet.write_string(r_idx + 3, start_c + c_idx, str(val), fmt)
-                else: worksheet.write(r_idx + 3, start_c + c_idx, val, fmt)
+                if c_idx == 1:
+                    worksheet.write_string(r_idx + 3, start_c + c_idx, str(val), fmt)
+                else:
+                    worksheet.write(r_idx + 3, start_c + c_idx, val, fmt)
         
-        # Totais
+        # Totais com fórmulas Excel
         worksheet.write(30, start_c, "TOTAL GERAL", f_total)
         worksheet.write(30, start_c + 1, "", f_total)
         for i in range(2, 6):
