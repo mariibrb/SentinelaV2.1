@@ -202,3 +202,86 @@ if emp_sel:
             st.info(msg)
 else:
     st.info("👈 Selecione a empresa na barra lateral.")
+with tab_dominio:
+        st.markdown("### 📉 Módulos de Conformidade")
+        sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
+        
+        # --- SUB-ABA ICMS/IPI ---
+        with sub_icms:
+            st.markdown("#### 📊 Auditoria ICMS/IPI")
+            c1, c2 = st.columns(2)
+            with c1:
+                st.file_uploader("📑 Gerencial de Saídas (Domínio)", type=['xlsx', 'xls'], key=f"dom_icms_s_{v}")
+            with c2:
+                st.file_uploader("📑 Gerencial de Entradas (Domínio)", type=['xlsx', 'xls'], key=f"dom_icms_e_{v}")
+            
+            if st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True):
+                st.info("Pronto para conciliação XML vs Gerenciais Domínio.")
+
+        # --- SUB-ABA DIFAL ---
+        with sub_difal:
+            st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
+            c1, c2 = st.columns(2)
+            with c1:
+                st.file_uploader("📑 Gerencial de Saídas (DIFAL/ST)", type=['xlsx'], key=f"dom_difal_s_{v}")
+            with c2:
+                st.file_uploader("📑 Gerencial de Entradas (DIFAL/ST)", type=['xlsx'], key=f"dom_difal_e_{v}")
+            
+            if st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True):
+                st.info("Aguardando motor de cálculo para conferência de alíquotas interestaduais.")
+
+        # --- SUB-ABA RET ---
+        with sub_ret:
+            st.markdown("#### 🏨 Auditoria RET (Regime Especial)")
+            if ret_sel:
+                st.write(f"✅ **Modo RET Ativo para {dados_e['RAZÃO SOCIAL']}**")
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.file_uploader("📑 Gerencial de Saídas (Faturamento RET)", type=['xlsx'], key=f"dom_ret_s_{v}")
+                with c2:
+                    st.file_uploader("📑 Gerencial de Entradas (Insumos RET)", type=['xlsx'], key=f"dom_ret_e_{v}")
+                
+                if st.button("⚖️ VALIDAR RET", use_container_width=True):
+                    st.info("Módulo de conferência de tributação monofásica/especial.")
+            else:
+                st.warning("⚠️ O Passo 4 (Habilitar RET) precisa estar ativo na Sidebar para esta auditoria.")
+
+        # --- SUB-ABA PIS/COFINS ---
+        with sub_pis:
+            st.markdown("#### 💰 Auditoria PIS/Cofins")
+            c1, c2 = st.columns(2)
+            with c1:
+                st.file_uploader("📑 Gerencial de Saídas (PIS/COFINS)", type=['xlsx'], key=f"dom_pis_s_{v}")
+            with c2:
+                st.file_uploader("📑 Gerencial de Entradas (PIS/COFINS)", type=['xlsx'], key=f"dom_pis_e_{v}")
+            
+            if st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True):
+                st.info("Pronto para validar créditos e débitos de PIS/COFINS.")
+
+    # --- FINAL DO CÓDIGO (EXIBIÇÃO DOS RESULTADOS DO GARIMPEIRO) ---
+    if st.session_state.get('executado') and st.session_state.get('relat_buf'):
+        st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
+        st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
+        
+        st.markdown("---")
+        st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
+        sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
+        c1, c2, c3 = st.columns(3)
+        c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
+        c2.metric("❌ EMISSÕES CANCELADAS", sc.get("CANCELADOS", 0))
+        c3.metric("🚫 EMISSÕES INUTILIZADAS", sc.get("INUTILIZADOS", 0))
+
+        col_res, col_fal = st.columns(2)
+        with col_res:
+            st.write("**Resumo por Série:**")
+            st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
+        with col_fal:
+            st.write("**Notas Faltantes:**")
+            st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
+
+        st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
+        c_org, c_todos = st.columns(2)
+        with c_org: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+        with c_todos: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
+else:
+    st.info("👈 Selecione a empresa na barra lateral.")
