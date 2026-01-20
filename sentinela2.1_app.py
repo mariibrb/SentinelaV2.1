@@ -107,7 +107,6 @@ if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
     with tab_xml:
-        # AQUI ESTÁ A INSTRUÇÃO RESTAURADA
         st.markdown("### 📥 Central de Importação")
         st.markdown("##### Faça o upload dos documentos abaixo para iniciar a auditoria cruzada.")
         
@@ -118,7 +117,7 @@ if emp_sel:
         
         if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True):
             if u_xml:
-                with st.spinner("Processando..."):
+                with st.spinner("Auditando e Garimpando..."):
                     try:
                         xe, xs = extrair_dados_xml_recursivo(u_xml, cnpj_limpo)
                         buf = io.BytesIO()
@@ -184,6 +183,22 @@ if emp_sel:
             with c_todos: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
 
     with tab_dominio:
-        st.info("📉 Módulo Conformidade Domínio em desenvolvimento.")
+        st.markdown("### 📉 Módulos de Conformidade")
+        # SUB-ABAS RESTAURADAS AQUI
+        sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
+        msg = "⚙️ **Módulo em Construção** | Integração com Domínio Sistemas."
+        
+        with sub_icms:
+            st.markdown("#### 📊 Auditoria ICMS/IPI")
+            st.info(msg)
+        with sub_difal:
+            st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
+            st.info(msg)
+        with sub_ret:
+            st.markdown("#### 🏨 Auditoria RET (Regime Especial)")
+            st.info(msg)
+        with sub_pis:
+            st.markdown("#### 💰 Auditoria PIS/Cofins")
+            st.info(msg)
 else:
     st.info("👈 Selecione a empresa na barra lateral.")
