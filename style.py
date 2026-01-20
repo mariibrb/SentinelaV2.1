@@ -5,37 +5,19 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
-        /* Blindagem contra ícones fantasmas e textos indesejados */
-        span[data-testid="stHeaderActionElements"], 
-        .st-emotion-cache-10oheav, 
-        #keyboard_double {
+        /* Blindagem contra ícones fantasmas */
+        span[data-testid="stHeaderActionElements"], .st-emotion-cache-10oheav, #keyboard_double {
             display: none !important;
             visibility: hidden !important;
         }
 
-        html, body, [class*="st-"] { 
-            font-family: 'Inter', sans-serif; 
-        }
+        html, body, [class*="st-"] { font-family: 'Inter', sans-serif; }
 
-        .titulo-principal { 
-            color: #1E1E1E; 
-            font-size: 2.5rem; 
-            font-weight: 800; 
-            margin-bottom: 5px; 
-        }
-
-        .barra-laranja { 
-            width: 80px; 
-            height: 6px; 
-            background: linear-gradient(90deg, #FF8C00, #FF4500); 
-            border-radius: 10px; 
-            margin-bottom: 30px; 
-        }
+        .titulo-principal { color: #1E1E1E; font-size: 2.5rem; font-weight: 800; margin-bottom: 5px; }
+        .barra-laranja { width: 80px; height: 6px; background: linear-gradient(90deg, #FF8C00, #FF4500); border-radius: 10px; margin-bottom: 30px; }
 
         /* --- ESTILO DAS ABAS (TABS) --- */
-        .stTabs [data-baseweb="tab-list"] { 
-            gap: 15px; 
-        }
+        .stTabs [data-baseweb="tab-list"] { gap: 15px; }
 
         .stTabs [data-baseweb="tab"] {
             height: 70px !important;
@@ -45,9 +27,20 @@ def aplicar_estilo_sentinela():
             font-size: 20px !important; 
             font-weight: 600 !important;
             color: #888 !important;
-            transition: all 0.3s ease-in-out !important;
+            transition: all 0.2s ease-in-out !important;
+            border: none !important;
         }
 
+        /* BRILHO AO PASSAR O MOUSE NAS ABAS (IGUAL AO BOTÃO) */
+        .stTabs [data-baseweb="tab"]:hover {
+            background: linear-gradient(180deg, #FFB357 0%, #FF8C00 100%) !important;
+            color: white !important;
+            filter: brightness(1.15) !important;
+            transform: translateY(-2px) !important;
+            cursor: pointer;
+        }
+
+        /* IDENTIFICAÇÃO DA ABA ATIVA (METALIZADO FIXO) */
         .stTabs [aria-selected="true"] {
             background: linear-gradient(180deg, #FF9D26 0%, #FF6F00 50%, #E65C00 100%) !important;
             color: white !important;
@@ -67,10 +60,7 @@ def aplicar_estilo_sentinela():
             text-transform: uppercase;
         }
 
-        .stButton > button:hover { 
-            filter: brightness(1.15); 
-            transform: translateY(-1px); 
-        }
+        .stButton > button:hover { filter: brightness(1.15); transform: translateY(-1px); }
 
         .status-container {
             background-color: #ffffff;
