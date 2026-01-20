@@ -34,7 +34,8 @@ def localizar_base_impostos(cod_cliente):
     for pasta in pastas:
         for arquivo in arquivos:
             caminho_teste = os.path.join(pasta, arquivo)
-            if os.path.exists(caminho_teste): return camino_teste
+            if os.path.exists(caminho_teste): 
+                return caminho_teste  # CORRIGIDO: Era camino_teste
     return None
 
 df_cli = carregar_clientes()
@@ -55,13 +56,16 @@ with st.sidebar:
         cod_c = emp_sel.split(" - ")[0].strip()
         dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
+        
         c_base = localizar_base_impostos(cod_c)
         if c_base: st.success("✅ Base de Impostos Localizada")
         else: st.warning("⚠️ Base não localizada")
+        
         if ret_sel:
             path_ret = f"RET/{cod_c}-RET_MG.xlsx"
             if os.path.exists(path_ret): st.success("✅ Base RET (MG) Localizada")
             else: st.warning("⚠️ Base RET (MG) não localizada")
+        
         st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
 
 # --- CABEÇALHO ---
@@ -76,17 +80,16 @@ if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
     with tab_xml:
-        # --- NOVO LAYOUT DE UPLOAD ---
         st.markdown("### 📥 Central de Importação")
         st.caption("Faça o upload dos documentos abaixo para iniciar a auditoria cruzada.")
         
         c1, c2, c3 = st.columns(3)
         with c1: 
-            u_xml = st.file_uploader("📁 XML das Notas (ZIP)", accept_multiple_files=True, help="Arraste aqui o arquivo .zip com os XMLs", key=f"x_{v}")
+            u_xml = st.file_uploader("📁 XML das Notas (ZIP)", accept_multiple_files=True, key=f"x_{v}")
         with c2: 
-            u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, help="Relatório de autenticidade de notas de entrada", key=f"ae_{v}")
+            u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
         with c3: 
-            u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, help="Relatório de autenticidade de notas de saída", key=f"as_{v}")
+            u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
         
         st.markdown("---")
         if st.button("🚀 INICIAR PROCESSAMENTO DOS XMLS", use_container_width=True, key=f"run_{v}"):
@@ -99,7 +102,7 @@ if emp_sel:
                             gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, None)
                         st.session_state['relat_buf'] = buf.getvalue()
                     except Exception as e: st.error(f"Erro: {e}")
-            else: st.warning("⚠️ Verifique a Sidebar e certifique-se de carregar pelo menos o arquivo XML.")
+            else: st.warning("⚠️ Verifique a Sidebar e certifique-se de carregar o arquivo XML.")
 
         if st.session_state.get('relat_buf'):
             st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
@@ -108,19 +111,19 @@ if emp_sel:
     with tab_dominio:
         st.markdown("### 📉 Módulos de Conformidade")
         sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
-        msg_construcao = "⚙️ **Módulo em Construção** | Este recurso está sendo preparado para integração com o Domínio Sistemas."
+        msg_const = "⚙️ **Módulo em Construção** | Integração com Domínio Sistemas."
 
         with sub_icms:
             st.markdown("#### 📊 Auditoria ICMS/IPI")
-            st.info(msg_construcao)
+            st.info(msg_const)
         with sub_difal:
             st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
-            st.info(msg_construcao)
+            st.info(msg_const)
         with sub_ret:
             st.markdown("#### 🏨 Auditoria RET (Regime Especial)")
-            st.info(msg_construcao)
+            st.info(msg_const)
         with sub_pis:
             st.markdown("#### 💰 Auditoria PIS/Cofins")
-            st.info(msg_construcao)
+            st.info(msg_const)
 else:
     st.info("👈 Selecione a empresa na barra lateral.")
