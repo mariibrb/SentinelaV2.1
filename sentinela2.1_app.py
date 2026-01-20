@@ -34,7 +34,7 @@ def localizar_base_impostos(cod_cliente):
     for pasta in pastas:
         for arquivo in arquivos:
             caminho_teste = os.path.join(pasta, arquivo)
-            if os.path.exists(caminho_teste): return caminho_teste
+            if os.path.exists(caminho_teste): return camino_teste
     return None
 
 df_cli = carregar_clientes()
@@ -76,15 +76,22 @@ if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
     with tab_xml:
-        st.markdown("### 📥 Passo 5: Central de Arquivos")
-        c1, c2, c3 = st.columns(3)
-        with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
-        with c2: u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
-        with c3: u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
+        # --- NOVO LAYOUT DE UPLOAD ---
+        st.markdown("### 📥 Central de Importação")
+        st.caption("Faça o upload dos documentos abaixo para iniciar a auditoria cruzada.")
         
-        if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True, key=f"run_{v}"):
+        c1, c2, c3 = st.columns(3)
+        with c1: 
+            u_xml = st.file_uploader("📁 XML das Notas (ZIP)", accept_multiple_files=True, help="Arraste aqui o arquivo .zip com os XMLs", key=f"x_{v}")
+        with c2: 
+            u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, help="Relatório de autenticidade de notas de entrada", key=f"ae_{v}")
+        with c3: 
+            u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, help="Relatório de autenticidade de notas de saída", key=f"as_{v}")
+        
+        st.markdown("---")
+        if st.button("🚀 INICIAR PROCESSAMENTO DOS XMLS", use_container_width=True, key=f"run_{v}"):
             if u_xml and reg_sel and seg_sel:
-                with st.spinner("Auditando..."):
+                with st.spinner("Analisando documentos..."):
                     try:
                         xe, xs = extrair_dados_xml_recursivo(u_xml, str(dados_e['CNPJ']).strip())
                         buf = io.BytesIO()
@@ -92,29 +99,26 @@ if emp_sel:
                             gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, None)
                         st.session_state['relat_buf'] = buf.getvalue()
                     except Exception as e: st.error(f"Erro: {e}")
-            else: st.warning("⚠️ Verifique a Sidebar e os arquivos.")
+            else: st.warning("⚠️ Verifique a Sidebar e certifique-se de carregar pelo menos o arquivo XML.")
+
         if st.session_state.get('relat_buf'):
-            st.download_button("💾 BAIXAR RELATÓRIO", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, key=f"dl_{v}")
+            st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
+            st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, key=f"dl_{v}")
 
     with tab_dominio:
         st.markdown("### 📉 Módulos de Conformidade")
         sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
-        
-        # Mensagem padrão para sub-módulos em desenvolvimento
         msg_construcao = "⚙️ **Módulo em Construção** | Este recurso está sendo preparado para integração com o Domínio Sistemas."
 
         with sub_icms:
             st.markdown("#### 📊 Auditoria ICMS/IPI")
             st.info(msg_construcao)
-            
         with sub_difal:
             st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
             st.info(msg_construcao)
-            
         with sub_ret:
             st.markdown("#### 🏨 Auditoria RET (Regime Especial)")
             st.info(msg_construcao)
-            
         with sub_pis:
             st.markdown("#### 💰 Auditoria PIS/Cofins")
             st.info(msg_construcao)
