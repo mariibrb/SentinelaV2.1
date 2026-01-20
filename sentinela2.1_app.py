@@ -63,7 +63,7 @@ with st.sidebar:
         if c_base: st.success("✅ Base de Impostos Localizada")
         else: st.warning("⚠️ Base não localizada")
         
-        # AVISO RET (MG) - RESTAURADO AQUI
+        # AVISO RET (MG)
         if ret_sel:
             path_ret = f"RET/{cod_c}-RET_MG.xlsx"
             if os.path.exists(path_ret): 
@@ -77,6 +77,7 @@ with st.sidebar:
 c_t, c_r = st.columns([4, 1])
 with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with c_r:
+    st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔄 LIMPAR TUDO", use_container_width=True, key=f"reset_{v}"): limpar_central()
 
 # --- CONTEÚDO COM ABAS ---
@@ -86,30 +87,33 @@ if emp_sel:
     with tab_xml:
         st.markdown("### 📥 Passo 5: Central de Arquivos")
         c1, c2, c3 = st.columns(3)
-        with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
+        with c1: 
+            u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
         with c2: 
-            u_ge = st.file_uploader("📥 Gerencial Entradas", accept_multiple_files=True, key=f"ge_{v}")
             u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
         with c3:
-            u_gs = st.file_uploader("📤 Gerencial Saídas", accept_multiple_files=True, key=f"gs_{v}")
             u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
 
+        st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True, key=f"run_{v}"):
             if u_xml and reg_sel and seg_sel:
-                with st.spinner("Auditando..."):
+                with st.spinner("Auditando XMLs e Autenticidades..."):
                     try:
                         xe, xs = extrair_dados_xml_recursivo(u_xml, str(dados_e['CNPJ']).strip())
                         buf = io.BytesIO()
                         with pd.ExcelWriter(buf, engine='openpyxl') as writer:
-                            gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, u_ge, u_gs)
+                            # Integridade: Passando None para os campos gerenciais removidos da tela
+                            gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, None)
                         st.session_state['relat_buf'] = buf.getvalue()
                     except Exception as e: st.error(f"Erro: {e}")
-            else: st.warning("⚠️ Verifique a Sidebar e os arquivos.")
+            else: st.warning("⚠️ Verifique a Sidebar e certifique-se de subir o arquivo XML.")
 
         if st.session_state.get('relat_buf'):
+            st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ ANÁLISE XML CONCLUÍDA</h2></div>", unsafe_allow_html=True)
             st.download_button("💾 BAIXAR RELATÓRIO", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, key=f"dl_{v}")
 
     with tab_dominio:
-        st.info("📉 Módulo Conformidade Domínio em desenvolvimento.")
+        st.markdown("### 📉 Conformidade Domínio")
+        st.info("Aqui você poderá realizar o cruzamento com os relatórios gerenciais do Domínio Sistemas.")
 else:
-    st.info("👈 Selecione a empresa na barra lateral.")
+    st.info("👈 Selecione a empresa na barra lateral para liberar as ferramentas.")
