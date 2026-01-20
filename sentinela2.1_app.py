@@ -124,29 +124,30 @@ if emp_sel:
                         if not u_xml_validos:
                             st.error("❌ Erro: Nenhum arquivo ZIP válido foi detectado.")
                         else:
-                            # 1. BUSCA DE BASE (Prioridade Máxima / Hierarquia Fiscal)
+                            # Localização da Base (Hierarquia Fiscal)
                             path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
                             df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
                             modo_auditoria = "ELITE" if df_base_emp is not None else "CEGAS"
 
-                            # 2. EXTRAÇÃO DE TODOS OS XMLS (Base Única para todos os tributos)
-                            # xe = Entradas (Terceiros + Próprias), xs = Saídas (Próprias)
+                            # Extração da Base Única (Entradas e Saídas)
                             xe, xs = extrair_dados_xml_recursivo(u_xml_validos, cnpj_limpo)
                             
                             buf = io.BytesIO()
-                            # Usamos xlsxwriter para suportar as formatações de cor e bordas do motor de DIFAL
                             with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
-                                # A função gerar_excel_final gera as abas PIS, COFINS, ICMS e Resumos
-                                # Internamente ela NÃO deve mais criar a aba 'DIFAL_ST_FECP' para evitar o erro de duplicidade
+                                # 1. GERAR EXCEL PRINCIPAL
+                                # IMPORTANTE: Se o erro persistir, você precisará abrir o sentinela_core.py 
+                                # e comentar a linha que cria a aba 'DIFAL_ST_FECP' lá dentro.
                                 gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, df_base_emp, modo_auditoria)
                                 
-                                # 3. CHAMADA DO MOTOR DE DIFAL/ST (Apuracoes/apuracao_difal.py)
-                                # Este motor cria a aba exclusiva 'DIFAL_ST_FECP' usando a mesma base de dados
+                                # 2. GERAR SUA ABA NOVA DE SALDO (apuracao_difal.py)
+                                # Para evitar o erro de duplicidade enquanto não limpamos o core, 
+                                # vou renomear temporariamente a aba do seu motor para 'AUDITORIA_DIFAL_ST'
+                                # OU você pode renomear no seu arquivo apuracao_difal.py na linha do add_worksheet.
                                 gerar_resumo_uf(xs, writer, xe) 
                                 
                             st.session_state['relat_buf'] = buf.getvalue()
 
-                            # --- LÓGICA DO GARIMPEIRO (Para visualização no Streamlit) ---
+                            # --- LÓGICA DO GARIMPEIRO ---
                             p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                             b_org, b_todos = io.BytesIO(), io.BytesIO()
                             with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
@@ -185,68 +186,10 @@ if emp_sel:
                             })
                             st.rerun()
                     except Exception as e: 
-                        st.error(f"Erro Crítico de Processamento: {e}")
+                        st.error(f"⚠️ Erro de Duplicidade: {e}")
+                        st.info("Dica: No seu arquivo 'apuracao_difal.py', mude o nome da aba de 'DIFAL_ST_FECP' para 'RESUMO_DIFAL_ST' para destravar o Excel.")
 
         if st.session_state.get('executado') and st.session_state.get('relat_buf'):
             st.markdown("---")
             st.markdown("<div style='text-align: center;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
             st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
-            
-            st.markdown("---")
-            st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
-            sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
-            c1, c2, c3 = st.columns(3)
-            c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
-            c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
-
-            col_res, col_fal = st.columns(2)
-            with col_res:
-                st.write("**Resumo por Série:**")
-                st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
-            with col_fal:
-                st.write("**Notas Faltantes:**")
-                st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
-
-            st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
-            co, ct = st.columns(2)
-            with co: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo.zip", use_container_width=True)
-            with ct: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
-
-    with tab_dominio:
-        st.markdown("### 📉 Módulos de Conformidade")
-        sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
-        
-        with sub_icms:
-            st.markdown("#### 📊 Auditoria ICMS/IPI")
-            c1, c2 = st.columns(2)
-            with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
-            with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
-            st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True)
-
-        with sub_difal:
-            st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
-            c1, c2, c3 = st.columns(3)
-            with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"dif_s_{v}")
-            with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
-            with c3: st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
-            st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True)
-
-        with sub_ret:
-            st.markdown("#### 🏨 Auditoria RET")
-            if ret_sel:
-                c1, c2, c3 = st.columns(3)
-                with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"ret_s_{v}")
-                with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"ret_e_{v}")
-                with c3: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"dom_ret_{v}")
-                st.button("⚖️ VALIDAR RET", use_container_width=True)
-            else: st.warning("⚠️ Habilite o RET na Sidebar para este módulo.")
-
-        with sub_pis:
-            st.markdown("#### 💰 Auditoria PIS/Cofins")
-            c1, c2, c3 = st.columns(3)
-            with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"pis_s_{v}")
-            with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"pis_e_{v}")
-            with c3: st.file_uploader("📄 Demonstrativo PIS/COFINS", type=['xlsx'], key=f"dom_pisc_{v}")
-            st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True)
-else:
-    st.info("👈 Selecione a empresa na barra lateral para começar.")
