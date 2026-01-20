@@ -13,7 +13,7 @@ aplicar_estilo_sentinela()
 # --- FUNÇÕES DE SUPORTE ---
 @st.cache_data(ttl=600)
 def carregar_base_clientes():
-    # Mantendo a lógica de busca múltipla para garantir que a lista de empresas funcione
+    # Ajustado para incluir o caminho 'streamlit/' sem ponto encontrado no seu GitHub
     caminhos = [
         ".streamlit/Clientes Ativos.xlsx - EMPRESAS.csv", 
         ".streamlit/Clientes Ativos.xlsx",
@@ -46,6 +46,7 @@ df_clientes = carregar_base_clientes()
 
 # --- SIDEBAR ---
 with st.sidebar:
+    # Verificação dupla de pasta para a logo
     if os.path.exists(".streamlit/Sentinela.png"):
         st.image(".streamlit/Sentinela.png", use_container_width=True)
     elif os.path.exists("streamlit/Sentinela.png"):
@@ -72,7 +73,7 @@ with col_a:
         opcoes = [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_clientes.iterrows()]
         selecao = st.selectbox("Escolha a empresa para auditar", [""] + opcoes, label_visibility="collapsed")
     else: 
-        st.error("⚠️ Base de clientes não encontrada. Verifique os arquivos na pasta .streamlit")
+        st.error("⚠️ Base de clientes não encontrada. Verifique os arquivos na pasta .streamlit ou streamlit")
         selecao = None
 
 if selecao:
@@ -138,10 +139,11 @@ if selecao:
                         
                         relat = output.getvalue()
                         
+                        # Voltando para a cor Laranja (#FF6F00) conforme as cores originais
                         st.markdown(f"""
-                            <div style="background-color: #ffffff; border-radius: 15px; padding: 25px; border-top: 5px solid #008000; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; margin-top: 20px;">
+                            <div style="background-color: #ffffff; border-radius: 15px; padding: 25px; border-top: 5px solid #FF6F00; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; margin-top: 20px;">
                                 <div style="font-size: 3rem; margin-bottom: 10px;">✅</div>
-                                <h2 style="color: #008000; margin: 0; font-weight: 800;">AUDITORIA CONCLUÍDA (V2.1)</h2>
+                                <h2 style="color: #FF6F00; margin: 0; font-weight: 800;">AUDITORIA CONCLUÍDA (V2.1)</h2>
                                 <p style="color: #555; font-size: 1.1rem; margin-top: 10px;">
                                     Relatório gerado com sucesso para <b>{dados_empresa['RAZÃO SOCIAL']}</b> sem abas gerenciais.
                                 </p>
