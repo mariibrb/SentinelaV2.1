@@ -136,16 +136,12 @@ if emp_sel:
                                             if res:
                                                 key = res["Chave"] if res["Chave"] else name
                                                 if key not in p_keys:
-                                                    p_keys.add(key)
-                                                    z_org.writestr(f"{res['Pasta']}/{name}", xml_data)
-                                                    z_todos.writestr(name, xml_data)
-                                                    rel_list.append(res)
+                                                    p_keys.add(key); z_org.writestr(f"{res['Pasta']}/{name}", xml_data); z_todos.writestr(name, xml_data); rel_list.append(res)
                                                     if is_p:
                                                         if res["Status"] in st_counts: st_counts[res["Status"]] += 1
                                                         sk = (res["Tipo"], res["Série"])
                                                         if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
-                                                        seq_map[sk]["nums"].add(res["Número"])
-                                                        seq_map[sk]["valor"] += res["Valor"]
+                                                        seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
                         
                         res_f, fal_f, nums_s = [], [], {}
                         for (t, s), d in seq_map.items():
@@ -165,6 +161,31 @@ if emp_sel:
                         })
                         st.rerun()
                     except Exception as e: st.error(f"Erro: {e}")
+
+        if st.session_state.get('executado') and st.session_state.get('relat_buf'):
+            st.markdown("---")
+            st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
+            st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
+            
+            st.markdown("---")
+            st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
+            sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
+            c1, c2, c3 = st.columns(3)
+            c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
+            c2.metric("❌ EMISSÕES CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 EMISSÕES INUTILIZADAS", sc.get("INUTILIZADOS", 0))
+
+            col_res, col_fal = st.columns(2)
+            with col_res:
+                st.write("**Resumo por Série:**")
+                st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
+            with col_fal:
+                st.write("**Notas Faltantes:**")
+                st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
+
+            st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
+            co, ct = st.columns(2)
+            with co: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+            with ct: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
 
     with tab_dominio:
         st.markdown("### 📉 Módulos de Conformidade")
@@ -199,31 +220,5 @@ if emp_sel:
             with c1: st.file_uploader("📑 Gerencial Saídas (PIS)", type=['xlsx'], key=f"pis_s_{v}")
             with c2: st.file_uploader("📑 Gerencial Entradas (PIS)", type=['xlsx'], key=f"pis_e_{v}")
             st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
-
-    # --- RESULTADOS DO GARIMPEIRO (DENTRO DO IF EMP_SEL) ---
-    if st.session_state.get('executado') and st.session_state.get('relat_buf'):
-        st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
-        st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
-        
-        st.markdown("---")
-        st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
-        sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
-        c1, c2, c3 = st.columns(3)
-        c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
-        c2.metric("❌ EMISSÕES CANCELADAS", sc.get("CANCELADOS", 0))
-        c3.metric("🚫 EMISSÕES INUTILIZADAS", sc.get("INUTILIZADOS", 0))
-
-        col_res, col_fal = st.columns(2)
-        with col_res:
-            st.write("**Resumo por Série:**")
-            st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
-        with col_fal:
-            st.write("**Notas Faltantes:**")
-            st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
-
-        st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
-        co, ct = st.columns(2)
-        with co: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
-        with ct: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
 else:
     st.info("👈 Selecione a empresa na barra lateral para começar.")
