@@ -5,27 +5,29 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
-        /* ELIMINAÇÃO TOTAL DE LIXO VISUAL E ATALHOS */
-        [data-testid="stHeaderActionElements"], 
-        .st-emotion-cache-10oheav, 
-        .st-emotion-cache-zq59db,
-        #keyboard_double, 
-        button[title="View keyboard shortcuts"],
-        .stAppDeployButton {
+        /* LIMPEZA TOTAL DO TOPO (SIDEBAR E APP) */
+        header, .st-emotion-cache-18ni7ap, .st-emotion-cache-zq59db, 
+        #keyboard_double, .st-emotion-cache-10oheav, 
+        span[data-testid="stHeaderActionElements"],
+        button[title="View keyboard shortcuts"] {
             display: none !important;
             visibility: hidden !important;
-            height: 0 !important;
-            width: 0 !important;
-            position: absolute !important;
-            pointer-events: none !important;
+            height: 0px !important;
+            padding: 0px !important;
+            margin: 0px !important;
         }
+        
+        /* AJUSTE PARA O CONTEÚDO NÃO SUBIR DEMAIS */
+        .block-container { padding-top: 2rem !important; }
+        .st-emotion-cache-6qob1r { padding-top: 0px !important; }
 
         html, body, [class*="st-"] { font-family: 'Inter', sans-serif; }
 
+        /* TÍTULOS */
         .titulo-principal { color: #1E1E1E; font-size: 2.5rem; font-weight: 800; margin-bottom: 5px; }
         .barra-laranja { width: 80px; height: 6px; background: linear-gradient(90deg, #FF8C00, #FF4500); border-radius: 10px; margin-bottom: 30px; }
 
-        /* ABAS COM BRILHO METALIZADO */
+        /* ABAS METALIZADAS COM BRILHO */
         .stTabs [data-baseweb="tab"] {
             height: 70px !important;
             background: #f0f2f6 !important;
@@ -39,6 +41,7 @@ def aplicar_estilo_sentinela():
         .stTabs [data-baseweb="tab"]:hover {
             filter: brightness(1.1) !important;
             transform: translateY(-2px) !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
         }
 
         .stTabs [aria-selected="true"] {
@@ -48,7 +51,7 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 -5px 15px rgba(230, 92, 0, 0.3) !important;
         }
 
-        /* BOTÕES LUXO METALIZADOS */
+        /* BOTÕES LUXO COM BRILHO NO HOVER */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
             background: linear-gradient(180deg, #FF9D26 0%, #FF6F00 50%, #E65C00 100%) !important;
