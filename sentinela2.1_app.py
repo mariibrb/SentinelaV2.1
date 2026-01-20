@@ -3,10 +3,11 @@ import os, io, pandas as pd, zipfile, re, random
 from style import aplicar_estilo_sentinela
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 
-# --- MOTOR GARIMPEIRO (Lógica Íntegra Original) ---
+# --- MOTOR GARIMPEIRO (Lógica Íntegra Original com Proteção contra Erros) ---
 def identify_xml_info(content_bytes, client_cnpj, file_name):
     client_cnpj_clean = "".join(filter(str.isdigit, str(client_cnpj))) if client_cnpj else ""
     nome_puro = os.path.basename(file_name)
+    # Ignora arquivos temporários e ocultos que costumam causar erro de ZIP
     if nome_puro.startswith('.') or nome_puro.startswith('~') or not nome_puro.lower().endswith('.xml'):
         return None, False
     resumo = {
@@ -101,7 +102,7 @@ c_t, c_r = st.columns([4, 1])
 with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with c_r:
     if st.button("🔄 LIMPAR TUDO"): limpar_central()
-       # --- CONTEÚDO PRINCIPAL ---
+        # --- CONTEÚDO PRINCIPAL ---
 if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
@@ -118,49 +119,61 @@ if emp_sel:
             if u_xml:
                 with st.spinner("Auditando e Garimpando..."):
                     try:
-                        xe, xs = extrair_dados_xml_recursivo(u_xml, cnpj_limpo)
-                        buf = io.BytesIO()
-                        with pd.ExcelWriter(buf, engine='openpyxl') as writer:
-                            gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, None)
-                        st.session_state['relat_buf'] = buf.getvalue()
-
-                        p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
-                        b_org, b_todos = io.BytesIO(), io.BytesIO()
-                        with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
-                            for zip_file in u_xml:
-                                with zipfile.ZipFile(zip_file) as z_in:
-                                    for name in z_in.namelist():
-                                        if name.lower().endswith('.xml'):
-                                            xml_data = z_in.read(name)
-                                            res, is_p = identify_xml_info(xml_data, cnpj_limpo, name)
-                                            if res:
-                                                key = res["Chave"] if res["Chave"] else name
-                                                if key not in p_keys:
-                                                    p_keys.add(key); z_org.writestr(f"{res['Pasta']}/{name}", xml_data); z_todos.writestr(name, xml_data); rel_list.append(res)
-                                                    if is_p:
-                                                        if res["Status"] in st_counts: st_counts[res["Status"]] += 1
-                                                        sk = (res["Tipo"], res["Série"])
-                                                        if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
-                                                        seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
+                        # Filtrar apenas arquivos que são ZIPs válidos para evitar o erro fatal
+                        u_xml_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
                         
-                        res_f, fal_f, nums_s = [], [], {}
-                        for (t, s), d in seq_map.items():
-                            ns = d["nums"]
-                            res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
-                            if s not in nums_s: nums_s[s] = set()
-                            nums_s[s].update(ns)
-                        for s, ns in nums_s.items():
-                            if len(ns) > 1:
-                                buracos = sorted(list(set(range(min(ns), max(ns) + 1)) - ns))
-                                for b in buracos: fal_f.append({"Série": s, "Nº Faltante": b})
-                                
-                        st.session_state.update({
-                            'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 
-                            'relatorio': rel_list, 'df_resumo': pd.DataFrame(res_f), 
-                            'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'executado': True
-                        })
-                        st.rerun()
-                    except Exception as e: st.error(f"Erro: {e}")
+                        if not u_xml_validos:
+                            st.error("❌ Nenhum arquivo ZIP válido foi detectado. Verifique os arquivos enviados.")
+                        else:
+                            xe, xs = extrair_dados_xml_recursivo(u_xml_validos, cnpj_limpo)
+                            buf = io.BytesIO()
+                            with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+                                gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, None)
+                            st.session_state['relat_buf'] = buf.getvalue()
+
+                            p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
+                            b_org, b_todos = io.BytesIO(), io.BytesIO()
+                            with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
+                                for zip_file in u_xml_validos:
+                                    zip_file.seek(0) # Reseta o ponteiro do arquivo
+                                    with zipfile.ZipFile(zip_file) as z_in:
+                                        for name in z_in.namelist():
+                                            if name.lower().endswith('.xml'):
+                                                xml_data = z_in.read(name)
+                                                res, is_p = identify_xml_info(xml_data, cnpj_limpo, name)
+                                                if res:
+                                                    key = res["Chave"] if res["Chave"] else name
+                                                    if key not in p_keys:
+                                                        p_keys.add(key)
+                                                        z_org.writestr(f"{res['Pasta']}/{name}", xml_data)
+                                                        z_todos.writestr(name, xml_data)
+                                                        rel_list.append(res)
+                                                        if is_p:
+                                                            if res["Status"] in st_counts: st_counts[res["Status"]] += 1
+                                                            sk = (res["Tipo"], res["Série"])
+                                                            if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
+                                                            seq_map[sk]["nums"].add(res["Número"])
+                                                            seq_map[sk]["valor"] += res["Valor"]
+                            
+                            res_f, fal_f, nums_s = [], [], {}
+                            for (t, s), d in seq_map.items():
+                                ns = d["nums"]
+                                res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
+                                if s not in nums_s: nums_s[s] = set()
+                                nums_s[s].update(ns)
+                            for s, ns in nums_s.items():
+                                if len(ns) > 1:
+                                    buracos = sorted(list(set(range(min(ns), max(ns) + 1)) - ns))
+                                    for b in buracos: fal_f.append({"Série": s, "Nº Faltante": b})
+                                    
+                            st.session_state.update({
+                                'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 
+                                'relatorio': rel_list, 'df_resumo': pd.DataFrame(res_f), 
+                                'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'executado': True
+                            })
+                            st.rerun()
+                    except Exception as e: 
+                        st.error(f"Erro Crítico no Processamento: {e}")
 
         if st.session_state.get('executado') and st.session_state.get('relat_buf'):
             st.markdown("---")
@@ -172,7 +185,7 @@ if emp_sel:
             sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
             c1, c2, c3 = st.columns(3)
             c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
-            c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
+            c2.metric("❌ EMISSÕES CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 EMISSÕES INUTILIZADAS", sc.get("INUTILIZADOS", 0))
 
             col_res, col_fal = st.columns(2)
             with col_res:
@@ -184,7 +197,7 @@ if emp_sel:
 
             st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
             co, ct = st.columns(2)
-            with co: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo.zip", use_container_width=True)
+            with co: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
             with ct: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
 
     with tab_dominio:
