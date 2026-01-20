@@ -69,7 +69,7 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR ORIGINAL (NOMES E PASSOS RESTAURADOS) ---
+# --- SIDEBAR ORIGINAL (ESTÁVEL E APROVADA) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
@@ -85,10 +85,10 @@ with st.sidebar:
         dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
         cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
         
-        # Cartão de Status Original
+        # Cartão de Status
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
         
-        # VERIFICAÇÃO DE BASE DE IMPOSTOS (NOME CORRIGIDO)
+        # VERIFICAÇÃO DE BASE DE IMPOSTOS
         path_base = f"Bases_Tributárias/{cod_c}-Bases_Tributarias.xlsx"
         if os.path.exists(path_base): 
             st.success("✅ Base de Impostos Localizada")
@@ -110,20 +110,22 @@ with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div cla
 with c_r:
     if st.button("🔄 LIMPAR TUDO", use_container_width=True): limpar_central()
 
-# --- CONTEÚDO ---
+# --- CONTEÚDO PRINCIPAL ---
 if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
     with tab_xml:
         st.markdown("### 📥 Central de Importação")
+        st.caption("Faça o upload dos documentos abaixo para iniciar a auditoria cruzada.")
+        
         c1, c2, c3 = st.columns(3)
-        with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
+        with c1: u_xml = st.file_uploader("📁 XML das Notas (ZIP)", accept_multiple_files=True, key=f"x_{v}")
         with c2: u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
         with c3: u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
         
-        if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True, key=f"run_{v}"):
+        if st.button("🚀 INICIAR PROCESSAMENTO DOS XMLS", use_container_width=True, key=f"run_{v}"):
             if u_xml:
-                with st.spinner("Auditando..."):
+                with st.spinner("Auditando e Garimpando..."):
                     try:
                         xe, xs = extrair_dados_xml_recursivo(u_xml, cnpj_limpo)
                         buf = io.BytesIO()
@@ -131,7 +133,7 @@ if emp_sel:
                             gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, None)
                         st.session_state['relat_buf'] = buf.getvalue()
 
-                        # Processamento Garimpeiro
+                        # Processamento Garimpeiro Integrado
                         p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                         b_org, b_todos = io.BytesIO(), io.BytesIO()
                         with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
