@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (HIERARQUIA FISCAL) ---
 try:
     from audit_resumo import gerar_aba_resumo             
     from Auditorias.audit_icms import processar_icms       
@@ -85,26 +85,48 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None, df_base_emp=None, modo_auditoria=None):
+    """
+    GERADOR DE ABAS INTEGRAL: 
+    Aqui garantimos que TODAS as abas solicitadas sejam criadas.
+    """
     if df_xs.empty and df_xe.empty: return
     
-    # ORDEM RÍGIDA DAS ABAS
+    # 1. ABA RESUMO (CAPA)
     try: gerar_aba_resumo(writer)
     except: pass
     
-    try: processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo_auditoria)
-    except: pass
+    # 2. ABA AUDITORIA ICMS (Obrigatória)
+    try: 
+        processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo_auditoria)
+    except Exception as e:
+        print(f"Erro Aba ICMS: {e}")
     
-    try: processar_ipi(df_xs, writer, df_xe)
-    except: pass
+    # 3. ABA AUDITORIA IPI (Obrigatória)
+    try: 
+        processar_ipi(df_xs, writer, df_xe)
+    except Exception as e:
+        print(f"Erro Aba IPI: {e}")
     
-    try: processar_pc(df_xs, writer, df_xe)
-    except: pass
+    # 4. ABA AUDITORIA PIS/COFINS (Obrigatória)
+    try: 
+        processar_pc(df_xs, writer, df_xe)
+    except Exception as e:
+        print(f"Erro Aba PIS/COFINS: {e}")
     
-    try: processar_difal(df_xs, writer)
-    except: pass
+    # 5. ABA AUDITORIA DIFAL (Nota a Nota)
+    try: 
+        processar_difal(df_xs, writer)
+    except Exception as e:
+        print(f"Erro Aba Auditoria DIFAL: {e}")
     
-    try: gerar_resumo_uf(df_xs, writer, df_xe) # ABA DE SALDOS COM LARANJA E ABATIMENTO
-    except: pass
+    # 6. ABA APURAÇÃO DIFAL_ST_FECP (Saldos com Pintura Laranja e Abatimento IEST)
+    try: 
+        gerar_resumo_uf(df_xs, writer, df_xe)
+    except Exception as e:
+        print(f"Erro Aba Apuração UF: {e}")
     
-    try: gerar_abas_gerenciais(writer, ae, as_f, ge, gs)
-    except: pass
+    # 7. ABAS GERENCIAIS (Cruzamento Domínio)
+    try: 
+        gerar_abas_gerenciais(writer, ae, as_f, ge, gs)
+    except Exception as e:
+        print(f"Erro Abas Gerenciais: {e}")
