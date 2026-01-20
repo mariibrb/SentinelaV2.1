@@ -2,6 +2,10 @@ import pandas as pd
 import os
 
 def processar_ipi(df, writer, cod_cliente=None):
+    """
+    Auditoria especialista de IPI baseada em NCM e Gabarito de TIPI.
+    Gera a aba IPI_AUDIT no Excel.
+    """
     df_ipi = df.copy()
 
     # --- 1. CARREGAMENTO DA BASE TRIBUTÁRIA (GABARITO) ---
@@ -26,7 +30,7 @@ def processar_ipi(df, writer, cod_cliente=None):
         vlr_ipi_xml = float(r.get('VLR-IPI', 0.0))
         vprod = float(r.get('VPROD', 0.0))
         
-        # --- Gabarito e Regras de Esperado (O Cérebro do IPI) ---
+        # --- Gabarito e Regras de Esperado ---
         cst_esp = "50" # Saída Tributada (Padrão)
         alq_esp = 0.0
         
@@ -87,15 +91,11 @@ def processar_ipi(df, writer, cod_cliente=None):
     # Aplica a inteligência
     df_ipi[analises_nomes] = df_ipi.apply(audit_ipi_completa, axis=1)
 
-    # --- REORGANIZAÇÃO RIGOROSA DAS COLUNAS ---
-    # 1. Identificamos as tags originais do XML (removendo a situação para não duplicar)
+    # --- REORGANIZAÇÃO ---
     cols_originais = [c for c in df.columns if c != 'Situação Nota']
-    
-    # 2. Identificamos o Status de Autenticidade
     cols_status = ['Situação Nota'] if 'Situação Nota' in df.columns else []
     
-    # 3. Montamos o DataFrame final: [XML] + [SITUAÇÃO] + [ANÁLISES]
     df_final = pd.concat([df_ipi[cols_originais], df_ipi[cols_status], df_ipi[analises_nomes]], axis=1)
 
-    # Gravação no Excel
+    # --- ESCRITA OBRIGATÓRIA (CRIAÇÃO DA ABA) ---
     df_final.to_excel(writer, sheet_name='IPI_AUDIT', index=False)
