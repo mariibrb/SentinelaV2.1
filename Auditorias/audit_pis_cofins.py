@@ -2,6 +2,10 @@ import pandas as pd
 import os
 
 def processar_pc(df, writer, cod_cliente=None, regime="Lucro Real"):
+    """
+    Auditoria especialista de PIS/COFINS baseada no Regime Tributário e NCM.
+    Gera a aba PIS_COFINS_AUDIT no Excel.
+    """
     df_pc = df.copy()
 
     # --- 1. CARREGAMENTO DA BASE TRIBUTÁRIA (GABARITO) ---
@@ -92,15 +96,11 @@ def processar_pc(df, writer, cod_cliente=None, regime="Lucro Real"):
     # Aplica a auditoria
     df_pc[analises_nomes] = df_pc.apply(audit_pc_completa, axis=1)
     
-    # --- REORGANIZAÇÃO RIGOROSA DAS COLUNAS ---
-    # 1. Separamos as Tags do XML (dados brutos extraídos pelo Core)
+    # --- REORGANIZAÇÃO ---
     cols_originais = [c for c in df.columns if c != 'Situação Nota']
-    
-    # 2. Separamos o Status de Autenticidade
     cols_status = ['Situação Nota'] if 'Situação Nota' in df.columns else []
     
-    # 3. Concatenamos na ordem: [XML] -> [STATUS] -> [ANÁLISES]
     df_final = pd.concat([df_pc[cols_originais], df_pc[cols_status], df_pc[analises_nomes]], axis=1)
     
-    # Gravação no Excel
+    # --- ESCRITA OBRIGATÓRIA (CRIAÇÃO DA ABA NO EXCEL) ---
     df_final.to_excel(writer, sheet_name='PIS_COFINS_AUDIT', index=False)
