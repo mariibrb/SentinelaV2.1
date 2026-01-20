@@ -193,7 +193,7 @@ if emp_sel:
         
         with sub_icms:
             st.markdown("#### 📊 Auditoria ICMS/IPI")
-            c1, c2 = st.columns(2) # Ajustado para 2 colunas
+            c1, c2 = st.columns(2)
             with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
             with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
             st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
