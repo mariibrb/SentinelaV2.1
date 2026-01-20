@@ -80,11 +80,10 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
         
         res_saldo[c_fin] = valores_saldo
 
-    # --- EXCEL ---
+    # --- EXCEL (SÓ ESTE CÓDIGO CRIA A ABA AGORA) ---
     workbook = writer.book
-    sheet_name = 'CONFRONTO_DIFAL_ST_UF'
-    worksheet = workbook.add_worksheet(sheet_name)
-    writer.sheets[sheet_name] = worksheet
+    worksheet = workbook.add_worksheet('DIFAL_ST_FECP')
+    writer.sheets['DIFAL_ST_FECP'] = worksheet
     worksheet.hide_gridlines(2)
     
     f_title = workbook.add_format({'bold': True, 'align': 'center', 'font_color': '#FF6F00', 'border': 1})
@@ -97,6 +96,7 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
 
     heads = ['UF', 'IEST (SUBST)', 'ST TOTAL', 'DIFAL TOTAL', 'FCP TOTAL', 'FCP-ST TOTAL']
 
+    # LOOP DE ESCRITA DAS 3 TABELAS (Saídas, Entradas e Saldo)
     for df_t, start_c, title in [(res_s, 0, "1. SAÍDAS"), (res_e, 7, "2. ENTRADAS"), (res_saldo, 14, "3. SALDO")]:
         worksheet.merge_range(0, start_c, 0, start_c + 5, title, f_title)
         for i, h in enumerate(heads): worksheet.write(2, start_c + i, h, f_head)
@@ -107,12 +107,12 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
             
             for c_idx, val in enumerate(row):
                 fmt = f_orange_num if tem_ie and isinstance(val, (int, float)) else f_orange_fill if tem_ie else f_num if isinstance(val, (int, float)) else f_border
-                if c_idx == 1:
+                if c_idx == 1: # Coluna da IE
                     worksheet.write_string(r_idx + 3, start_c + c_idx, str(val), fmt)
                 else:
                     worksheet.write(r_idx + 3, start_c + c_idx, val, fmt)
         
-        # Totais
+        # Totais Automáticos
         worksheet.write(30, start_c, "TOTAL GERAL", f_total)
         worksheet.write(30, start_c + 1, "", f_total)
         for i in range(2, 6):
