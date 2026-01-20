@@ -6,7 +6,17 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
     if df_entrada is None: df_entrada = pd.DataFrame()
     
     # Consolidação íntegra para cálculo de saldo
-    df_total = pd.concat([df_saida, df_entrada], ignore_index=True)
+    # Selecionamos apenas as colunas necessárias para evitar duplicidade de 'NCM' ou outras tags
+    cols_calc = [
+        'UF_DEST', 'UF_EMIT', 'CFOP', 'VAL-ICMS-ST', 'VAL-DIFAL', 
+        'VAL-FCP-DEST', 'VAL-FCP-ST', 'IE_SUBST', 'Situação Nota'
+    ]
+    
+    # Garante que as colunas existam antes de concatenar
+    df_s_clean = df_saida[[c for c in cols_calc if c in df_saida.columns]].copy()
+    df_e_clean = df_entrada[[c for c in cols_calc if c in df_entrada.columns]].copy()
+    
+    df_total = pd.concat([df_s_clean, df_e_clean], ignore_index=True)
     
     # Filtro de segurança: apenas notas autorizadas
     if 'Situação Nota' in df_total.columns:
@@ -16,16 +26,15 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
         base = pd.DataFrame({'UF_DEST': UFS_BRASIL})
         df_temp = df_total.copy()
         
-        # Garante que não haverá duplicidade na criação de colunas de apoio
-        if 'PREFIXO_AUX' not in df_temp.columns:
-            df_temp['PREFIXO_AUX'] = df_temp['CFOP'].astype(str).str.strip().str[0]
+        # Criação de coluna de apoio para CFOP
+        df_temp['PREFIXO_AUX'] = df_temp['CFOP'].astype(str).str.strip().str[0]
         
         if tipo == 'saida':
             df_filtro = df_temp[df_temp['PREFIXO_AUX'].isin(['5', '6', '7'])]
             col_uf_final = 'UF_DEST'
         else:
             df_filtro = df_temp[df_temp['PREFIXO_AUX'].isin(['1', '2', '3'])]
-            # Lógica de Devolução Própria
+            # Lógica de Devolução Própria: Se Emitente for SP, olha Destinatário
             df_filtro['UF_AGRUPAR'] = df_filtro.apply(
                 lambda x: x['UF_DEST'] if x['UF_EMIT'] == 'SP' else x['UF_EMIT'], axis=1
             )
@@ -36,7 +45,7 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
             base['IE_SUBST'] = ""
             return base
 
-        # Agrupamento explícito para evitar conflitos de nomes de colunas como 'NCM'
+        # Agrupamento explícito das tags financeiras
         agrupado = df_filtro.groupby([col_uf_final]).agg({
             'VAL-ICMS-ST': 'sum', 
             'VAL-DIFAL': 'sum',      
@@ -44,12 +53,12 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
             'VAL-FCP-ST': 'sum'
         }).reset_index().rename(columns={col_uf_final: 'UF_DEST'})
         
-        # Isola o DIFAL do FCP conforme regra fiscal
+        # Cálculo do DIFAL Puro (Valor total menos FCP)
         agrupado['DIFAL_PURO'] = agrupado['VAL-DIFAL'] - agrupado['VAL-FCP-DEST']
         
         final = pd.merge(base, agrupado, on='UF_DEST', how='left').fillna(0)
         
-        # Mapeamento de IE para destaque laranja
+        # Mapeamento de IE para destaque laranja e regra de abatimento
         ie_map = df_filtro[df_filtro['IE_SUBST'] != ""].groupby(col_uf_final)['IE_SUBST'].first().to_dict()
         final['IE_SUBST'] = final['UF_DEST'].map(ie_map).fillna("").astype(str)
         
@@ -58,7 +67,7 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
     res_s = preparar_tabela('saida')
     res_e = preparar_tabela('entrada')
 
-    # Tabela de Saldo Líquido
+    # Tabela de Confronto de Saldo
     res_saldo = pd.DataFrame({'UF': UFS_BRASIL})
     res_saldo['IE_SUBST'] = res_s['IE_SUBST']
     
@@ -75,15 +84,14 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
             tem_ie = str(res_s.iloc[i]['IE_SUBST']).strip() != ""
             v_s = res_s.iloc[i][c_xml]
             v_e = res_e.iloc[i][c_xml]
-            # Só abate se houver Inscrição Estadual de Substituto
+            # Só ocorre o abatimento (Saída - Entrada) se houver Inscrição de Substituto
             valores_saldo.append(v_s - v_e if tem_ie else v_s)
         res_saldo[c_fin] = valores_saldo
 
-    # --- EXCEL (NOME DA ABA ATUALIZADO PARA DESTRAVAR) ---
+    # --- ESCRITA EXCEL (NOME DE ABA DESTIVADO) ---
     workbook = writer.book
     nome_aba = 'RESUMO_DIFAL_ST'
     
-    # Recupera a aba criada pelo Core ou cria uma nova se necessário
     if nome_aba in writer.sheets:
         worksheet = writer.sheets[nome_aba]
     else:
@@ -92,7 +100,7 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
 
     worksheet.hide_gridlines(2)
     
-    # Estilização Visual Laranja
+    # Formatações Visuais
     f_title = workbook.add_format({'bold': True, 'align': 'center', 'font_color': '#FF6F00', 'border': 1})
     f_head = workbook.add_format({'bold': True, 'border': 1, 'bg_color': '#E0E0E0', 'align': 'center'})
     f_num = workbook.add_format({'num_format': '#,##0.00', 'border': 1})
@@ -118,7 +126,7 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
                 else:
                     worksheet.write(r_idx + 3, start_c + c_idx, val, fmt)
         
-        # Linha de Totais Finais
+        # Linha de Totais Gerais
         row_tot = 3 + len(UFS_BRASIL)
         worksheet.write(row_tot, start_c, "TOTAL GERAL", f_total)
         worksheet.write(row_tot, start_c + 1, "", f_total)
