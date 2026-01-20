@@ -2,6 +2,7 @@ import pandas as pd
 import io, zipfile, streamlit as st, xml.etree.ElementTree as ET, re, os
 from datetime import datetime
 
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
 try:
     from audit_resumo import gerar_aba_resumo             
     from Auditorias.audit_icms import processar_icms       
@@ -110,8 +111,10 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
+# --- ORQUESTRADOR: ELE NÃO CRIA AS ABAS, APENAS CHAMA OS ESPECIALISTAS ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo_auditoria=None):
     if df_xs.empty: return
+    
     st_map = {}
     for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
         try:
@@ -122,15 +125,16 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         except: continue
     df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
 
-    try: gerar_aba_resumo(writer)
+    # AQUI ESTÁ O TRATO: O CORE SÓ PASSA A BOLA
+    try: gerar_aba_resumo(writer)            # O especialista cria a aba 'RESUMO'
     except: pass
-    try: processar_icms(df_xs, writer, cod_cliente, df_xe)
+    try: processar_icms(df_xs, writer, cod_cliente, df_xe) # O especialista cria a aba 'ICMS_AUDIT'
     except: pass
-    try: processar_ipi(df_xs, writer, cod_cliente)
+    try: processar_ipi(df_xs, writer, cod_cliente)         # O especialista cria a aba 'IPI_AUDIT'
     except: pass
-    try: processar_pc(df_xs, writer, cod_cliente, regime)
+    try: processar_pc(df_xs, writer, cod_cliente, regime)  # O especialista cria a aba 'PIS_COFINS_AUDIT'
     except: pass
-    try: processar_difal(df_xs, writer)
+    try: processar_difal(df_xs, writer)                    # O especialista cria a aba 'DIFAL_AUDIT'
     except: pass
-    try: gerar_resumo_uf(df_xs, writer, df_xe)
+    try: gerar_resumo_uf(df_xs, writer, df_xe)             # O especialista cria a aba 'DIFAL_ST_FECP'
     except: pass
