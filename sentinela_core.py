@@ -4,12 +4,12 @@ from datetime import datetime
 
 # --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
 try:
-    from audit_resumo import gerar_aba_resumo
-    from Auditorias.audit_icms import processar_icms
-    from Auditorias.audit_ipi import processar_ipi
-    from Auditorias.audit_pis_cofins import processar_pc
-    from Auditorias.audit_difal import processar_difal
-    from Apuracoes.apuracao_difal import gerar_resumo_uf
+    from audit_resumo import gerar_aba_resumo             
+    from Auditorias.audit_icms import processar_icms       
+    from Auditorias.audit_ipi import processar_ipi         
+    from Auditorias.audit_pis_cofins import processar_pc   
+    from Auditorias.audit_difal import processar_difal     
+    from Apuracoes.apuracao_difal import gerar_resumo_uf   
     from Gerenciais.audit_gerencial import gerar_abas_gerenciais
 except ImportError as e:
     st.error(f"⚠️ Erro de Dependência: {e}")
@@ -54,9 +54,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
             prod = det.find('prod'); imp = det.find('imposto')
             icms_no = det.find('.//ICMS'); ipi_no = det.find('.//IPI')
             pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
-            v_ic_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
-            v_fc_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
-
+            
             linha = {
                 "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
                 "NUM_NF": buscar_tag_recursiva('nNF', ide), "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
@@ -70,12 +68,11 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)), "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
                 "CST-PIS": buscar_tag_recursiva('CST', pis_no), "VLR-PIS": safe_float(buscar_tag_recursiva('vPIS', pis_no)),
                 "CST-COFINS": buscar_tag_recursiva('CST', cof_no), "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no)),
-                "VAL-FCP": safe_float(buscar_tag_recursiva('vFCP', imp)), "VAL-DIFAL": v_ic_dest + v_fc_dest, "VAL-FCP-DEST": v_fc_dest
+                "VAL-FCP": safe_float(buscar_tag_recursiva('vFCP', imp))
             }
             dados_lista.append(linha)
     except: pass
 
-# --- FUNÇÃO RENOMEADA PARA CASAR COM O APP ---
 def extrair_dados_xml_recursivo(files, cnpj_auditado):
     dados = []
     if not files: return pd.DataFrame(), pd.DataFrame()
@@ -91,36 +88,42 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     
-    for col in ['VAL-FCP', 'VAL-ICMS-ST', 'VAL-DIFAL', 'VAL-FCP-DEST', 'IE_SUBST']:
+    # Garantia de colunas básicas
+    for col in ['VAL-FCP', 'VAL-ICMS-ST', 'IE_SUBST']:
         if col not in df.columns: df[col] = 0.0 if col != 'IE_SUBST' else ""
             
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- FUNÇÃO RENOMEADA PARA CASAR COM O APP ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None, df_base_emp=None, modo_auditoria=None):
     if df_xs.empty: return
     st_map = {}
     for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
         try:
             f_auth.seek(0)
-            if f_auth.name.endswith('.xlsx'): df_a = pd.read_excel(f_auth, header=None)
-            else: df_a = pd.read_csv(f_auth, header=None, sep=None, engine='python')
+            df_a = pd.read_excel(f_auth, header=None) if f_auth.name.endswith('.xlsx') else pd.read_csv(f_auth, header=None, sep=None, engine='python')
             df_a[0] = df_a[0].astype(str).str.replace('NFe', '').str.strip()
             st_map.update(df_a.set_index(0)[5].to_dict())
         except: continue
     df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
 
+    # CHAMADAS DAS ABAS QUE ESTÃO FUNCIONANDO
     try: gerar_aba_resumo(writer)
     except: pass
+    
     try: gerar_abas_gerenciais(writer, ge, gs)
     except: pass
+    
     try: processar_icms(df_xs, writer, cod_cliente, df_xe)
     except: pass
+    
     try: processar_ipi(df_xs, writer, cod_cliente)
     except: pass
+    
     try: processar_pc(df_xs, writer, cod_cliente, regime)
     except: pass
-    try: processar_difal(df_xs, writer)
-    except: pass
-    try: gerar_resumo_uf(df_xs, writer, df_xe)
-    except: pass
+
+    # --- DIFAL DESATIVADO PARA EVITAR O ERRO 'SHEETNAME ALREADY IN USE' ---
+    # try: processar_difal(df_xs, writer)
+    # except: pass
+    # try: gerar_resumo_uf(df_xs, writer, df_xe)
+    # except: pass
