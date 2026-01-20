@@ -13,18 +13,15 @@ aplicar_estilo_sentinela()
 # --- FUNÇÕES DE SUPORTE ---
 @st.cache_data(ttl=600)
 def carregar_base_clientes():
-    # Ajustado para incluir o caminho 'streamlit/' sem ponto encontrado no seu GitHub
     caminhos = [
-        ".streamlit/Clientes Ativos.xlsx - EMPRESAS.csv", 
         ".streamlit/Clientes Ativos.xlsx",
         "streamlit/Clientes Ativos.xlsx",
-        "Bases_Tributárias/394-Bases_Tributarias.xlsx",
         "Clientes Ativos.xlsx"
     ]
     for caminho in caminhos:
         if os.path.exists(caminho):
             try:
-                df = pd.read_csv(caminho) if caminho.endswith('.csv') else pd.read_excel(caminho)
+                df = pd.read_excel(caminho)
                 df = df.dropna(subset=['CÓD', 'RAZÃO SOCIAL'])
                 df['CÓD'] = df['CÓD'].apply(lambda x: str(int(float(x))))
                 return df
@@ -35,22 +32,32 @@ def verificar_arquivo_github(caminho_relativo):
     token = st.secrets.get("GITHUB_TOKEN")
     repo = st.secrets.get("GITHUB_REPO")
     if not token or not repo: return False
-    url = f"https://api.github.com/repos/{repo}/contents/{caminho_relativo}"
-    headers = {"Authorization": f"token {token}"}
-    try:
-        res = requests.get(url, headers=headers, timeout=5)
-        return res.status_code == 200
-    except: return False
+    
+    # Criamos uma lista de possíveis caminhos para a pasta de bases
+    # Tentando com e sem acento, já que o GitHub diferencia
+    possibilidades = [
+        caminho_relativo,
+        caminho_relativo.replace("Bases_Tributárias", "Bases_Tributarias"),
+        caminho_relativo.replace("Bases_Tributárias", "bases_tributarias")
+    ]
+    
+    for path in possibilidades:
+        url = f"https://api.github.com/repos/{repo.strip()}/contents/{path}"
+        headers = {"Authorization": f"token {token}"}
+        try:
+            res = requests.get(url, headers=headers, timeout=5)
+            if res.status_code == 200:
+                return True
+        except: continue
+    return False
 
 df_clientes = carregar_base_clientes()
 
 # --- SIDEBAR ---
 with st.sidebar:
-    # Verificação dupla de pasta para a logo
-    if os.path.exists(".streamlit/Sentinela.png"):
-        st.image(".streamlit/Sentinela.png", use_container_width=True)
-    elif os.path.exists("streamlit/Sentinela.png"):
-        st.image("streamlit/Sentinela.png", use_container_width=True)
+    logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
+    if os.path.exists(logo_path):
+        st.image(logo_path, use_container_width=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
     
@@ -73,7 +80,7 @@ with col_a:
         opcoes = [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_clientes.iterrows()]
         selecao = st.selectbox("Escolha a empresa para auditar", [""] + opcoes, label_visibility="collapsed")
     else: 
-        st.error("⚠️ Base de clientes não encontrada. Verifique os arquivos na pasta .streamlit ou streamlit")
+        st.error("⚠️ Base de clientes não encontrada.")
         selecao = None
 
 if selecao:
@@ -88,9 +95,10 @@ if selecao:
 
     st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b> {dados_empresa['RAZÃO SOCIAL']} | <b>CNPJ:</b> {cnpj_auditado}</div>", unsafe_allow_html=True)
     
-    # Validação GitHub
     c1_stat, c2_stat = st.columns(2)
+    # Procurando o arquivo específico da empresa
     path_base = f"Bases_Tributárias/{cod_cliente}-Bases_Tributarias.xlsx"
+    
     if verificar_arquivo_github(path_base):
         with c1_stat: st.success("✅ Base de Impostos Localizada")
     else:
@@ -103,7 +111,6 @@ if selecao:
         else:
             with c2_stat: st.warning("⚠️ Base RET não localizada")
 
-    # --- CENTRAL DE ARQUIVOS ---
     st.markdown("### Passo 3: Central de Arquivos")
     c1, c2, c3 = st.columns(3)
     
@@ -128,28 +135,21 @@ if selecao:
             if xmls and regime:
                 with st.spinner("O Sentinela 2.1 está auditando os dados..."):
                     try:
-                        # Processamento dos XMLs
                         df_xe, df_xs = extrair_dados_xml_recursivo(xmls, cnpj_auditado)
-                        
-                        # Criação do buffer para o Excel
                         output = io.BytesIO()
                         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                            # Chamada da função core mantendo toda a lógica de auditoria íntegra
                             gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae, as_f, ge, gs)
                         
                         relat = output.getvalue()
-                        
-                        # Voltando para a cor Laranja (#FF6F00) conforme as cores originais
                         st.markdown(f"""
                             <div style="background-color: #ffffff; border-radius: 15px; padding: 25px; border-top: 5px solid #FF6F00; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; margin-top: 20px;">
                                 <div style="font-size: 3rem; margin-bottom: 10px;">✅</div>
-                                <h2 style="color: #FF6F00; margin: 0; font-weight: 800;">AUDITORIA CONCLUÍDA (V2.1)</h2>
+                                <h2 style="color: #FF6F00; margin: 0; font-weight: 800;">AUDITORIA CONCLUÍDA</h2>
                                 <p style="color: #555; font-size: 1.1rem; margin-top: 10px;">
-                                    Relatório gerado com sucesso para <b>{dados_empresa['RAZÃO SOCIAL']}</b> sem abas gerenciais.
+                                    Relatório gerado com sucesso para <b>{dados_empresa['RAZÃO SOCIAL']}</b>.
                                 </p>
                             </div>
                         """, unsafe_allow_html=True)
-                        
                         st.markdown("<br>", unsafe_allow_html=True)
                         st.download_button("💾 BAIXAR RELATÓRIO FINAL", relat, f"Sentinela_{cod_cliente}_v2.1.xlsx", use_container_width=True)
                     except Exception as e:
