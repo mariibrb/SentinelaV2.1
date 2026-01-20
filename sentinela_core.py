@@ -2,29 +2,35 @@ import pandas as pd
 import io, zipfile, streamlit as st, xml.etree.ElementTree as ET, re, os
 from datetime import datetime
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (6 ABAS CONFIGURADAS) ---
 try:
-    from audit_resumo import gerar_aba_resumo             
-    from Auditorias.audit_icms import processar_icms       
-    from Auditorias.audit_ipi import processar_ipi         
-    from Auditorias.audit_pis_cofins import processar_pc   
-    from Auditorias.audit_difal import processar_difal     
-    from Apuracoes.apuracao_difal import gerar_resumo_uf   
+    from audit_resumo import gerar_aba_resumo             # Aba: RESUMO
+    from Auditorias.audit_icms import processar_icms       # Aba: ICMS_AUDIT
+    from Auditorias.audit_ipi import processar_ipi         # Aba: IPI_AUDIT
+    from Auditorias.audit_pis_cofins import processar_pc   # Aba: PIS_COFINS_AUDIT
+    from Auditorias.audit_difal import processar_difal     # Aba: DIFAL_AUDIT
+    from Apuracoes.apuracao_difal import gerar_resumo_uf   # Aba: DIFAL_ST_FECP
 except ImportError as e:
-    st.error(f"⚠️ Erro de Dependência: {e}")
+    st.error(f"⚠️ Erro de Dependência no Core: {e}")
 
+# --- UTILITÁRIOS DE TRATAMENTO DE DADOS ---
 def safe_float(v):
+    """Converte valores do XML para float tratando nulos e formatação brasileira."""
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
     if txt in ['NT', '', 'N/A', 'ISENTO', 'NULL', 'ZERO', '-', ' ']: return 0.0
     try:
         txt = txt.replace('R$', '').replace(' ', '').replace('%', '').strip()
-        if ',' in txt and '.' in txt: txt = txt.replace('.', '').replace(',', '.')
-        elif ',' in txt: txt = txt.replace(',', '.')
+        if ',' in txt and '.' in txt: 
+            txt = txt.replace('.', '').replace(',', '.')
+        elif ',' in txt: 
+            txt = txt.replace(',', '.')
         return round(float(txt), 4)
-    except: return 0.0
+    except: 
+        return 0.0
 
 def buscar_tag_recursiva(tag_alvo, no):
+    """Busca uma tag em qualquer nível do nó XML fornecido."""
     if no is None: return ""
     for elemento in no.iter():
         tag_nome = elemento.tag.split('}')[-1]
@@ -32,40 +38,59 @@ def buscar_tag_recursiva(tag_alvo, no):
     return ""
 
 def tratar_ncm_texto(ncm):
+    """Limpa o NCM para manter apenas números."""
     if pd.isna(ncm) or ncm == "": return ""
     return re.sub(r'\D', '', str(ncm)).strip()
 
+# --- MOTOR DE PROCESSAMENTO DE CONTEÚDO XML ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
+    """Extrai todas as tags necessárias para auditoria e apuração de saldo."""
     try:
         xml_str = content.decode('utf-8', errors='replace')
+        # Remove namespaces para facilitar a busca de tags
         xml_str = re.sub(r'\sxmlns(:\w+)?="[^"]+"', '', xml_str) 
         root = ET.fromstring(xml_str)
+        
         inf = root.find('.//infNFe')
         if inf is None: return 
-        ide = root.find('.//ide'); emit = root.find('.//emit'); dest = root.find('.//dest')
+        
+        ide = root.find('.//ide')
+        emit = root.find('.//emit')
+        dest = root.find('.//dest')
+        
         cnpj_emit = re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', emit))
         cnpj_alvo = re.sub(r'\D', '', str(cnpj_empresa_auditada))
+        
         tipo_nf = buscar_tag_recursiva('tpNF', ide)
+        # Identificação de Entrada/Saída baseada no CNPJ auditado
         tipo_operacao = "SAIDA" if (cnpj_emit == cnpj_alvo and tipo_nf == '1') else "ENTRADA"
+        
         chave = inf.attrib.get('Id', '')[3:]
+        ind_ie_dest = buscar_tag_recursiva('indIEDest', dest)
 
         for det in root.findall('.//det'):
-            prod = det.find('prod'); imp = det.find('imposto')
-            icms_no = det.find('.//ICMS'); ipi_no = det.find('.//IPI')
-            pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
+            prod = det.find('prod')
+            imp = det.find('imposto')
+            icms_no = det.find('.//ICMS')
+            ipi_no = det.find('.//IPI')
+            pis_no = det.find('.//PIS')
+            cof_no = det.find('.//COFINS')
             
-            # Tags para DIFAL e FCP
+            # Tags específicas para DIFAL, FCP e ST
             v_icms_uf_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
             v_fcp_uf_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
 
             linha = {
-                "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
+                "TIPO_SISTEMA": tipo_operacao,
+                "CHAVE_ACESSO": str(chave).strip(),
                 "NUM_NF": buscar_tag_recursiva('nNF', ide),
                 "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
-                "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
-                "UF_DEST": buscar_tag_recursiva('UF', dest), "CFOP": buscar_tag_recursiva('CFOP', prod),
+                "CNPJ_EMIT": cnpj_emit,
+                "UF_EMIT": buscar_tag_recursiva('UF', emit),
+                "UF_DEST": buscar_tag_recursiva('UF', dest),
+                "CFOP": buscar_tag_recursiva('CFOP', prod),
                 "NCM": tratar_ncm_texto(buscar_tag_recursiva('NCM', prod)),
-                "INDIEDEST": buscar_tag_recursiva('indIEDest', dest),
+                "INDIEDEST": ind_ie_dest,
                 "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)),
                 "CST-ICMS": buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no),
                 "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)),
@@ -83,19 +108,24 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
                 "VAL-DIFAL": v_icms_uf_dest + v_fcp_uf_dest, 
                 "VAL-FCP-DEST": v_fcp_uf_dest,
-                "VAL-FCP": safe_float(buscar_tag_recursiva('vFCP', imp)) # GARANTIA DA COLUNA
+                "VAL-FCP": safe_float(buscar_tag_recursiva('vFCP', imp))
             }
             dados_lista.append(linha)
-    except: pass
+    except: 
+        pass
 
+# --- GARIMPEIRO: EXTRAÇÃO RECURSIVA ---
 def extrair_dados_xml_recursivo(files, cnpj_auditado):
+    """Varre arquivos e ZIPs em busca de XMLs de NFe."""
     dados = []
     if not files: return pd.DataFrame(), pd.DataFrame()
+    
     def ler_zip(zip_data):
         with zipfile.ZipFile(zip_data) as z:
             for n in z.namelist():
                 if n.lower().endswith('.xml'):
                     with z.open(n) as f: processar_conteudo_xml(f.read(), dados, cnpj_auditado)
+    
     for f in files:
         f.seek(0)
         if f.name.endswith('.xml'): processar_conteudo_xml(f.read(), dados, cnpj_auditado)
@@ -103,24 +133,56 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     
     df = pd.DataFrame(dados)
     
-    # TRAVA DE SEGURANÇA: Garante que a coluna exista mesmo que nenhum XML tenha a tag
-    if not df.empty and 'VAL-FCP' not in df.columns:
-        df['VAL-FCP'] = 0.0
-        
+    # --- TRAVA DE SEGURANÇA CONTRA COLUNAS INEXISTENTES ---
+    colunas_obrigatorias = ['VAL-FCP', 'VAL-FCP-ST', 'VAL-ICMS-ST', 'VAL-DIFAL', 'VAL-FCP-DEST']
+    for col in colunas_obrigatorias:
+        if col not in df.columns:
+            df[col] = 0.0
+
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     
     df_e = df[df['TIPO_SISTEMA'] == "ENTRADA"].copy()
     df_s = df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
     return df_e, df_s
 
+# --- GERADOR DE EXCEL FINAL (ORQUESTRADOR DE 6 ABAS) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo_auditoria=None):
     workbook = writer.book
 
-    # 1. RESUMO
+    # 1. ABA: RESUMO
     try: gerar_aba_resumo(writer)
     except: pass
 
     if not df_xs.empty:
-        # Lógica de situação e abas especialistas mantida conforme aprovado...
-        # (Chama processar_icms, processar_ipi, etc.)
-        pass
+        # Mapeamento de Situação via Relatórios Domínio
+        st_map = {}
+        for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
+            try:
+                f_auth.seek(0)
+                df_a = pd.read_excel(f_auth, header=None) if f_auth.name.endswith('.xlsx') else pd.read_csv(f_auth, header=None, sep=None, engine='python')
+                df_a[0] = df_a[0].astype(str).str.replace('NFe', '').str.strip()
+                st_map.update(df_a.set_index(0)[5].to_dict())
+            except: continue
+        
+        df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
+
+        # HIERARQUIA DE EXECUÇÃO DAS ABAS TÉCNICAS
+        abas_especialistas = [
+            ('ICMS_AUDIT', processar_icms, [df_xs, writer, cod_cliente, df_xe]),
+            ('IPI_AUDIT', processar_ipi, [df_xs, writer, cod_cliente]),
+            ('PIS_COFINS_AUDIT', processar_pc, [df_xs, writer, cod_cliente, regime]),
+            ('DIFAL_AUDIT', processar_difal, [df_xs, writer]),
+            ('DIFAL_ST_FECP', gerar_resumo_uf, [df_xs, writer, df_xe])
+        ]
+
+        for nome_aba, funcao, args in abas_especialistas:
+            try:
+                # O Core garante a existência da aba no Workbook
+                if nome_aba not in writer.sheets:
+                    workbook.add_worksheet(nome_aba)
+                    writer.sheets[nome_aba] = workbook.get_worksheet_by_name(nome_aba)
+                
+                # Dispara o especialista
+                funcao(*args)
+            except Exception as e:
+                st.error(f"⚠️ Erro ao processar aba {nome_aba}: {e}")
