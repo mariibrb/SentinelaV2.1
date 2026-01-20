@@ -42,6 +42,7 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
         }).reset_index().rename(columns={col_uf_final: 'UF_DEST'})
         
         # --- LÓGICA DE SUBTRAÇÃO SOLICITADA ---
+        # Subtraímos o FCP Destino do DIFAL Total para ter o valor puro em colunas separadas
         agrupado['DIFAL_PURO'] = agrupado['VAL-DIFAL'] - agrupado['VAL-FCP-DEST']
         
         final = pd.merge(base, agrupado, on='UF_DEST', how='left').fillna(0)
@@ -69,7 +70,7 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
     for c_xml, c_fin in colunas_imposto:
         valores_saldo = []
         for i in range(len(res_s)):
-            tem_ie = str(res_s.iloc[i]['IE_SUBST']).strip() != ""
+            tem_ie = res_s.iloc[i]['IE_SUBST'] != ""
             valor_saida = res_s.iloc[i][c_xml]
             valor_entrada = res_e.iloc[i][c_xml]
             
@@ -102,7 +103,7 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
         
         for r_idx, row in enumerate(df_t.values):
             uf = str(row[0]).strip()
-            tem_ie = str(res_s.loc[res_s['UF_DEST'] == uf, 'IE_SUBST'].values[0]).strip() != ""
+            tem_ie = res_s.loc[res_s['UF_DEST'] == uf, 'IE_SUBST'].values[0] != ""
             
             for c_idx, val in enumerate(row):
                 fmt = f_orange_num if tem_ie and isinstance(val, (int, float)) else f_orange_fill if tem_ie else f_num if isinstance(val, (int, float)) else f_border
@@ -111,6 +112,7 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
                 else:
                     worksheet.write(r_idx + 3, start_c + c_idx, val, fmt)
         
+        # Totais
         worksheet.write(30, start_c, "TOTAL GERAL", f_total)
         worksheet.write(30, start_c + 1, "", f_total)
         for i in range(2, 6):
