@@ -47,14 +47,13 @@ def localizar_base_dados(cod_cliente):
 
 df_clientes = carregar_base_clientes()
 
-# --- SIDEBAR (CONFIGURAÇÕES - PASSO 1 E 2) ---
+# --- SIDEBAR (PAINEL DE CONTROLE E STATUS) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path):
         st.image(logo_path, use_container_width=True)
     
     st.markdown("---")
-    
     st.markdown("### 🏢 Passo 1: Empresa")
     if not df_clientes.empty:
         opcoes = [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_clientes.iterrows()]
@@ -66,10 +65,40 @@ with st.sidebar:
     if selecao:
         st.markdown("### ⚖️ Passo 2: Regime")
         regime = st.selectbox("Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="regime_sel")
+        
+        st.markdown("### ⚙️ Passo 3: Habilitar Apurações")
+        tipo_ipi = st.selectbox("Tipo de Empresa (IPI)", ["Comércio (Não gera IPI)", "Indústria", "Equiparado à Indústria"], key="tipo_ipi_sel")
         is_ret = st.toggle("Habilitar MG (RET)", key="ret_sel")
         
+        # --- BLOCO DE STATUS ---
         st.markdown("---")
-        # Botão de download do modelo (Degradê via CSS no Primary)
+        st.markdown("### 📊 Status da Conexão")
+        
+        cod_cliente = selecao.split(" - ")[0].strip()
+        dados_empresa = df_clientes[df_clientes['CÓD'] == cod_cliente].iloc[0]
+        cnpj_auditado = str(dados_empresa['CNPJ']).strip()
+        
+        st.markdown(f"""
+            <div class='status-container' style='margin-top:0px;'>
+                📍 <b>Analisando:</b><br>{dados_empresa['RAZÃO SOCIAL']}<br>
+                <b>CNPJ:</b> {cnpj_auditado}
+            </div>
+        """, unsafe_allow_html=True)
+        
+        caminho_base = localizar_base_dados(cod_cliente)
+        if caminho_base:
+            st.success("✅ Base de Impostos Localizada")
+        else:
+            st.warning("⚠️ Base de Impostos não localizada")
+            
+        if is_ret:
+            path_ret = f"RET/{cod_cliente}-RET_MG.xlsx"
+            if os.path.exists(path_ret):
+                st.success("✅ Base RET Localizada")
+            else:
+                st.warning("⚠️ Base RET não localizada")
+        
+        st.markdown("---")
         def criar_gabarito():
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -89,28 +118,7 @@ with col_reset:
 
 # --- CORPO PRINCIPAL ---
 if selecao:
-    cod_cliente = selecao.split(" - ")[0].strip()
-    dados_empresa = df_clientes[df_clientes['CÓD'] == cod_cliente].iloc[0]
-    cnpj_auditado = str(dados_empresa['CNPJ']).strip()
-
-    st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b> {dados_empresa['RAZÃO SOCIAL']} | <b>CNPJ:</b> {cnpj_auditado}</div>", unsafe_allow_html=True)
-    
-    c1_stat, c2_stat = st.columns(2)
-    caminho_base = localizar_base_dados(cod_cliente)
-    
-    if caminho_base:
-        with c1_stat: st.success("✅ Base de Impostos Localizada")
-    else:
-        with c1_stat: st.warning("⚠️ Base de Impostos não localizada")
-    
-    if is_ret:
-        path_ret = f"RET/{cod_cliente}-RET_MG.xlsx"
-        if os.path.exists(path_ret):
-            with c2_stat: st.success("✅ Base RET Localizada")
-        else:
-            with c2_stat: st.warning("⚠️ Base RET não localizada")
-
-    st.markdown("### 📥 Passo 3: Central de Arquivos")
+    st.markdown("### 📥 Passo 4: Central de Arquivos")
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown("**📁 XML (ZIP)**")
@@ -129,18 +137,19 @@ if selecao:
     with col_btn:
         if st.button("🚀 INICIAR ANÁLISE", key="btn_analise"):
             if xmls and regime:
-                with st.spinner("O Sentinela está auditando os dados..."):
+                with st.spinner("Auditando dados..."):
                     try:
                         df_xe, df_xs = extrair_dados_xml_recursivo(xmls, cnpj_auditado)
                         output = io.BytesIO()
                         with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                            # Adicionado o tipo_ipi no processamento
                             gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae, as_f, ge, gs)
                         relat = output.getvalue()
-                        st.markdown("<div style='text-align: center;'><h2>✅ AUDITORIA CONCLUÍDA</h2></div>", unsafe_allow_html=True)
+                        st.markdown(f"<div style='background-color: #ffffff; border-radius: 15px; padding: 25px; border-top: 5px solid #FF6F00; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; margin-top: 20px;'><h2 style='color: #FF6F00;'>AUDITORIA CONCLUÍDA</h2></div>", unsafe_allow_html=True)
                         st.download_button("💾 BAIXAR RELATÓRIO FINAL", relat, f"Sentinela_{cod_cliente}_v2.1.xlsx", use_container_width=True)
                     except Exception as e:
                         st.error(f"Erro: {e}")
             else:
                 st.warning("⚠️ Selecione o Regime Fiscal e carregue os XMLs.")
 else:
-    st.info("👈 Utilize a barra lateral para selecionar a empresa e o regime fiscal e começar a auditoria.")
+    st.info("👈 Utilize a barra lateral para configurar a empresa e as apurações.")
