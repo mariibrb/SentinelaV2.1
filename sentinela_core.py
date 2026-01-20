@@ -1,6 +1,5 @@
 import pandas as pd
 import io, zipfile, streamlit as st, xml.etree.ElementTree as ET, re, os
-from datetime import datetime
 
 # --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
 try:
@@ -8,11 +7,11 @@ try:
     from Auditorias.audit_icms import processar_icms       
     from Auditorias.audit_ipi import processar_ipi         
     from Auditorias.audit_pis_cofins import processar_pc   
-    from Auditorias.audit_difal import processar_difal      # ABA: audit_Difal
-    from Apuracoes.apuracao_difal import gerar_resumo_uf    # ABA: DIFAL_ST_FECP
+    from Auditorias.audit_difal import processar_difal      
+    from Apuracoes.apuracao_difal import gerar_resumo_uf    
     from Gerenciais.audit_gerencial import gerar_abas_gerenciais
 except ImportError as e:
-    st.error(f"⚠️ Erro de Dependência no Core: {e}")
+    st.error(f"⚠️ Erro de Dependência: {e}")
 
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
@@ -50,12 +49,10 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
         tipo_nf = buscar_tag_recursiva('tpNF', ide)
         tipo_operacao = "SAIDA" if (cnpj_emit == cnpj_alvo and tipo_nf == '1') else "ENTRADA"
         chave = inf.attrib.get('Id', '')[3:]
-        ind_ie_dest = buscar_tag_recursiva('indIEDest', dest)
 
         for det in root.findall('.//det'):
             prod = det.find('prod'); imp = det.find('imposto')
             icms_no = det.find('.//ICMS')
-            
             v_ic_uf_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
             v_fc_uf_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
 
@@ -67,7 +64,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), "UF_DEST": buscar_tag_recursiva('UF', dest), 
                 "CFOP": buscar_tag_recursiva('CFOP', prod),
                 "NCM": tratar_ncm_texto(buscar_tag_recursiva('NCM', prod)),
-                "INDIEDEST": ind_ie_dest, "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)),
+                "INDIEDEST": buscar_tag_recursiva('indIEDest', dest), "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)),
                 "ORIGEM": buscar_tag_recursiva('orig', icms_no), 
                 "CST-ICMS": buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no),
                 "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)), "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)),
@@ -94,47 +91,25 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
         elif f.name.endswith('.zip'): ler_zip(f)
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
-    
     cols_fix = ['VAL-FCP', 'VAL-FCP-ST', 'VAL-ICMS-ST', 'VAL-DIFAL', 'VAL-FCP-DEST', 'IE_SUBST']
     for col in cols_fix:
         if col not in df.columns: df[col] = 0.0 if col != 'IE_SUBST' else ""
-            
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None, df_base_emp=None, modo_auditoria=None):
     if df_xs.empty and df_xe.empty: return
-
-    # Mapeamento de Autenticidade
-    st_map = {}
-    for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
-        try:
-            f_auth.seek(0)
-            df_a = pd.read_excel(f_auth, header=None) if f_auth.name.endswith('.xlsx') else pd.read_csv(f_auth, header=None, sep=None, engine='python')
-            df_a[0] = df_a[0].astype(str).str.replace('NFe', '').str.strip()
-            st_map.update(df_a.set_index(0)[5].to_dict())
-        except: continue
-    df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
-
-    # --- ORQUESTRAÇÃO: O CORE APENAS CHAMA, NÃO CRIA AS ABAS ---
     try: gerar_aba_resumo(writer)
     except: pass
-    
     try: gerar_abas_gerenciais(writer, ge, gs)
     except: pass
-    
     try: processar_icms(df_xs, writer, cod_cliente, df_xe)
     except: pass
-    
     try: processar_ipi(df_xs, writer, cod_cliente)
     except: pass
-    
     try: processar_pc(df_xs, writer, cod_cliente, regime)
     except: pass
-
-    # Motor 1: audit_Difal (Este motor cria a própria aba)
+    # AS DUAS ABAS DO DIFAL SEM CONFLITO
     try: processar_difal(df_xs, writer)
     except: pass
-
-    # Motor 2: DIFAL_ST_FECP (Este motor cria a própria aba)
     try: gerar_resumo_uf(df_xs, writer, df_xe)
     except: pass
