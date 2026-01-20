@@ -12,12 +12,11 @@ aplicar_estilo_sentinela()
 
 # --- FUNÇÃO PARA REINICIAR APENAS ARQUIVOS E RESULTADOS ---
 def limpar_central_arquivos():
-    # Lista de chaves que queremos limpar (Passo 5 e resultados)
-    chaves_para_limpar = ["xml_up", "ge", "ae", "gs", "as", "btn_analise", "btn_download"]
+    # Chaves específicas da Central de Arquivos para evitar conflito com a Sidebar
+    chaves_para_limpar = ["xml_up", "ge", "ae", "gs", "as", "btn_analise_final", "btn_download_final"]
     for key in chaves_para_limpar:
         if key in st.session_state:
             del st.session_state[key]
-    # O comando st.rerun() força a atualização da tela mantendo o que não foi deletado
     st.rerun()
 
 # --- FUNÇÕES DE SUPORTE ---
@@ -51,7 +50,7 @@ def localizar_base_dados(cod_cliente):
 
 df_clientes = carregar_base_clientes()
 
-# --- SIDEBAR (PAINEL DE CONTROLE - DADOS MANTIDOS NO RESTART) ---
+# --- SIDEBAR (PAINEL DE CONTROLE - DADOS PRESERVADOS) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path):
@@ -61,20 +60,20 @@ with st.sidebar:
     st.markdown("### 🏢 Passo 1: Empresa")
     if not df_clientes.empty:
         opcoes = [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_clientes.iterrows()]
-        selecao = st.selectbox("Escolha a empresa", [""] + opcoes, key="empresa_sel")
+        selecao = st.selectbox("Escolha a empresa", [""] + opcoes, key="sidebar_empresa_sel")
     else: 
         st.error("⚠️ Base de clientes não encontrada.")
         selecao = None
 
     if selecao:
         st.markdown("### ⚖️ Passo 2: Regime")
-        regime = st.selectbox("Escolha o Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="regime_sel")
+        regime = st.selectbox("Escolha o Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="sidebar_regime_sel")
         
         st.markdown("### 🏗️ Passo 3: Segmento")
-        tipo_ipi = st.selectbox("Escolha o Segmento", ["", "Comércio (Não gera IPI)", "Indústria", "Equiparado à Indústria"], index=0, key="tipo_ipi_sel")
+        tipo_ipi = st.selectbox("Escolha o Segmento", ["", "Comércio (Não gera IPI)", "Indústria", "Equiparado à Indústria"], index=0, key="sidebar_segmento_sel")
         
         st.markdown("### 🛡️ Passo 4: RET")
-        is_ret = st.toggle("Habilitar MG (RET)", value=False, key="ret_sel")
+        is_ret = st.toggle("Habilitar MG (RET)", value=False, key="sidebar_ret_toggle")
         
         # --- BLOCO DE STATUS ---
         st.markdown("---")
@@ -111,7 +110,7 @@ with st.sidebar:
                 pd.DataFrame(columns=["NCM", "CST_ESPERADA", "ALQ_INTER", "CST_PC_ESPERADA", "CST_IPI_ESPERADA", "ALQ_IPI_ESPERADA"]).to_excel(writer, sheet_name='GABARITO', index=False)
             return output.getvalue()
         
-        st.download_button("📥 Modelo Bases", criar_gabarito(), "modelo_gabarito.xlsx", use_container_width=True, type="primary")
+        st.download_button("📥 Modelo Bases", criar_gabarito(), "modelo_gabarito.xlsx", use_container_width=True, type="primary", key="sidebar_download_modelo")
 
 # --- CABEÇALHO ---
 col_titulo, col_reset = st.columns([4, 1])
@@ -119,8 +118,7 @@ with col_titulo:
     st.markdown("<div class='titulo-principal'>SENTINELA 2.1 | Análise Tributária</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with col_reset:
     st.markdown("<br>", unsafe_allow_html=True)
-    # AJUSTE: O botão agora chama a função que limpa apenas os arquivos
-    if st.button("🔄 REINICIAR ARQUIVOS", use_container_width=True):
+    if st.button("🔄 REINICIAR ARQUIVOS", use_container_width=True, key="main_reset_btn"):
         limpar_central_arquivos()
 
 # --- CORPO PRINCIPAL ---
@@ -142,7 +140,7 @@ if selecao:
     st.markdown("<br>", unsafe_allow_html=True)
     _, col_btn, _ = st.columns([1, 1, 1])
     with col_btn:
-        if st.button("🚀 INICIAR ANÁLISE", key="btn_analise"):
+        if st.button("🚀 INICIAR ANÁLISE", key="btn_analise_final"):
             if xmls and regime and tipo_ipi:
                 with st.spinner("O Sentinela está auditando os dados..."):
                     try:
@@ -152,7 +150,7 @@ if selecao:
                             gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae, as_f, ge, gs)
                         relat = output.getvalue()
                         st.markdown(f"<div style='background-color: #ffffff; border-radius: 15px; padding: 25px; border-top: 5px solid #FF6F00; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; margin-top: 20px;'><h2 style='color: #FF6F00;'>AUDITORIA CONCLUÍDA</h2></div>", unsafe_allow_html=True)
-                        st.download_button("💾 BAIXAR RELATÓRIO FINAL", relat, f"Sentinela_{cod_cliente}_v2.1.xlsx", use_container_width=True, key="btn_download")
+                        st.download_button("💾 BAIXAR RELATÓRIO FINAL", relat, f"Sentinela_{cod_cliente}_v2.1.xlsx", use_container_width=True, key="btn_download_final")
                     except Exception as e:
                         st.error(f"Erro: {e}")
             else:
