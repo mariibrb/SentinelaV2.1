@@ -10,6 +10,12 @@ st.set_page_config(page_title="Sentinela 2.1 | Auditoria Fiscal", page_icon="�
 # --- INJEÇÃO DA APARÊNCIA PREMIUM ---
 aplicar_estilo_sentinela()
 
+# --- FUNÇÃO PARA REINICIAR O APP ---
+def reiniciar_aplicacao():
+    for key in st.session_state.keys():
+        del st.session_state[key]
+    st.rerun()
+
 # --- FUNÇÕES DE SUPORTE ---
 @st.cache_data(ttl=600)
 def carregar_base_clientes():
@@ -33,12 +39,11 @@ def verificar_arquivo_github(caminho_relativo):
     repo = st.secrets.get("GITHUB_REPO")
     if not token or not repo: return False
     
-    # Criamos uma lista de possíveis caminhos para a pasta de bases
-    # Tentando com e sem acento, já que o GitHub diferencia
+    # Criamos uma lista de possibilidades para garantir que o acento não atrapalhe
     possibilidades = [
-        caminho_relativo,
-        caminho_relativo.replace("Bases_Tributárias", "Bases_Tributarias"),
-        caminho_relativo.replace("Bases_Tributárias", "bases_tributarias")
+        caminho_relativo, # Tenta com o nome original
+        caminho_relativo.replace("Bases_Tributárias", "Bases_Tributarias"), # Tenta sem acento
+        caminho_relativo.replace("Bases_Tributárias", "bases_tributarias")  # Tenta tudo minúsculo
     ]
     
     for path in possibilidades:
@@ -53,32 +58,25 @@ def verificar_arquivo_github(caminho_relativo):
 
 df_clientes = carregar_base_clientes()
 
-# --- SIDEBAR ---
-with st.sidebar:
-    logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
-    if os.path.exists(logo_path):
-        st.image(logo_path, use_container_width=True)
-    
+# --- CABEÇALHO E BOTÃO REINICIAR ---
+col_titulo, col_reset = st.columns([4, 1])
+
+with col_titulo:
+    st.markdown("<div class='titulo-principal'>SENTINELA 2.1 | Análise Tributária</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
+
+with col_reset:
     st.markdown("<br>", unsafe_allow_html=True)
-    
-    def criar_gabarito():
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            pd.DataFrame(columns=["NCM", "CST_ESPERADA", "ALQ_INTER", "CST_PC_ESPERADA", "CST_IPI_ESPERADA", "ALQ_IPI_ESPERADA"]).to_excel(writer, sheet_name='GABARITO', index=False)
-        return output.getvalue()
-    
-    st.download_button("📥 Modelo Bases Tributárias", criar_gabarito(), "modelo_gabarito.xlsx", use_container_width=True)
+    if st.button("🔄 REINICIAR TUDO", use_container_width=True):
+        reiniciar_aplicacao()
 
 # --- CORPO PRINCIPAL ---
-st.markdown("<div class='titulo-principal'>SENTINELA 2.1 | Análise Tributária</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
-
 col_a, col_b = st.columns([2, 1])
 
 with col_a:
     st.markdown("### Passo 1: Seleção da Empresa")
     if not df_clientes.empty:
         opcoes = [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_clientes.iterrows()]
-        selecao = st.selectbox("Escolha a empresa para auditar", [""] + opcoes, label_visibility="collapsed")
+        selecao = st.selectbox("Escolha a empresa para auditar", [""] + opcoes, label_visibility="collapsed", key="empresa_sel")
     else: 
         st.error("⚠️ Base de clientes não encontrada.")
         selecao = None
@@ -90,13 +88,13 @@ if selecao:
 
     with col_b:
         st.markdown("### Passo 2: Seleção de Regime")
-        regime = st.selectbox("Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], label_visibility="collapsed")
-        is_ret = st.toggle("Habilitar MG (RET)")
+        regime = st.selectbox("Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], label_visibility="collapsed", key="regime_sel")
+        is_ret = st.toggle("Habilitar MG (RET)", key="ret_sel")
 
     st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b> {dados_empresa['RAZÃO SOCIAL']} | <b>CNPJ:</b> {cnpj_auditado}</div>", unsafe_allow_html=True)
     
     c1_stat, c2_stat = st.columns(2)
-    # Procurando o arquivo específico da empresa
+    # Buscando exatamente o nome da pasta com acento que está no seu GitHub
     path_base = f"Bases_Tributárias/{cod_cliente}-Bases_Tributarias.xlsx"
     
     if verificar_arquivo_github(path_base):
@@ -131,7 +129,7 @@ if selecao:
     st.markdown("<br>", unsafe_allow_html=True)
     _, col_btn, _ = st.columns([1, 1, 1])
     with col_btn:
-        if st.button("🚀 INICIAR ANÁLISE"):
+        if st.button("🚀 INICIAR ANÁLISE", key="btn_analise"):
             if xmls and regime:
                 with st.spinner("O Sentinela 2.1 está auditando os dados..."):
                     try:
@@ -151,7 +149,7 @@ if selecao:
                             </div>
                         """, unsafe_allow_html=True)
                         st.markdown("<br>", unsafe_allow_html=True)
-                        st.download_button("💾 BAIXAR RELATÓRIO FINAL", relat, f"Sentinela_{cod_cliente}_v2.1.xlsx", use_container_width=True)
+                        st.download_button("💾 BAIXAR RELATÓRIO FINAL", relat, f"Sentinela_{cod_cliente}_v2.1.xlsx", use_container_width=True, key="btn_download")
                     except Exception as e:
                         st.error(f"Erro no processamento: {e}")
             else:
