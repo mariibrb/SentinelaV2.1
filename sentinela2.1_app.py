@@ -13,11 +13,13 @@ aplicar_estilo_sentinela()
 # --- FUNÇÕES DE SUPORTE ---
 @st.cache_data(ttl=600)
 def carregar_base_clientes():
-    # Caminhos ajustados para garantir a leitura no novo repositório
+    # Mantendo a lógica de busca múltipla para garantir que a lista de empresas funcione
     caminhos = [
         ".streamlit/Clientes Ativos.xlsx - EMPRESAS.csv", 
         ".streamlit/Clientes Ativos.xlsx",
-        "Bases_Tributárias/394-Bases_Tributarias.xlsx"
+        "streamlit/Clientes Ativos.xlsx",
+        "Bases_Tributárias/394-Bases_Tributarias.xlsx",
+        "Clientes Ativos.xlsx"
     ]
     for caminho in caminhos:
         if os.path.exists(caminho):
@@ -46,6 +48,8 @@ df_clientes = carregar_base_clientes()
 with st.sidebar:
     if os.path.exists(".streamlit/Sentinela.png"):
         st.image(".streamlit/Sentinela.png", use_container_width=True)
+    elif os.path.exists("streamlit/Sentinela.png"):
+        st.image("streamlit/Sentinela.png", use_container_width=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
     
@@ -129,7 +133,7 @@ if selecao:
                         # Criação do buffer para o Excel
                         output = io.BytesIO()
                         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                            # Chamada da função core (ajustada para os novos nomes e ordem)
+                            # Chamada da função core mantendo toda a lógica de auditoria íntegra
                             gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae, as_f, ge, gs)
                         
                         relat = output.getvalue()
@@ -139,7 +143,7 @@ if selecao:
                                 <div style="font-size: 3rem; margin-bottom: 10px;">✅</div>
                                 <h2 style="color: #008000; margin: 0; font-weight: 800;">AUDITORIA CONCLUÍDA (V2.1)</h2>
                                 <p style="color: #555; font-size: 1.1rem; margin-top: 10px;">
-                                    Relatório gerado com sucesso para <b>{dados_empresa['RAZÃO SOCIAL']}</b>.
+                                    Relatório gerado com sucesso para <b>{dados_empresa['RAZÃO SOCIAL']}</b> sem abas gerenciais.
                                 </p>
                             </div>
                         """, unsafe_allow_html=True)
