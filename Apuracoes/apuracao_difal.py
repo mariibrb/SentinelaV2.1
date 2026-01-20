@@ -23,19 +23,13 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
             'VAL-ICMS-ST': 'sum', 'VAL-DIFAL': 'sum', 'VAL-FCP-DEST': 'sum', 'VAL-FCP-ST': 'sum'
         }).reset_index().rename(columns={col_uf: 'UF_DEST'})
         
-        # Mapeamento da IE: Fundamental para a pintura laranja e abatimento
         ie_map = df_filtro[df_filtro['IE_SUBST'] != ""].groupby(col_uf)['IE_SUBST'].first().to_dict()
-        
         final = pd.merge(base, agrupado, on='UF_DEST', how='left').fillna(0)
         final['IE_SUBST'] = final['UF_DEST'].map(ie_map).fillna("")
         return final
 
-    res_s = preparar_tabela('saida')
-    res_e = preparar_tabela('entrada')
-
-    # SALDO LÍQUIDO
-    res_saldo = pd.DataFrame({'UF': UFS_BRASIL})
-    res_saldo['IE_SUBST'] = res_s['IE_SUBST']
+    res_s = preparar_tabela('saida'); res_e = preparar_tabela('entrada')
+    res_saldo = pd.DataFrame({'UF': UFS_BRASIL}); res_saldo['IE_SUBST'] = res_s['IE_SUBST']
     
     colunas = [('VAL-ICMS-ST', 'ST LIQ'), ('VAL-DIFAL', 'DIFAL LIQ'), ('VAL-FCP-DEST', 'FCP LIQ'), ('VAL-FCP-ST', 'FCPST LIQ')]
 
@@ -43,12 +37,10 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
         saldos = []
         for i in range(len(res_s)):
             tem_ie = str(res_s.iloc[i]['IE_SUBST']).strip() != ""
-            v_s = res_s.iloc[i][c_xml]
-            v_e = res_e.iloc[i][c_xml]
-            saldos.append(v_s - v_e if tem_ie else v_s) # SÓ ABATE SE TIVER IE
+            v_s = res_s.iloc[i][c_xml]; v_e = res_e.iloc[i][c_xml]
+            saldos.append(v_s - v_e if tem_ie else v_s) 
         res_saldo[c_fin] = saldos
 
-    # EXCEL E FORMATAÇÃO LARANJA
     workbook = writer.book
     worksheet = workbook.add_worksheet('DIFAL_ST_FECP')
     f_orange = workbook.add_format({'bg_color': '#FFDAB9', 'border': 1, 'num_format': '#,##0.00'})
