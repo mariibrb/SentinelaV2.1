@@ -24,7 +24,7 @@ def aplicar_estilo_sentinela():
             margin-bottom: 30px;
         }
 
-        /* Correção completa para o formato pílula em todas as camadas */
+        /* Ajuste para que toda a caixa de seleção seja pílula */
         div[data-baseweb="select"], 
         div[data-baseweb="select"] > div,
         div[data-baseweb="select"] [role="combobox"] {
@@ -32,7 +32,6 @@ def aplicar_estilo_sentinela():
             border: 1px solid #d1d1d1 !important;
         }
 
-        /* Ajuste do preenchimento interno para não cortar o texto */
         div[data-baseweb="select"] [data-testid="stSelectboxVirtualFocusContainer"] {
             padding-left: 15px !important;
         }
