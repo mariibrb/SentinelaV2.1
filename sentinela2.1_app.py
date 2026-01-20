@@ -97,7 +97,7 @@ with st.sidebar:
         
         st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
 
-# --- CABEÇALHO COM BOTÃO LIMPAR ---
+# --- CABEÇALHO ---
 c_t, c_r = st.columns([4, 1])
 with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with c_r:
@@ -119,33 +119,30 @@ if emp_sel:
             if u_xml:
                 with st.spinner("Auditando e Gerando Relatórios..."):
                     try:
-                        # Proteção contra erro de ZIP
                         u_xml_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
                         
                         if not u_xml_validos:
                             st.error("❌ Erro: Nenhum arquivo ZIP válido foi detectado.")
                         else:
-                            # Tenta localizar a base da empresa (Prioridade Máxima)
                             path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
                             df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
                             modo_auditoria = "ELITE" if df_base_emp is not None else "CEGAS"
 
-                            # Extração dos dados via Core
                             xe, xs = extrair_dados_xml_recursivo(u_xml_validos, cnpj_limpo)
                             
                             buf = io.BytesIO()
+                            # Importante: Usamos xlsxwriter para suportar as formatações do seu motor de DIFAL
                             with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
-                                # 1. Geração do Relatório Base
+                                # 1. Gera as abas principais (XML, Resumos, etc)
                                 gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, df_base_emp, modo_auditoria)
                                 
-                                # 2. Geração da Aba de DIFAL/ST/FECP com o motor de saldo
+                                # 2. Chama o seu motor personalizado (Ele criará a aba 'DIFAL_ST_FECP' do zero)
                                 gerar_resumo_uf(xs, writer, xe) 
                                 
                             st.session_state['relat_buf'] = buf.getvalue()
 
-                            # Motor do Garimpeiro para visualização e ZIPs
                             p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
-                            b_org, b_todos = io.BytesIO() , io.BytesIO()
+                            b_org, b_todos = io.BytesIO(), io.BytesIO()
                             with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
                                 for zip_file in u_xml_validos:
                                     zip_file.seek(0)
@@ -181,11 +178,12 @@ if emp_sel:
                                 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'executado': True
                             })
                             st.rerun()
-                    except Exception as e: st.error(f"Erro no Processamento: {e}")
+                    except Exception as e: 
+                        st.error(f"Erro Crítico: {e}")
 
         if st.session_state.get('executado') and st.session_state.get('relat_buf'):
             st.markdown("---")
-            st.markdown("<div style='text-align: center; padding: 15px;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
+            st.markdown("<div style='text-align: center;'><h2>✅ PROCESSAMENTO CONCLUÍDO</h2></div>", unsafe_allow_html=True)
             st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
             
             st.markdown("---")
@@ -193,7 +191,8 @@ if emp_sel:
             sc = st.session_state.get('st_counts') or {"CANCELADOS": 0, "INUTILIZADOS": 0}
             c1, c2, c3 = st.columns(3)
             c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
-            c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
+            c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0))
+            c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
 
             col_res, col_fal = st.columns(2)
             with col_res:
@@ -212,6 +211,7 @@ if emp_sel:
         st.markdown("### 📉 Módulos de Conformidade")
         sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
         
+        # Módulos mantidos conforme original para preenchimento futuro
         with sub_icms:
             st.markdown("#### 📊 Auditoria ICMS/IPI")
             c1, c2 = st.columns(2)
