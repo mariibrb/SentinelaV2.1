@@ -16,15 +16,17 @@ def aplicar_estilo_sentinela():
             margin-bottom: 5px;
         }
 
+        /* Barra com Degradê Metalizado */
         .barra-laranja {
             width: 80px;
             height: 6px;
-            background: #FF6F00;
+            background: linear-gradient(90deg, #FF8C00 0%, #FF4500 100%);
             border-radius: 10px;
             margin-bottom: 30px;
+            box-shadow: 0px 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* Ajuste para que toda a caixa de seleção seja pílula */
+        /* Input de Empresa em Formato Pílula */
         div[data-baseweb="select"], 
         div[data-baseweb="select"] > div,
         div[data-baseweb="select"] [role="combobox"] {
@@ -36,20 +38,32 @@ def aplicar_estilo_sentinela():
             padding-left: 15px !important;
         }
 
+        /* Botão com Efeito Laranja Metalizado Degradê */
+        .stButton > button, .stDownloadButton > button {
+            width: 100%;
+            background: linear-gradient(145deg, #ff8a00, #e65c00) !important;
+            color: white !important;
+            border-radius: 50px !important;
+            font-weight: 600 !important;
+            border: none !important;
+            box-shadow: 0 4px 15px rgba(230, 92, 0, 0.3), inset 0 -2px 5px rgba(0,0,0,0.2) !important;
+            transition: all 0.3s ease !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stButton > button:hover, .stDownloadButton > button:hover {
+            background: linear-gradient(145deg, #ff9d26, #ff6a00) !important;
+            box-shadow: 0 6px 20px rgba(230, 92, 0, 0.4) !important;
+            transform: translateY(-1px);
+        }
+
         .status-container {
             background-color: #f9f9f9;
             padding: 15px;
             border-radius: 10px;
             border-left: 5px solid #FF6F00;
             margin: 20px 0;
-        }
-
-        .stButton > button {
-            width: 100%;
-            background-color: #FF6F00 !important;
-            color: white !important;
-            border-radius: 8px !important;
-            font-weight: 600 !important;
         }
         </style>
     """, unsafe_allow_html=True)
