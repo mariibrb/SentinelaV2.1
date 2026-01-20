@@ -101,8 +101,11 @@ c_t, c_r = st.columns([4, 1])
 with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with c_r:
     if st.button("🔄 LIMPAR TUDO"): limpar_central()
-        # --- CONTEÚDO PRINCIPAL ---
+       # --- CONTEÚDO PRINCIPAL ---
 if emp_sel:
+    # Blindagem extra contra o texto "keyboard_double" que apareceu na imagem
+    st.markdown("<style>#keyboard_double, .st-emotion-cache-10oheav { display: none !important; }</style>", unsafe_allow_html=True)
+    
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
     with tab_xml:
