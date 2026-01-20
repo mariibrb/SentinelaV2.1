@@ -4,16 +4,17 @@ from datetime import datetime
 
 # --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
 try:
-    from audit_resumo import gerar_aba_resumo             
-    from Auditorias.audit_icms import processar_icms       
-    from Auditorias.audit_ipi import processar_ipi         
-    from Auditorias.audit_pis_cofins import processar_pc   
-    from Auditorias.audit_difal import processar_difal     
-    from Apuracoes.apuracao_difal import gerar_resumo_uf   
+    from audit_resumo import gerar_aba_resumo
+    from Auditorias.audit_icms import processar_icms
+    from Auditorias.audit_ipi import processar_ipi
+    from Auditorias.audit_pis_cofins import processar_pc
+    from Auditorias.audit_difal import processar_difal
+    from Apuracoes.apuracao_difal import gerar_resumo_uf
+    from Gerenciais.audit_gerencial import gerar_abas_gerenciais
 except ImportError as e:
-    st.error(f"⚠️ Erro de Dependência no Core: {e}")
+    st.error(f"⚠️ Erro Crítico de Dependência: {e}")
 
-# --- UTILITÁRIOS DE TRATAMENTO ---
+# --- UTILITÁRIOS ORIGINAIS ---
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -51,7 +52,6 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
         tipo_nf = buscar_tag_recursiva('tpNF', ide)
         tipo_operacao = "SAIDA" if (cnpj_emit == cnpj_alvo and tipo_nf == '1') else "ENTRADA"
         chave = inf.attrib.get('Id', '')[3:]
-        ind_ie_dest = buscar_tag_recursiva('indIEDest', dest)
 
         for det in root.findall('.//det'):
             prod = det.find('prod'); imp = det.find('imposto')
@@ -68,7 +68,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
                 "UF_DEST": buscar_tag_recursiva('UF', dest), "CFOP": buscar_tag_recursiva('CFOP', prod),
                 "NCM": tratar_ncm_texto(buscar_tag_recursiva('NCM', prod)),
-                "INDIEDEST": ind_ie_dest,
+                "INDIEDEST": buscar_tag_recursiva('indIEDest', dest),
                 "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)),
                 "ORIGEM": buscar_tag_recursiva('orig', icms_no),
                 "CST-ICMS": buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no),
@@ -77,11 +77,10 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)),
                 "BC-ICMS-ST": safe_float(buscar_tag_recursiva('vBCST', icms_no)),
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
-                "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
-                "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
+                "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
                 "CST-PIS": buscar_tag_recursiva('CST', pis_no),
                 "VLR-PIS": safe_float(buscar_tag_recursiva('vPIS', pis_no)),
                 "CST-COFINS": buscar_tag_recursiva('CST', cof_no),
@@ -93,7 +92,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
             dados_lista.append(linha)
     except: pass
 
-def extrair_dados_xml_recursivo(files, cnpj_auditado):
+def extrair_xml(files, cnpj_auditado):
     dados = []
     if not files: return pd.DataFrame(), pd.DataFrame()
     def ler_zip(zip_data):
@@ -105,41 +104,50 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
         f.seek(0)
         if f.name.endswith('.xml'): processar_conteudo_xml(f.read(), dados, cnpj_auditado)
         elif f.name.endswith('.zip'): ler_zip(f)
-    
     df = pd.DataFrame(dados)
-    # Garante que as colunas existam para os Audits não quebrarem
-    cols_fix = ['VAL-FCP', 'VAL-FCP-ST', 'VAL-ICMS-ST', 'VAL-DIFAL', 'VAL-FCP-DEST', 'BC-ICMS-ST', 'VLR-PIS', 'VLR-COFINS']
-    for col in cols_fix:
-        if col not in df.columns: df[col] = 0.0
-
     if df.empty: return pd.DataFrame(), pd.DataFrame()
+    
+    # Garantia de colunas para não quebrar os Audits
+    cols_fix = ['VAL-FCP', 'VAL-ICMS-ST', 'VAL-DIFAL', 'VAL-FCP-DEST', 'IE_SUBST']
+    for col in cols_fix:
+        if col not in df.columns: df[col] = 0.0 if col != 'IE_SUBST' else ""
+            
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERADOR DE EXCEL (O ORQUESTRADOR FINAL) ---
-def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo_auditoria=None):
+# --- ORQUESTRADOR DE ANÁLISE (O COMANDO QUE GERA O EXCEL) ---
+def gerar_analise_xml(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
     if df_xs.empty: return
-    
-    # Mapeamento de Situação das Notas
+
+    # 1. Mapeamento de Autenticidade (Situação da Nota)
     st_map = {}
     for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
         try:
             f_auth.seek(0)
-            df_a = pd.read_excel(f_auth, header=None) if f_auth.name.endswith('.xlsx') else pd.read_csv(f_auth, header=None, sep=None, engine='python')
+            if f_auth.name.endswith('.xlsx'): df_a = pd.read_excel(f_auth, header=None)
+            else: df_a = pd.read_csv(f_auth, header=None, sep=None, engine='python')
             df_a[0] = df_a[0].astype(str).str.replace('NFe', '').str.strip()
             st_map.update(df_a.set_index(0)[5].to_dict())
         except: continue
     df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
 
-    # CHAMADA DOS ESPECIALISTAS: Cada função abaixo cria sua própria aba internamente
+    # 2. Chamadas Sequenciais (Respeitando a ordem das abas)
     try: gerar_aba_resumo(writer)
     except: pass
+    
+    try: gerar_abas_gerenciais(writer, ge, gs)
+    except: pass
+
     try: processar_icms(df_xs, writer, cod_cliente, df_xe)
     except: pass
+    
     try: processar_ipi(df_xs, writer, cod_cliente)
     except: pass
+    
     try: processar_pc(df_xs, writer, cod_cliente, regime)
     except: pass
+    
     try: processar_difal(df_xs, writer)
     except: pass
+    
     try: gerar_resumo_uf(df_xs, writer, df_xe)
     except: pass
