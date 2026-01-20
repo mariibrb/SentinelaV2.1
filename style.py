@@ -18,30 +18,33 @@ def aplicar_estilo_sentinela():
 
         /* --- ESTILO DAS ABAS (TABS) --- */
         .stTabs [data-baseweb="tab-list"] {
-            gap: 10px;
+            gap: 15px;
             background-color: transparent;
         }
 
         .stTabs [data-baseweb="tab"] {
-            height: 60px;
-            background: #f0f0f0 !important; /* Cor da aba inativa */
+            height: 70px !important; /* Abas mais altas */
+            background: #f8f9fa !important;
             border-radius: 15px 15px 0px 0px !important;
-            padding: 10px 30px !important;
-            font-size: 18px !important; /* Letras maiores */
+            padding: 10px 40px !important;
+            font-size: 20px !important; /* Letras grandes para facilitar leitura */
             font-weight: 600 !important;
-            color: #666 !important;
-            transition: all 0.3s ease !important;
+            color: #888 !important;
+            border: 1px solid #eee !important;
+            transition: all 0.3s ease-in-out !important;
         }
 
-        /* ABA SELECIONADA (IDENTIFICAÇÃO VISUAL) */
+        /* IDENTIFICAÇÃO DA ABA ATIVA (LARANJA METALIZADO) */
         .stTabs [aria-selected="true"] {
             background: linear-gradient(180deg, #FF9D26 0%, #FF6F00 50%, #E65C00 100%) !important;
             color: white !important;
             font-weight: 800 !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 -4px 15px rgba(230, 92, 0, 0.2) !important;
+            box-shadow: 
+                inset 0 1px 0 rgba(255,255,255,0.4), 
+                0 -5px 15px rgba(230, 92, 0, 0.3) !important;
+            border: none !important;
         }
 
-        /* Efeito de Brilho ao passar o mouse nas abas */
         .stTabs [data-baseweb="tab"]:hover {
             filter: brightness(1.1);
             transform: translateY(-2px);
