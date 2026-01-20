@@ -28,8 +28,12 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
         final['IE_SUBST'] = final['UF_DEST'].map(ie_map).fillna("")
         return final
 
-    res_s = preparar_tabela('saida'); res_e = preparar_tabela('entrada')
-    res_saldo = pd.DataFrame({'UF': UFS_BRASIL}); res_saldo['IE_SUBST'] = res_s['IE_SUBST']
+    res_s = preparar_tabela('saida')
+    res_e = preparar_tabela('entrada')
+
+    # SALDO LÍQUIDO COM ABATIMENTO
+    res_saldo = pd.DataFrame({'UF': UFS_BRASIL})
+    res_saldo['IE_SUBST'] = res_s['IE_SUBST']
     
     colunas = [('VAL-ICMS-ST', 'ST LIQ'), ('VAL-DIFAL', 'DIFAL LIQ'), ('VAL-FCP-DEST', 'FCP LIQ'), ('VAL-FCP-ST', 'FCPST LIQ')]
 
@@ -37,15 +41,18 @@ def gerar_resumo_uf(df_saida, writer, df_entrada=None):
         saldos = []
         for i in range(len(res_s)):
             tem_ie = str(res_s.iloc[i]['IE_SUBST']).strip() != ""
-            v_s = res_s.iloc[i][c_xml]; v_e = res_e.iloc[i][c_xml]
+            v_s = res_s.iloc[i][c_xml]
+            v_e = res_e.iloc[i][c_xml]
+            # REGRA: SÓ ABATE ENTRADA SE TIVER INSCRIÇÃO (IEST)
             saldos.append(v_s - v_e if tem_ie else v_s) 
         res_saldo[c_fin] = saldos
 
+    # EXCEL COM FORMATAÇÃO LARANJA
     workbook = writer.book
     worksheet = workbook.add_worksheet('DIFAL_ST_FECP')
     f_orange = workbook.add_format({'bg_color': '#FFDAB9', 'border': 1, 'num_format': '#,##0.00'})
     f_num = workbook.add_format({'border': 1, 'num_format': '#,##0.00'})
-    f_head = workbook.add_format({'bold': True, 'bg_color': '#E0E0E0', 'border': 1})
+    f_head = workbook.add_format({'bold': True, 'bg_color': '#E0E0E0', 'border': 1, 'align': 'center'})
 
     for df_t, start_c in [(res_s, 0), (res_e, 7), (res_saldo, 14)]:
         for c_idx, col in enumerate(df_t.columns):
