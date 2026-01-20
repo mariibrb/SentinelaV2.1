@@ -67,8 +67,6 @@ def carregar_clientes():
     return pd.DataFrame()
 
 df_cli = carregar_clientes()
-v = st.session_state['v_ver']
-
 # --- SIDEBAR ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
@@ -102,97 +100,54 @@ c_t, c_r = st.columns([4, 1])
 with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with c_r:
     if st.button("🔄 LIMPAR TUDO"): limpar_central()
-import streamlit as st
-import pandas as pd
-import io
-from sentinela_core import extrair_xml, gerar_analise_xml
 
-# Configuração da Página (Estética Fofa solicitada)
-st.set_page_config(page_title="Sentinela V2.1", layout="wide", page_icon="🛡️")
+# --- UPLOAD ---
+col_u1, col_u2 = st.columns(2)
+with col_u1:
+    st.markdown("### 📂 Garimpeiro: XMLs")
+    xml_files = st.file_uploader("Arraste ZIPs ou XMLs", accept_multiple_files=True, type=['zip', 'xml'], key="up_xml")
+with col_u2:
+    st.markdown("### 📄 Relatórios Domínio")
+    ae = st.file_uploader("Relatório de Entradas (Excel/CSV)", type=['xlsx', 'csv'], key="up_ae")
+    as_f = st.file_uploader("Relatório de Saídas (Excel/CSV)", type=['xlsx', 'csv'], key="up_as")
 
-# CSS para o layout delicado e tons pastéis
-st.markdown("""
-    <style>
-    .stApp { background-color: #FFF5F7; }
-    .main { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    h1 { color: #FF69B4; font-family: 'Segoe UI'; }
-    .stButton>button { background-color: #FFB6C1; color: white; border-radius: 10px; border: none; }
-    .stButton>button:hover { background-color: #FF69B4; color: white; }
-    </style>
-    """, unsafe_allow_html=True)
-
-st.title("🛡️ Sentinela V2.1 - Auditoria Fiscal")
-
-# --- SIDEBAR: CONFIGURAÇÕES E FILTROS ---
-with st.sidebar:
-    st.header("⚙️ Configurações")
-    cnpj_auditado = st.text_input("CNPJ da Empresa Auditada", placeholder="Apenas números")
-    cod_cliente = st.text_input("Código do Cliente (Domínio)", placeholder="Ex: 001")
-    regime = st.selectbox("Regime Tributário", ["Lucro Presumido", "Lucro Real", "Simples Nacional"])
-    
-    st.divider()
-    is_ret = st.checkbox("Gerar Auditoria RET MG?")
-    
-    st.divider()
-    st.info("💡 Carregue os XMLs e os relatórios da Domínio para iniciar o Garimpeiro.")
-
-# --- ÁREA DE UPLOAD ---
-col1, col2 = st.columns(2)
-
-with col1:
-    st.subheader("📂 XMLs (Entradas e Saídas)")
-    xml_files = st.file_uploader("Arraste aqui os ZIPs ou XMLs", accept_multiple_files=True, type=['zip', 'xml'])
-
-with col2:
-    st.subheader("📄 Relatórios Domínio")
-    ae = st.file_uploader("Autorização de Entradas (Excel/CSV)", type=['xlsx', 'csv'])
-    as_f = st.file_uploader("Autorização de Saídas (Excel/CSV)", type=['xlsx', 'csv'])
-
-# --- PROCESSAMENTO ---
-if st.button("🚀 Iniciar Auditoria Completa"):
-    if not cnpj_auditado or not xml_files:
-        st.warning("⚠️ Por favor, informe o CNPJ e carregue os arquivos XML.")
+# --- EXECUÇÃO ---
+if st.button("🚀 INICIAR AUDITORIA COMPLETA", use_container_width=True):
+    if not emp_sel or not xml_files:
+        st.error("⚠️ Selecione a empresa e carregue os arquivos primeiro!")
     else:
         try:
-            with st.status("🔍 Garimpeiro em ação: Minerando arquivos...", expanded=True) as status:
-                # 1. Extração Recursiva
-                st.write("📦 Extraindo dados dos XMLs...")
-                df_xe, df_xs = extrair_xml(xml_files, cnpj_auditado)
+            with st.status("🔍 Garimpeiro em ação...", expanded=True) as status:
+                st.write("📦 Minerando XMLs e identificando pastas...")
+                df_xe, df_xs = extrair_dados_xml_recursivo(xml_files, cnpj_limpo)
                 
                 if df_xe.empty and df_xs.empty:
-                    st.error("❌ Nenhum XML válido foi processado.")
+                    st.error("❌ Nenhum dado minerado.")
                     st.stop()
                 
-                st.write(f"✅ Sucesso! Entradas: {len(df_xe)} | Saídas: {len(df_xs)}")
-                
-                # 2. Geração do Relatório Excel
-                st.write("📊 Gerando planilhas de auditoria...")
+                st.write(f"📊 Gerando Relatório Excel para {dados_e['RAZÃO SOCIAL']}...")
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                    # O Core gerencia a criação das abas e chama o Difal internamente
-                    gerar_analise_xml(
-                        df_xe, df_xs, cod_cliente, writer, regime, 
-                        is_ret, ae, as_f
+                    # O Core gerencia as abas e chama o DIFAL_ST_FECP internamente
+                    gerar_excel_final(
+                        df_xe, df_xs, cod_c, writer, reg_sel, 
+                        ret_sel, ae, as_f, df_base_emp=None, modo_auditoria="Completa"
                     )
                 
                 processed_data = output.getvalue()
-                status.update(label="✅ Auditoria Concluída!", state="complete", expanded=False)
+                status.update(label="✅ Auditoria Finalizada!", state="complete")
 
-            # --- DOWNLOAD ---
-            st.success("✨ Tudo pronto! O seu relatório de auditoria foi gerado com sucesso.")
-            
-            nome_arquivo = f"SENTINELA_V2.1_{cod_cliente}_{cnpj_auditado}.xlsx"
+            st.balloons()
             st.download_button(
-                label="📥 Baixar Relatório de Auditoria",
+                label="📥 BAIXAR RELATÓRIO DE AUDITORIA",
                 data=processed_data,
-                file_name=nome_arquivo,
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                file_name=f"SENTINELA_2.1_{cod_c}_{cnpj_limpo}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
             )
-            
         except Exception as e:
-            st.error(f"❌ Erro Crítico no Processamento: {e}")
+            st.error(f"❌ Erro Crítico: {e}")
             st.exception(e)
 
-# Mensagem de rodapé fofa
 st.markdown("---")
-st.caption("Desenvolvido com ❤️ para facilitar sua rotina fiscal.")
+st.caption("Sentinela V2.1 | Inteligência Fiscal Integrada")
