@@ -2,18 +2,16 @@ import pandas as pd
 import io, zipfile, streamlit as st, xml.etree.ElementTree as ET, re, os
 from datetime import datetime
 
-# --- IMPORTAÇÃO DOS SEUS MÓDULOS ESPECIALISTAS ---
 try:
-    from audit_resumo import gerar_aba_resumo             # Aba 1
-    from Auditorias.audit_icms import processar_icms       # Aba 2
-    from Auditorias.audit_ipi import processar_ipi         # Aba 3
-    from Auditorias.audit_pis_cofins import processar_pc   # Aba 4
-    from Auditorias.audit_difal import processar_difal     # Aba 5
-    from Apuracoes.apuracao_difal import gerar_resumo_uf   # Aba 6
+    from audit_resumo import gerar_aba_resumo             
+    from Auditorias.audit_icms import processar_icms       
+    from Auditorias.audit_ipi import processar_ipi         
+    from Auditorias.audit_pis_cofins import processar_pc   
+    from Auditorias.audit_difal import processar_difal     
+    from Apuracoes.apuracao_difal import gerar_resumo_uf   
 except ImportError as e:
-    st.error(f"⚠️ Erro ao localizar módulos de auditoria: {e}")
+    st.error(f"⚠️ Erro de Dependência: {e}")
 
-# --- UTILITÁRIOS DE CONVERSÃO E LIMPEZA ---
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -36,7 +34,6 @@ def tratar_ncm_texto(ncm):
     if pd.isna(ncm) or ncm == "": return ""
     return re.sub(r'\D', '', str(ncm)).strip()
 
-# --- MOTOR DE MINERAÇÃO (ALIMENTA TODOS OS AUDITS) ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -57,7 +54,6 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
             icms_no = det.find('.//ICMS'); ipi_no = det.find('.//IPI')
             pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
             
-            # Tags críticas capturadas uma única vez
             v_ic_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
             v_fc_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
 
@@ -75,6 +71,10 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)),
                 "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)),
                 "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)),
+                "BC-ICMS-ST": safe_float(buscar_tag_recursiva('vBCST', icms_no)),
+                "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
+                "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
+                "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
@@ -82,9 +82,6 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VLR-PIS": safe_float(buscar_tag_recursiva('vPIS', pis_no)),
                 "CST-COFINS": buscar_tag_recursiva('CST', cof_no),
                 "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no)),
-                "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
-                "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
-                "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
                 "VAL-FCP": safe_float(buscar_tag_recursiva('vFCP', imp)),
                 "VAL-DIFAL": v_ic_dest + v_fc_dest, 
                 "VAL-FCP-DEST": v_fc_dest
@@ -106,18 +103,15 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
         elif f.name.endswith('.zip'): ler_zip(f)
     
     df = pd.DataFrame(dados)
-    # BLINDAGEM: Garante que as colunas existam para os Audits não quebrarem
-    for col in ['VAL-FCP', 'VAL-FCP-ST', 'VAL-ICMS-ST', 'VAL-DIFAL', 'VAL-FCP-DEST', 'INDIEDEST']:
+    cols_fix = ['VAL-FCP', 'VAL-FCP-ST', 'VAL-ICMS-ST', 'VAL-DIFAL', 'VAL-FCP-DEST', 'BC-ICMS-ST', 'VLR-PIS', 'VLR-COFINS']
+    for col in cols_fix:
         if col not in df.columns: df[col] = 0.0
 
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERADOR DE EXCEL (O MAESTRO) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo_auditoria=None):
     if df_xs.empty: return
-
-    # Mapeamento de Situação para todos os Audits
     st_map = {}
     for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
         try:
@@ -128,22 +122,15 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         except: continue
     df_xs['Situação Nota'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada')
 
-    # CHAMADA SEQUENCIAL DOS SEUS 6 ARQUIVOS .PY
-    # (Cada um criará sua aba conforme o comando interno que você já colocou neles)
     try: gerar_aba_resumo(writer)
     except: pass
-
     try: processar_icms(df_xs, writer, cod_cliente, df_xe)
     except: pass
-
     try: processar_ipi(df_xs, writer, cod_cliente)
     except: pass
-
     try: processar_pc(df_xs, writer, cod_cliente, regime)
     except: pass
-
     try: processar_difal(df_xs, writer)
     except: pass
-
     try: gerar_resumo_uf(df_xs, writer, df_xe)
     except: pass
