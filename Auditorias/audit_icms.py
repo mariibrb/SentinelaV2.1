@@ -4,6 +4,10 @@ import streamlit as st
 import re
 
 def processar_icms(df_saidas, writer, cod_cliente, df_entradas=pd.DataFrame()):
+    """
+    Auditoria de ICMS Próprio e ST baseada em Gabarito e Regras Fiscais.
+    Gera a aba ICMS_AUDIT no Excel.
+    """
     colunas_xml_originais = list(df_saidas.columns)
     df_i = df_saidas.copy()
 
@@ -38,7 +42,6 @@ def processar_icms(df_saidas, writer, cod_cliente, df_entradas=pd.DataFrame()):
         cst_xml = str(r.get('CST-ICMS', '00')).zfill(2)
         alq_xml = float(r.get('ALQ-ICMS', 0.0))
         bc_icms_xml = float(r.get('BC-ICMS', 0.0))
-        vprod = float(r.get('VPROD', 0.0))
         vlr_icms_xml = float(r.get('VLR-ICMS', 0.0))
 
         alq_esp = None
@@ -60,20 +63,24 @@ def processar_icms(df_saidas, writer, cod_cliente, df_entradas=pd.DataFrame()):
 
         # PASSO 2: REGRAS DE ST (FALHA DE GABARITO OU CFOP)
         if alq_esp is None:
-            if cfop in ['5405', '6405', '6404', '5667'] or ncm_xml in ncms_com_st_na_compra:
+            if cfop in ['5405', '6405', '6404', '5667', '5403', '6403'] or ncm_xml in ncms_com_st_na_compra:
                 cst_esp = "60"; alq_esp = 0.0
                 fundamentacao = "Validado como ST por CFOP ou Compra."
 
-        # PASSO 3: REGRAS GERAIS
+        # PASSO 3: REGRAS GERAIS TRIBUTÁRIAS
         if alq_esp is None:
             if uf_orig == uf_dest:
                 alq_esp = 18.0
             else:
                 sul_sudeste = ['SP', 'RJ', 'MG', 'PR', 'RS', 'SC']
-                alq_esp = 7.0 if (uf_orig in sul_sudeste and uf_dest not in sul_sudeste + ['ES']) else 12.0
+                # Regra de 7% (Sul/Sudeste para Norte/Nordeste/Centro-Oeste/ES)
+                if (uf_orig in sul_sudeste and uf_dest not in sul_sudeste + ['ES']):
+                    alq_esp = 7.0
+                else:
+                    alq_esp = 12.0
             
             cst_esp = "00" if cst_esp is None else cst_esp
-            fundamentacao = "Aplicada Regra Geral."
+            fundamentacao = "Aplicada Regra Geral de Alíquotas."
 
         # --- CÁLCULOS E DIAGNÓSTICOS ---
         vlr_icms_devido = round(bc_icms_xml * (alq_esp / 100), 2)
@@ -83,12 +90,12 @@ def processar_icms(df_saidas, writer, cod_cliente, df_entradas=pd.DataFrame()):
         diag_cst = "✅ OK" if cst_xml == cst_esp else f"❌ Divergente (XML:{cst_xml}|Esp:{cst_esp})"
         
         status_base = "✅ Integral"
-        if cst_xml in ['60', '10', '70']: status_base = "✅ ST/Retido"
+        if cst_xml in ['60', '10', '70', '500']: status_base = "✅ ST/Retido"
         elif cst_xml == '20' or cst_esp == '20': status_base = "✅ Redução Base (CST 20)"
         
         return pd.Series([cst_esp, alq_esp, diag_cst, diag_alq, status_base, vlr_comp_final, fundamentacao])
 
-    # --- MONTAGEM FINAL ---
+    # --- MONTAGEM FINAL DO DATAFRAME ---
     analises_nomes = ['CST_ESPERADA', 'ALQ_ESPERADA', 'DIAG_CST', 'DIAG_ALQUOTA', 'STATUS_BASE', 'ICMS_COMPLEMENTAR', 'FUNDAMENTAÇÃO']
     df_analise = df_i.apply(audit_icms_linha, axis=1)
     df_analise.columns = analises_nomes
@@ -97,4 +104,6 @@ def processar_icms(df_saidas, writer, cod_cliente, df_entradas=pd.DataFrame()):
     cols_aut = ['Situação Nota'] if 'Situação Nota' in colunas_xml_originais else []
     
     df_final = pd.concat([df_i[cols_xml], df_i[cols_aut], df_analise], axis=1)
+
+    # --- COMANDO DE ESCRITA NO EXCEL (FUNDAMENTAL PARA A ABA APARECER) ---
     df_final.to_excel(writer, sheet_name='ICMS_AUDIT', index=False)
