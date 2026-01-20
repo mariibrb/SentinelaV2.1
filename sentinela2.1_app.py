@@ -35,7 +35,6 @@ def carregar_base_clientes():
     return pd.DataFrame()
 
 def localizar_base_dados(cod_cliente):
-    # Procura o arquivo localmente nas pastas do projeto para evitar erro de 'não localizada'
     possibilidades = [
         f"Bases_Tributárias/{cod_cliente}-Bases_Tributarias.xlsx",
         f"Bases_Tributarias/{cod_cliente}-Bases_Tributarias.xlsx",
@@ -48,31 +47,36 @@ def localizar_base_dados(cod_cliente):
 
 df_clientes = carregar_base_clientes()
 
-# --- SIDEBAR (LADO ESQUERDO) ---
+# --- SIDEBAR (CONFIGURAÇÕES - PASSO 1 E 2) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path):
         st.image(logo_path, use_container_width=True)
     
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    def criar_gabarito():
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            pd.DataFrame(columns=["NCM", "CST_ESPERADA", "ALQ_INTER", "CST_PC_ESPERADA", "CST_IPI_ESPERADA", "ALQ_IPI_ESPERADA"]).to_excel(writer, sheet_name='GABARITO', index=False)
-        return output.getvalue()
-    
-    # Botão de Modelo Laranja restaurado
-    st.download_button(
-        label="📥 Modelo Bases Tributárias", 
-        data=criar_gabarito(), 
-        file_name="modelo_gabarito.xlsx", 
-        use_container_width=True,
-        type="primary" # O tipo primary puxa a cor principal (laranja) definida no seu style.py
-    )
     st.markdown("---")
-    st.markdown("### Suporte")
-    st.info("Sentinela 2.1 - Sistema de Auditoria Interna")
+    
+    st.markdown("### 🏢 Passo 1: Empresa")
+    if not df_clientes.empty:
+        opcoes = [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_clientes.iterrows()]
+        selecao = st.selectbox("Escolha a empresa", [""] + opcoes, key="empresa_sel")
+    else: 
+        st.error("⚠️ Base de clientes não encontrada.")
+        selecao = None
+
+    if selecao:
+        st.markdown("### ⚖️ Passo 2: Regime")
+        regime = st.selectbox("Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="regime_sel")
+        is_ret = st.toggle("Habilitar MG (RET)", key="ret_sel")
+        
+        st.markdown("---")
+        # Botão de download do modelo (Degradê via CSS no Primary)
+        def criar_gabarito():
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                pd.DataFrame(columns=["NCM", "CST_ESPERADA", "ALQ_INTER", "CST_PC_ESPERADA", "CST_IPI_ESPERADA", "ALQ_IPI_ESPERADA"]).to_excel(writer, sheet_name='GABARITO', index=False)
+            return output.getvalue()
+        
+        st.download_button("📥 Modelo Bases", criar_gabarito(), "modelo_gabarito.xlsx", use_container_width=True, type="primary")
 
 # --- CABEÇALHO ---
 col_titulo, col_reset = st.columns([4, 1])
@@ -84,26 +88,10 @@ with col_reset:
         reiniciar_aplicacao()
 
 # --- CORPO PRINCIPAL ---
-col_a, col_b = st.columns([2, 1])
-
-with col_a:
-    st.markdown("### Passo 1: Seleção da Empresa")
-    if not df_clientes.empty:
-        opcoes = [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_clientes.iterrows()]
-        selecao = st.selectbox("Escolha a empresa para auditar", [""] + opcoes, label_visibility="collapsed", key="empresa_sel")
-    else: 
-        st.error("⚠️ Base de clientes não encontrada.")
-        selecao = None
-
 if selecao:
     cod_cliente = selecao.split(" - ")[0].strip()
     dados_empresa = df_clientes[df_clientes['CÓD'] == cod_cliente].iloc[0]
     cnpj_auditado = str(dados_empresa['CNPJ']).strip()
-
-    with col_b:
-        st.markdown("### Passo 2: Seleção de Regime")
-        regime = st.selectbox("Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], label_visibility="collapsed", key="regime_sel")
-        is_ret = st.toggle("Habilitar MG (RET)", key="ret_sel")
 
     st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b> {dados_empresa['RAZÃO SOCIAL']} | <b>CNPJ:</b> {cnpj_auditado}</div>", unsafe_allow_html=True)
     
@@ -113,7 +101,7 @@ if selecao:
     if caminho_base:
         with c1_stat: st.success("✅ Base de Impostos Localizada")
     else:
-        with c1_stat: st.warning("⚠️ Base de Impostos não localizada nas pastas")
+        with c1_stat: st.warning("⚠️ Base de Impostos não localizada")
     
     if is_ret:
         path_ret = f"RET/{cod_cliente}-RET_MG.xlsx"
@@ -122,7 +110,7 @@ if selecao:
         else:
             with c2_stat: st.warning("⚠️ Base RET não localizada")
 
-    st.markdown("### Passo 3: Central de Arquivos")
+    st.markdown("### 📥 Passo 3: Central de Arquivos")
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown("**📁 XML (ZIP)**")
@@ -141,16 +129,18 @@ if selecao:
     with col_btn:
         if st.button("🚀 INICIAR ANÁLISE", key="btn_analise"):
             if xmls and regime:
-                with st.spinner("Auditando dados..."):
+                with st.spinner("O Sentinela está auditando os dados..."):
                     try:
                         df_xe, df_xs = extrair_dados_xml_recursivo(xmls, cnpj_auditado)
                         output = io.BytesIO()
                         with pd.ExcelWriter(output, engine='openpyxl') as writer:
                             gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae, as_f, ge, gs)
                         relat = output.getvalue()
-                        st.markdown(f"<div style='background-color: #ffffff; border-radius: 15px; padding: 25px; border-top: 5px solid #FF6F00; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; margin-top: 20px;'><h2 style='color: #FF6F00;'>AUDITORIA CONCLUÍDA</h2></div>", unsafe_allow_html=True)
+                        st.markdown("<div style='text-align: center;'><h2>✅ AUDITORIA CONCLUÍDA</h2></div>", unsafe_allow_html=True)
                         st.download_button("💾 BAIXAR RELATÓRIO FINAL", relat, f"Sentinela_{cod_cliente}_v2.1.xlsx", use_container_width=True)
                     except Exception as e:
                         st.error(f"Erro: {e}")
             else:
-                st.warning("⚠️ Verifique os XMLs e o Regime Fiscal.")
+                st.warning("⚠️ Selecione o Regime Fiscal e carregue os XMLs.")
+else:
+    st.info("👈 Utilize a barra lateral para selecionar a empresa e o regime fiscal e começar a auditoria.")
