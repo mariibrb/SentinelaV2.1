@@ -10,10 +10,14 @@ st.set_page_config(page_title="Sentinela 2.1 | Auditoria Fiscal", page_icon="�
 # --- INJEÇÃO DA APARÊNCIA PREMIUM ---
 aplicar_estilo_sentinela()
 
-# --- FUNÇÃO PARA REINICIAR O APP ---
-def reiniciar_aplicacao():
-    for key in st.session_state.keys():
-        del st.session_state[key]
+# --- FUNÇÃO PARA REINICIAR APENAS ARQUIVOS E RESULTADOS ---
+def limpar_central_arquivos():
+    # Lista de chaves que queremos limpar (Passo 5 e resultados)
+    chaves_para_limpar = ["xml_up", "ge", "ae", "gs", "as", "btn_analise", "btn_download"]
+    for key in chaves_para_limpar:
+        if key in st.session_state:
+            del st.session_state[key]
+    # O comando st.rerun() força a atualização da tela mantendo o que não foi deletado
     st.rerun()
 
 # --- FUNÇÕES DE SUPORTE ---
@@ -47,7 +51,7 @@ def localizar_base_dados(cod_cliente):
 
 df_clientes = carregar_base_clientes()
 
-# --- SIDEBAR (PAINEL DE CONTROLE) ---
+# --- SIDEBAR (PAINEL DE CONTROLE - DADOS MANTIDOS NO RESTART) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path):
@@ -67,10 +71,10 @@ with st.sidebar:
         regime = st.selectbox("Escolha o Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="regime_sel")
         
         st.markdown("### 🏗️ Passo 3: Segmento")
-        tipo_ipi = st.selectbox("Escolha o Segmento", ["Comércio (Não gera IPI)", "Indústria", "Equiparado à Indústria"], key="tipo_ipi_sel")
+        tipo_ipi = st.selectbox("Escolha o Segmento", ["", "Comércio (Não gera IPI)", "Indústria", "Equiparado à Indústria"], index=0, key="tipo_ipi_sel")
         
-        st.markdown("### 🛡️ Passo 4: Habilitar RET")
-        is_ret = st.toggle("Habilitar MG (RET)", key="ret_sel")
+        st.markdown("### 🛡️ Passo 4: RET")
+        is_ret = st.toggle("Habilitar MG (RET)", value=False, key="ret_sel")
         
         # --- BLOCO DE STATUS ---
         st.markdown("---")
@@ -115,8 +119,9 @@ with col_titulo:
     st.markdown("<div class='titulo-principal'>SENTINELA 2.1 | Análise Tributária</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with col_reset:
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🔄 REINICIAR TUDO", use_container_width=True):
-        reiniciar_aplicacao()
+    # AJUSTE: O botão agora chama a função que limpa apenas os arquivos
+    if st.button("🔄 REINICIAR ARQUIVOS", use_container_width=True):
+        limpar_central_arquivos()
 
 # --- CORPO PRINCIPAL ---
 if selecao:
@@ -138,20 +143,19 @@ if selecao:
     _, col_btn, _ = st.columns([1, 1, 1])
     with col_btn:
         if st.button("🚀 INICIAR ANÁLISE", key="btn_analise"):
-            if xmls and regime:
+            if xmls and regime and tipo_ipi:
                 with st.spinner("O Sentinela está auditando os dados..."):
                     try:
                         df_xe, df_xs = extrair_dados_xml_recursivo(xmls, cnpj_auditado)
                         output = io.BytesIO()
                         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                            # Integridade fiscal mantida
                             gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae, as_f, ge, gs)
                         relat = output.getvalue()
                         st.markdown(f"<div style='background-color: #ffffff; border-radius: 15px; padding: 25px; border-top: 5px solid #FF6F00; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; margin-top: 20px;'><h2 style='color: #FF6F00;'>AUDITORIA CONCLUÍDA</h2></div>", unsafe_allow_html=True)
-                        st.download_button("💾 BAIXAR RELATÓRIO FINAL", relat, f"Sentinela_{cod_cliente}_v2.1.xlsx", use_container_width=True)
+                        st.download_button("💾 BAIXAR RELATÓRIO FINAL", relat, f"Sentinela_{cod_cliente}_v2.1.xlsx", use_container_width=True, key="btn_download")
                     except Exception as e:
                         st.error(f"Erro: {e}")
             else:
-                st.warning("⚠️ Selecione o Regime Fiscal e carregue os XMLs.")
+                st.warning("⚠️ Selecione o Regime Fiscal, o Segmento e carregue os XMLs.")
 else:
     st.info("👈 Utilize a barra lateral para configurar a empresa e as regras fiscais.")
