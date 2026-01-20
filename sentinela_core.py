@@ -1,21 +1,16 @@
 import pandas as pd
-import io
-import zipfile
-import streamlit as st
-import xml.etree.ElementTree as ET
-import re
-import os
-from datetime import datetime
+import io, zipfile, streamlit as st, xml.etree.ElementTree as ET, re, os
 
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
 try:
     from audit_resumo import gerar_aba_resumo
     from Auditorias.audit_icms import processar_icms
     from Auditorias.audit_ipi import processar_ipi
     from Auditorias.audit_pis_cofins import processar_pc
-    # Importação do seu módulo de apuração
+    # Importa a apuração para preencher a guia criada pelo Core
     from Apuracoes.apuracao_difal import preencher_dados_difal
 except ImportError as e:
-    st.error(f"⚠️ Erro de Dependência: {e}")
+    st.error(f"⚠️ Erro de Dependência Interna: {e}")
 
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
@@ -59,21 +54,33 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
                 "NUM_NF": buscar_tag_recursiva('nNF', ide),
                 "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
-                "CNPJ_EMIT": cnpj_emit,
-                "UF_EMIT": buscar_tag_recursiva('UF', emit),
-                "UF_DEST": buscar_tag_recursiva('UF', dest), 
-                "CFOP": buscar_tag_recursiva('CFOP', prod),
+                "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
+                "UF_DEST": buscar_tag_recursiva('UF', dest), "CFOP": buscar_tag_recursiva('CFOP', prod),
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
-                "VAL-DIFAL": v_icms_uf_dest + v_fcp_uf_dest, 
-                "VAL-FCP-DEST": v_fcp_uf_dest,
-                "VAL-FCP": safe_float(buscar_tag_recursiva('vFCP', imp))
+                "VAL-DIFAL": v_icms_uf_dest + v_fcp_uf_dest, "VAL-FCP-DEST": v_fcp_uf_dest
             }
             dados_lista.append(linha)
     except: pass
 
-def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None):
+def extrair_dados_xml_recursivo(files, cnpj_auditado):
+    dados = []
+    if not files: return pd.DataFrame(), pd.DataFrame()
+    def ler_zip(zip_data):
+        with zipfile.ZipFile(zip_data) as z:
+            for n in z.namelist():
+                if n.lower().endswith('.xml'):
+                    with z.open(n) as f: processar_conteudo_xml(f.read(), dados, cnpj_auditado)
+    for f in files:
+        f.seek(0)
+        if f.name.endswith('.xml'): processar_conteudo_xml(f.read(), dados, cnpj_auditado)
+        elif f.name.endswith('.zip'): ler_zip(f)
+    df = pd.DataFrame(dados)
+    if df.empty: return pd.DataFrame(), pd.DataFrame()
+    return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
+
+def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo_auditoria=None):
     try: gerar_aba_resumo(writer)
     except: pass
     
@@ -83,14 +90,12 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         processar_ipi(df_xs, writer, cod_cliente)
         processar_pc(df_xs, writer, cod_cliente, regime)
         
-        # --- CENTRALIZAÇÃO DA CRIAÇÃO DA GUIA NO CORE ---
+        # --- O CORE CRIA A GUIA (ÚNICO RESPONSÁVEL) ---
         workbook = writer.book
-        nome_guia = 'DIFAL_ST_FECP'
-        worksheet = workbook.add_worksheet(nome_guia)
-        writer.sheets[nome_guia] = worksheet
+        nome_aba = 'DIFAL_ST_FECP'
+        worksheet = workbook.add_worksheet(nome_aba)
+        writer.sheets[nome_aba] = worksheet
         
-        # Chama o especialista apenas para preencher a guia já criada
-        try:
-            preencher_dados_difal(df_xs, df_xe, writer, worksheet)
-        except Exception as e:
-            st.error(f"Erro ao preencher dados de Difal: {e}")
+        # Chama o preenchimento especialista
+        try: preencher_dados_difal(df_xs, df_xe, writer, worksheet)
+        except Exception as e: st.error(f"Erro no preenchimento do DIFAL: {e}")
