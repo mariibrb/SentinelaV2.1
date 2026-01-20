@@ -40,7 +40,7 @@ def localizar_base_impostos(cod_cliente):
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR (ORIGINAL) ---
+# --- SIDEBAR (IDENTIDADE E CONFIGURAÇÃO) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
@@ -98,23 +98,25 @@ if emp_sel:
 
     with tab_dominio:
         st.markdown("### 📉 Módulos de Conformidade")
-        # --- CRIAÇÃO DAS SUB-ABAS ---
         sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
         
+        # Mensagem padrão para sub-módulos em desenvolvimento
+        msg_construcao = "⚙️ **Módulo em Construção** | Este recurso está sendo preparado para integração com o Domínio Sistemas."
+
         with sub_icms:
             st.markdown("#### 📊 Auditoria ICMS/IPI")
-            st.info("Aguardando upload dos relatórios gerenciais do Domínio.")
+            st.info(msg_construcao)
             
         with sub_difal:
             st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
-            st.info("Aguardando upload dos relatórios gerenciais do Domínio.")
+            st.info(msg_construcao)
             
         with sub_ret:
-            st.markdown("#### 🏨 Auditoria RET (Regime Especial de Tributação)")
-            st.info("Aguardando upload dos relatórios gerenciais do Domínio.")
+            st.markdown("#### 🏨 Auditoria RET (Regime Especial)")
+            st.info(msg_construcao)
             
         with sub_pis:
             st.markdown("#### 💰 Auditoria PIS/Cofins")
-            st.info("Aguardando upload dos relatórios gerenciais do Domínio.")
+            st.info(msg_construcao)
 else:
     st.info("👈 Selecione a empresa na barra lateral.")
