@@ -40,7 +40,7 @@ def localizar_base_impostos(cod_cliente):
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR (MANTIDA IGUAL AO QUE VOCÊ TINHA) ---
+# --- SIDEBAR (ORIGINAL) ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
@@ -54,10 +54,23 @@ with st.sidebar:
         st.markdown("---")
         cod_c = emp_sel.split(" - ")[0].strip()
         dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
+        
+        # Cartão de Status
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}<br><b>CNPJ:</b> {dados_e['CNPJ']}</div>", unsafe_allow_html=True)
+        
+        # Localização da Base de Impostos
         c_base = localizar_base_impostos(cod_c)
         if c_base: st.success("✅ Base de Impostos Localizada")
         else: st.warning("⚠️ Base não localizada")
+        
+        # AVISO RET (MG) - RESTAURADO AQUI
+        if ret_sel:
+            path_ret = f"RET/{cod_c}-RET_MG.xlsx"
+            if os.path.exists(path_ret): 
+                st.success("✅ Base RET (MG) Localizada")
+            else: 
+                st.warning("⚠️ Base RET (MG) não localizada")
+        
         st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
 
 # --- CABEÇALHO ---
@@ -66,7 +79,7 @@ with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div cla
 with c_r:
     if st.button("🔄 LIMPAR TUDO", use_container_width=True, key=f"reset_{v}"): limpar_central()
 
-# --- CONTEÚDO ---
+# --- CONTEÚDO COM ABAS ---
 if emp_sel:
     tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
 
