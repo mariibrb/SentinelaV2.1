@@ -51,10 +51,11 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
     except: 
         return None, False
 
-# --- CONFIGURAÇÃO INICIAL ---
+# --- CONFIGURAÇÃO INICIAL E SEGURANÇA ---
 st.set_page_config(page_title="Sentinela 2.1 | Auditoria Fiscal", page_icon="🧡", layout="wide")
 aplicar_estilo_sentinela()
 
+if 'autenticado' not in st.session_state: st.session_state['autenticado'] = False
 if 'v_ver' not in st.session_state: st.session_state['v_ver'] = 0
 if 'executado' not in st.session_state: st.session_state['executado'] = False
 
@@ -62,6 +63,24 @@ def limpar_central():
     st.session_state.clear()
     st.rerun()
 
+# --- TELA DE LOGIN ---
+if not st.session_state['autenticado']:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        st.markdown("<h2 style='text-align: center;'>🔐 Acesso Restrito</h2>", unsafe_allow_html=True)
+        with st.container(border=True):
+            user = st.text_input("Usuário")
+            password = st.text_input("Senha", type="password")
+            if st.button("ENTRAR NO SISTEMA", use_container_width=True):
+                if user == "admin" and password == "admin":
+                    st.session_state['autenticado'] = True
+                    st.rerun()
+                else:
+                    st.error("Usuário ou senha inválidos.")
+    st.stop()
+
+# --- CARREGAMENTO DE DADOS (PÓS-LOGIN) ---
 @st.cache_data(ttl=600)
 def carregar_clientes():
     caminhos = [".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx", "Clientes Ativos.xlsx"]
@@ -106,13 +125,16 @@ with st.sidebar:
             if os.path.exists(path_ret): st.success("✅ Base RET (MG) Localizada")
             else: st.warning("⚠️ Base RET (MG) não localizada")
         
-        st.download_button("📥 Modelo Bases", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True, type="primary", key="f_mod")
+        # Download do modelo também protegido
+        with st.popover("📥 Modelo Bases"):
+            if st.text_input("Senha", type="password", key="p_modelo") == "admin":
+                st.download_button("Download", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
 
 # --- CABEÇALHO ---
 c_t, c_r = st.columns([4, 1])
 with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 with c_r:
-    if st.button("🔄 LIMPAR TUDO"): limpar_central()
+    if st.button("🔄 SAIR / LIMPAR"): limpar_central()
 
 # --- ÁREA CENTRAL ---
 if emp_sel:
@@ -130,23 +152,18 @@ if emp_sel:
                 with st.spinner("Auditando..."):
                     try:
                         u_xml_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
-                        
-                        # Captura Base Elite
                         path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
                         df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
                         modo_auditoria = "ELITE" if df_base_emp is not None else "CEGAS"
 
-                        # Processamento via Core
                         xe, xs = extrair_dados_xml_recursivo(u_xml_validos, cnpj_limpo)
                         
                         buf = io.BytesIO()
                         with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
-                            # Esta função já orquestra todas as abas, incluindo o DIFAL (IEST/Laranja)
                             gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, df_base_emp, modo_auditoria)
                         
                         st.session_state['relat_buf'] = buf.getvalue()
 
-                        # Lógica completa do Garimpeiro para exibição
                         p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                         b_org, b_todos = io.BytesIO(), io.BytesIO()
                         with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
@@ -184,11 +201,16 @@ if emp_sel:
                             'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'executado': True
                         })
                         st.rerun()
-                    except Exception as e: st.error(f"Erro no Processamento: {e}")
+                    except Exception as e: st.error(f"Erro: {e}")
 
     if st.session_state.get('executado'):
         st.markdown("---")
-        st.download_button("💾 BAIXAR RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
+        # PROTEÇÃO RELATÓRIO FINAL
+        with st.popover("💾 BAIXAR RELATÓRIO FINAL", use_container_width=True):
+            if st.text_input("Senha de Download", type="password", key="p_rel") == "admin":
+                st.download_button("Confirmar Download", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
+            elif st.session_state.get('p_rel'): st.error("Incorreto")
+
         st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
         sc = st.session_state.get('st_counts')
         c1, c2, c3 = st.columns(3)
@@ -206,8 +228,14 @@ if emp_sel:
 
         st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
         co, ct = st.columns(2)
-        with co: st.download_button("📂 BAIXAR ORGANIZADOS", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
-        with ct: st.download_button("📦 BAIXAR TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
+        with co:
+            with st.popover("📂 BAIXAR ORGANIZADOS", use_container_width=True):
+                if st.text_input("Senha", type="password", key="p_org") == "admin":
+                    st.download_button("Download ZIP", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+        with ct:
+            with st.popover("📦 BAIXAR TODOS XML", use_container_width=True):
+                if st.text_input("Senha", type="password", key="p_tod") == "admin":
+                    st.download_button("Download Todos", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
 
     with tab_dominio:
         st.markdown("### 📉 Módulos de Conformidade")
