@@ -78,7 +78,7 @@ def init_db():
         c.execute("""INSERT INTO usuarios 
                      (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
                      VALUES (?, ?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1, 1)""", 
-                  ('Mariana Mendes', 'mariana', email_admin, senha_mestre))
+                  ('Mariana', 'mariana', email_admin, senha_mestre))
     
     conn.commit()
     conn.close()
@@ -267,14 +267,14 @@ if not st.session_state['user_data']:
                 if st.button("SOLICITAR NOVA SENHA", use_container_width=True):
                     if email_recup:
                         enviar_email("marii.brbj@gmail.com", "SOLICITAÇÃO DE RESET", f"O e-mail {email_recup} pediu reset de senha.")
-                        st.success("Solicitação enviada! Aguarde retorno.")
+                        st.success("Solicitação enviada! Aguarde retorno no seu e-mail.")
 
     st.stop()
 
 # --- TÍTULO PRINCIPAL ---
 st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
-# --- PAINEL DE ADMINISTRAÇÃO ELITE ---
+# --- PAINEL DE ADMINISTRAÇÃO ELITE (CONTROLE DE VISIBILIDADE) ---
 modo_adm = st.session_state.get('show_adm', False)
 
 if st.session_state['user_data']['nivel'] == 'ADMIN':
@@ -310,6 +310,8 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                         enviar_email(row['email'], "SENHA RESETADA", f"Sua nova senha é: {nova_senha}\nPor favor, altere no login.")
                         st.info("Senha resetada e aviso enviado.")
 
+                    # AJUSTE: Permissão de XML incluída no ADM
+                    p_x = c3.checkbox("Audit XML", value=bool(row['perm_xml']), key=f"x_p_{idx}")
                     p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
                     p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
                     p_p = c3.checkbox("Audit PIS/COFINS", value=bool(row['perm_pis']), key=f"p_{idx}")
@@ -332,14 +334,14 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                             conn.commit(); st.rerun()
                             
                         if c4.button("💾 SALVAR ALTERAÇÕES", key=f"save_{idx}", use_container_width=True, type="primary"):
-                            conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                         (edit_nome, edit_mail, edit_user, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                            conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                         (edit_nome, edit_mail, edit_user, int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit(); st.success("Salvo!")
                     else:
                         c4.write("🛡️ Conta Mestre")
                         if c4.button("💾 ATUALIZAR PERFIL", key=f"sv_me_{idx}", use_container_width=True, type="primary"):
-                            conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                         (edit_nome, edit_mail, edit_user, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                            conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                         (edit_nome, edit_mail, edit_user, int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit()
                             st.session_state['user_data'].update({"nome": edit_nome, "usuario": edit_user, "email": edit_mail})
                             st.success("Atualizado!"); st.rerun()
@@ -393,11 +395,13 @@ with st.sidebar:
             else:
                 st.warning("🔍 Modo Cegas: Base não localizada")
                 
-            path_ret_base = f"RET/{cod_c}-RET_MG.xlsx"
-            if os.path.exists(path_ret_base):
-                st.success("💎 Modo Elite: Base RET Localizada")
-            else:
-                st.warning("🔍 Modo Cegas: Base RET não localizada")
+            # CORREÇÃO: Aviso do RET apenas se habilitado pelo flag
+            if ret_sel:
+                path_ret_base = f"RET/{cod_c}-RET_MG.xlsx"
+                if os.path.exists(path_ret_base):
+                    st.success("💎 Modo Elite: Base RET Localizada")
+                else:
+                    st.warning("🔍 Modo Cegas: Base RET não localizada")
                 
             with st.popover("📥 Modelo Bases", use_container_width=True):
                 if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
@@ -410,7 +414,7 @@ if emp_sel and not modo_adm:
     perms = st.session_state['user_data']['perms']
     abas_v = []
     
-    # Montagem dinâmica das abas conforme permissões ADM
+    # AJUSTE: Aba de XML agora respeita a permissão dinâmica
     if perms.get('xml'): abas_v.append("📂 ANÁLISE XML")
     if any([perms.get('icms'), perms.get('difal'), perms.get('ret'), perms.get('pis')]):
         abas_v.append("🏢 CONFORMIDADE DOMÍNIO")
