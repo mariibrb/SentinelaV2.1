@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- UTILITÁRIOS ---
+# --- UTILITÁRIOS ORIGINAIS ---
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -90,7 +90,7 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DO EXCEL FINAL ---
+# --- GERAÇÃO DO EXCEL FINAL (COM IMPORTAÇÃO DINÂMICA) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
     
     if not df_xs.empty:
@@ -110,38 +110,44 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
 
         df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(mapa_status).fillna('⚠️ N/Encontrada no Garimpo')
         
-        # --- BLOCO DE AUDITORIAS COM IMPORTAÇÃO DINÂMICA ---
+        # --- EXECUÇÃO DAS AUDITORIAS ---
+        
+        # 1. ICMS (Módulo Essencial)
+        try:
+            import Auditorias.audit_icms as mod_icms
+            mod_icms.processar_icms(df_xs, writer, cod_cliente, df_xe)
+        except Exception as e: st.error(f"Erro ICMS: {e}")
+
+        # 2. IPI (O que está dando erro de nome)
+        try:
+            import Auditorias.audit_ipi as mod_ipi
+            # Tenta os dois nomes mais comuns: processar_ipi ou audit_ipi
+            if hasattr(mod_ipi, 'processar_ipi'):
+                mod_ipi.processar_ipi(df_xs, writer, cod_cliente)
+            elif hasattr(mod_ipi, 'audit_ipi'):
+                mod_ipi.audit_ipi(df_xs, writer, cod_cliente)
+            else:
+                st.warning("⚠️ Módulo IPI carregado, mas a função de processamento não foi encontrada.")
+        except Exception as e: st.error(f"Erro IPI: {e}")
+
+        # 3. PIS/COFINS
+        try:
+            import Auditorias.audit_pis_cofins as mod_pc
+            mod_pc.processar_pc(df_xs, writer, cod_cliente, regime)
+        except Exception as e: st.error(f"Erro PIS/COFINS: {e}")
+
+        # 4. DIFAL
+        try:
+            import Auditorias.audit_difal as mod_difal
+            mod_difal.processar_difal(df_xs, writer)
+        except Exception as e: st.error(f"Erro DIFAL: {e}")
+
+        # 5. Outros (Resumo, Gerenciais)
         try:
             from audit_resumo import gerar_aba_resumo
             gerar_aba_resumo(writer)
-        except: pass
-
-        try:
-            from Auditorias.audit_icms import processar_icms
-            processar_icms(df_xs, writer, cod_cliente, df_xe)
-        except Exception as e: st.error(f"Erro ICMS: {e}")
-
-        try:
-            from Auditorias.audit_ipi import processar_ipi
-            processar_ipi(df_xs, writer, cod_cliente)
-        except Exception as e: st.error(f"Erro IPI: {e} (Verifique se a função 'processar_ipi' existe no arquivo)")
-
-        try:
-            from Auditorias.audit_pis_cofins import processar_pc
-            processar_pc(df_xs, writer, cod_cliente, regime)
-        except Exception as e: st.error(f"Erro PIS/COFINS: {e}")
-
-        try:
-            from Auditorias.audit_difal import processar_difal
-            processar_difal(df_xs, writer)
-        except Exception as e: st.error(f"Erro DIFAL: {e}")
-
-        try:
             from Apuracoes.apuracao_difal import gerar_resumo_uf
             gerar_resumo_uf(df_xs, writer, df_xe)
-        except: pass
-
-        try:
             from Gerenciais.audit_gerencial import gerar_abas_gerenciais
             gerar_abas_gerenciais(writer, ge, gs)
         except: pass
