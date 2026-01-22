@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
+# --- FUNÇÕES DE APOIO ---
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -24,6 +25,7 @@ def buscar_tag_recursiva(tag_alvo, no):
         if tag_nome == tag_alvo: return elemento.text if elemento.text else ""
     return ""
 
+# --- EXTRAÇÃO DE DADOS DOS XMLs ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -62,7 +64,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 
-                # Tags essenciais para Auditorias
+                # Tags essenciais para Auditorias (IPI/PIS/COFINS)
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
@@ -89,7 +91,9 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
+# --- GERAÇÃO DO EXCEL COM TODOS OS MÓDULOS ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo=None):
+    # Lazy Imports para evitar Erro Circular
     try:
         from audit_resumo import gerar_aba_resumo             
         from Auditorias.audit_icms import processar_icms       
@@ -98,25 +102,35 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         from Auditorias.audit_difal import processar_difal      
         from Apuracoes.apuracao_difal import gerar_resumo_uf
     except ImportError as e:
-        st.error(f"⚠️ Erro de Importação: {e}")
+        st.error(f"⚠️ Erro ao carregar módulos de auditoria: {e}")
         return
 
-    # --- 1. PROCESSAMENTO FISCAL ---
+    # 1. EXECUÇÃO DA SEQUÊNCIA DE AUDITORIAS
     if not df_xs.empty:
+        # Auditoria de ICMS
         processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
+        
+        # Auditoria de IPI
         try: processar_ipi(df_xs, writer, cod_cliente)
-        except: pass
+        except Exception as e: st.warning(f"Erro no IPI: {e}")
+        
+        # Auditoria de PIS/COFINS
         try: processar_pc(df_xs, writer, cod_cliente, regime)
-        except: pass
+        except Exception as e: st.warning(f"Erro no PIS/COFINS: {e}")
+        
+        # Auditoria de DIFAL (ST/FECP)
         processar_difal(df_xs, writer)
+        
+        # --- ABA DE APURAÇÃO DO DIFAL ---
         gerar_resumo_uf(df_xs, writer, df_xe)
 
-    # --- 2. GERAÇÃO DAS ABAS XML ---
+    # 2. ABA RESUMO GERAL
     try: gerar_aba_resumo(writer)
     except: pass
     
-    cols_v = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST"]
+    # 3. ABAS DE CONFERÊNCIA XML
+    cols_xml = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST"]
 
     for df_t, nome_aba in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_t.empty:
-            df_t[cols_v].to_excel(writer, sheet_name=nome_aba, index=False)
+            df_t[cols_xml].to_excel(writer, sheet_name=nome_aba, index=False)
