@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- FUNÇÕES DE LIMPEZA ---
+# --- FUNÇÕES DE APOIO ---
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -25,7 +25,7 @@ def buscar_tag_recursiva(tag_alvo, no):
         if tag_nome == tag_alvo: return elemento.text if elemento.text else ""
     return ""
 
-# --- MOTOR DE EXTRAÇÃO XML ---
+# --- EXTRAÇÃO DE TAGS (TODAS AS QUE VOCÊ PRECISA) ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -89,43 +89,36 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DAS 06 ABAS (IMPORTAÇÃO PROTEGIDA) ---
+# --- GERAÇÃO DO EXCEL (IMPORTAÇÃO PROTEGIDA) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo=None):
-    # IMPORT LOCAL: Só carrega os arquivos na hora de processar (MATA O ERRO CIRCULAR)
+    # IMPORT LOCAL: Resolvendo o conflito de importação
     try:
-        import audit_resumo
+        from audit_resumo import gerar_aba_resumo             
         from Auditorias import audit_icms, audit_ipi, audit_pis_cofins, audit_difal
         from Apuracoes import apuracao_difal
     except ImportError as e:
-        st.error(f"⚠️ Erro Crítico ao carregar módulos especialistas: {e}")
+        st.error(f"⚠️ Erro ao carregar módulos especialistas: {e}")
         return
 
-    # Ordem de execução das 6 abas
     if not df_xs.empty:
-        # 1. Auditoria ICMS
+        # Aba 1: ICMS
         audit_icms.processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
-        
-        # 2. Auditoria IPI
+        # Aba 2: IPI
         try: audit_ipi.processar_ipi(df_xs, writer, cod_cliente)
-        except Exception as e: st.warning(f"Erro na aba IPI: {e}")
-        
-        # 3. Auditoria PIS/COFINS
+        except: pass
+        # Aba 3: PIS/COFINS
         try: audit_pis_cofins.processar_pc(df_xs, writer, cod_cliente, regime)
-        except Exception as e: st.warning(f"Erro na aba PIS/COFINS: {e}")
-        
-        # 4. Auditoria DIFAL
-        try: audit_difal.processar_difal(df_xs, writer)
-        except Exception as e: st.warning(f"Erro na aba Auditoria DIFAL: {e}")
-        
-        # 5. Apuração DIFAL por UF
-        try: apuracao_difal.gerar_resumo_uf(df_xs, writer, df_xe)
-        except Exception as e: st.warning(f"Erro na aba Apuração: {e}")
+        except: pass
+        # Aba 4: DIFAL
+        audit_difal.processar_difal(df_xs, writer)
+        # Aba 5: Apuração DIFAL UF
+        apuracao_difal.gerar_resumo_uf(df_xs, writer, df_xe)
 
-    # 6. Resumo Executivo
-    try: audit_resumo.gerar_aba_resumo(writer)
+    # Aba 6: Resumo
+    try: gerar_aba_resumo(writer)
     except: pass
     
-    # Abas Extras: Dumping de conferência
+    # Abas XML
     cols_dump = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL"]
     for df_t, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_t.empty:
