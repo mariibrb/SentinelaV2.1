@@ -536,15 +536,40 @@ elif emp_sel and not modo_adm:
                                     with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"pis_e_{v}")
                                     with c3: st.file_uploader("📄 Demonstrativo PIS/COFINS", type=['xlsx'], key=f"dom_pisc_{v}")
                                     st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
+        
+        # --- RESULTADOS GARIMPEIRO (MANTIDO CONFORME SUA SOLICITAÇÃO) ---
         if st.session_state.get('executado'):
             st.markdown("---")
-            with st.popover("📥 ACESSAR DOWNLOADS SEGUROS", use_container_width=True):
-                if st.text_input("Senha", type="password", key="p_down") == "Senhaforte@123":
-                    st.download_button("💾 RELATÓRIO FINAL EXCEL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
-                    st.download_button("📂 ZIP ORGANIZADO", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+            st.write("### 📥 Área de Downloads")
+            c1, c2, c3 = st.columns(3)
+            
+            # BLOCO BOTÃO 1
+            with c1:
+                if st.button("💾 RELATÓRIO EXCEL", use_container_width=True, key="btn_d1"):
+                    st.session_state['show_p1'] = True
+                if st.session_state.get('show_p1'):
+                    if st.text_input("Senha para Relatório", type="password", key="p1") == "Senhaforte@123":
+                        st.download_button("Clique para Baixar", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
+
+            # BLOCO BOTÃO 2
+            with c2:
+                if st.button("📂 ZIP ORGANIZADO", use_container_width=True, key="btn_d2"):
+                    st.session_state['show_p2'] = True
+                if st.session_state.get('show_p2'):
+                    if st.text_input("Senha para ZIP", type="password", key="p2") == "Senhaforte@123":
+                        st.download_button("Clique para Baixar", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+
+            # BLOCO BOTÃO 3
+            with c3:
+                if st.button("📦 TODOS XMLS", use_container_width=True, key="btn_d3"):
+                    st.session_state['show_p3'] = True
+                if st.session_state.get('show_p3'):
+                    if st.text_input("Senha para Todos", type="password", key="p3") == "Senhaforte@123":
+                        st.download_button("Clique para Baixar", st.session_state['z_todos'], "todos_xmls.zip", use_container_width=True)
+
             st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
-            sc = st.session_state.get('st_counts'); c1, c2, c3 = st.columns(3)
-            c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', []))); c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
+            sc = st.session_state.get('st_counts'); d1, d2, d3 = st.columns(3)
+            d1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', []))); d2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); d3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
             cr, cf = st.columns(2)
             with cr: st.write("**Resumo por Série:**"); st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
             with cf: st.write("**Notas Faltantes:**"); st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
