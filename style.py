@@ -30,7 +30,7 @@ def aplicar_estilo_sentinela():
             text-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
         }
 
-        /* --- 3. ABAS MESTRE (SETORIZAÇÃO) --- */
+        /* --- 3. ABAS MESTRE (OS SETORES) --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         .stTabs [data-baseweb="tab-list"] { gap: 20px !important; padding: 40px 0 !important; }
 
@@ -67,32 +67,33 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- 4. 📦 O CAIXOTÃO ÚNICO (GAVETA GERAL) --- */
-        /* Esta é a regra que engloba tudo, inclusive a área de upload */
+        /* --- 4. 📦 O CAIXOTÃO BRANCO GRANDE (A GAVETA GERAL) --- */
+        
         [data-testid="stTabPanel"] {
-            background: rgba(255, 255, 255, 0.95) !important; /* Branco mais sólido para limpeza */
+            background: white !important; /* Branco sólido como você pediu */
             padding: 50px !important;
             border-radius: 0 60px 60px 60px !important;
             margin-top: -20px !important;
             box-shadow: 0 20px 80px rgba(0,0,0,0.1) !important;
             border: 4px solid transparent !important;
+            min-height: 400px !important; /* Garante que a caixa seja GRANDE */
         }
 
-        /* Borda Neon Azul Shine no XML */
+        /* Borda Neon Azul no Setor XML */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border: 5px solid #00D1FF !important;
-            border-top: 10px solid #00BFFF !important;
-            box-shadow: 0 0 30px rgba(0, 209, 255, 0.3) !important;
+            border: 4px solid #00D1FF !important;
+            border-top: 8px solid #00BFFF !important;
+            box-shadow: 0 15px 60px rgba(0, 209, 255, 0.3) !important;
         }
 
-        /* Borda Neon Rosa Shine na Conformidade */
+        /* Borda Neon Rosa na Conformidade */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border: 5px solid #FFB6C1 !important;
-            border-top: 10px solid #FF69B4 !important;
-            box-shadow: 0 0 30px rgba(255, 105, 180, 0.3) !important;
+            border: 4px solid #FFB6C1 !important;
+            border-top: 8px solid #FF69B4 !important;
+            box-shadow: 0 15px 60px rgba(255, 105, 180, 0.3) !important;
         }
 
-        /* Reset visual do uploader para ele não ter caixa própria e sim usar o caixotão */
+        /* Reset do uploader para usar o fundo do caixotão */
         [data-testid="stFileUploader"] {
             background: transparent !important;
             border: 2px dashed #D8C7B1 !important;
@@ -100,7 +101,7 @@ def aplicar_estilo_sentinela():
             border-radius: 20px !important;
         }
 
-        /* --- 5. SUB-ABAS --- */
+        /* --- 5. SUB-ABAS SETORIZADAS --- */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 65px !important;
             background: #FDFDFD !important;
