@@ -17,7 +17,7 @@ def aplicar_estilo_sentinela():
         /* RESET DO LIXO VISUAL */
         header, [data-testid="stHeader"] { display: none !important; }
 
-        /* FUNDO MOCHA MOUSSE */
+        /* FUNDO MOCHA MOUSSE PROFISSIONAL */
         .stApp { 
             background: radial-gradient(circle at top left, #FCF8F4 0%, #E8DCCB 100%) !important; 
         }
@@ -44,7 +44,7 @@ def aplicar_estilo_sentinela():
             align-items: flex-end;
         }
 
-        /* Estilo Inativo: Metal Bronzeado */
+        /* Estilo Inativo: Metal Bronzeado Mocha */
         .stTabs [data-baseweb="tab"] {
             height: 90px !important;
             background: linear-gradient(180deg, #FDFDFD 0%, #D8C7B1 100%) !important;
@@ -59,10 +59,10 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* --- 💡 SOLUÇÃO: FORÇAR COR NA ABA MÃE MESMO SEM FOCO --- */
+        /* --- 💡 FIXAÇÃO DA MÃE: FORÇANDO ROSA PINK NA CONFORMIDADE --- */
 
-        /* 🔵 FORÇAR XML AZUL (Quando selecionada) */
-        .stTabs [data-baseweb="tab"]:has(div:contains("XML"))[aria-selected="true"] {
+        /* 🔵 ABA 1 (XML): AZUL NEON QUANDO ATIVA */
+        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
@@ -71,10 +71,9 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* 💗 FORÇAR CONFORMIDADE ROSA (Sempre que o painel interno fiscal estiver aberto) */
-        /* Esta regra olha se a aba de Conformidade está selecionada OU se há sub-abas fiscais visíveis */
-        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE"))[aria-selected="true"],
-        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE")):active {
+        /* 💗 ABA 2 (CONFORMIDADE): ROSA PINK NEON QUANDO ATIVA */
+        /* Usei o seletor direto da ordem para não ter erro com o nome do texto */
+        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
@@ -83,17 +82,17 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- O INTERIOR DA CAIXA (SUB-ABAS) --- */
+        /* --- INTERIOR DA CAIXA (SUB-ABAS) --- */
         .stTabs .stTabs {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
             border-radius: 0 60px 60px 60px !important;
-            border: 4px solid #FF69B4 !important; /* CONECTA COM A MÃE ROSA */
+            border: 4px solid #FF69B4 !important; /* CONEXÃO COM A MÃE ROSA */
             margin-top: -20px !important;
-            box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3) !important;
+            box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
         }
 
-        /* Filhas menores */
+        /* Sub-abas menores */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #FDFDFD !important;
@@ -102,9 +101,10 @@ def aplicar_estilo_sentinela():
             color: #DB7093 !important;
             border: 1px solid #FFD1DC !important;
             margin-right: 5px !important;
+            transform: none !important;
         }
 
-        /* Filha Ativa (Shine Neon) */
+        /* Sub-aba Ativa (Glow Neon igual à mãe) */
         .stTabs .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFD1DC 0%, #FF69B4 100%) !important;
             color: white !important;
