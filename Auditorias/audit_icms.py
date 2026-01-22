@@ -1,100 +1,137 @@
 import pandas as pd
+import os
+import streamlit as st
+import re
 
 def processar_icms(df_xs, writer, cod_cliente, df_xe=None, df_base_emp=None, modo_auditoria="CEGAS"):
     """
-    AUDITORIA INTEGRAL DE ICMS (MODO ELITE):
-    Contém todos os diagnósticos de conferência entre XML e Base Tributária.
+    RESTAURAÇÃO SENTINELA 2.0:
+    Auditoria inteligente que cruza Base Tributária, CFOP, 
+    histórico de Entradas (ST) e Regras Interestaduais.
     """
     if df_xs.empty:
         return
 
-    audit_df = df_xs.copy()
-    
-    # Tratamento de NCM para Cruzamento
-    audit_df['NCM'] = audit_df['NCM'].astype(str).str.replace(r'\D', '', regex=True).str.strip()
+    colunas_xml_originais = list(df_xs.columns)
+    df_i = df_xs.copy()
 
-    # --- MODO ELITE: RECUPERAÇÃO DAS REGRAS DA BASE ---
+    # --- 1. PREPARAÇÃO DO GABARITO (MODO ELITE) ---
+    base_gabarito = pd.DataFrame()
     if modo_auditoria == "ELITE" and df_base_emp is not None:
-        df_base_emp['NCM'] = df_base_emp['NCM'].astype(str).str.replace(r'\D', '', regex=True).str.strip()
+        base_gabarito = df_base_emp.copy()
+        base_gabarito.columns = [str(c).strip().upper() for c in base_gabarito.columns]
+        col_ncm_gab = [c for c in base_gabarito.columns if 'NCM' in c]
+        if col_ncm_gab:
+            base_gabarito['NCM_KEY'] = base_gabarito[col_ncm_gab[0]].apply(lambda x: re.sub(r'\D', '', str(x)).strip())
+
+    # --- 2. MAPEAMENTO DE ST NAS ENTRADAS (INTELIGÊNCIA 2.0) ---
+    ncms_com_st_na_compra = []
+    if df_xe is not None and not df_xe.empty:
+        temp_xe = df_xe.copy()
+        temp_xe['NCM_LIMP'] = temp_xe['NCM'].apply(lambda x: re.sub(r'\D', '', str(x)).strip())
+        # Identifica se comprou com ST ou CST de substituição
+        mask_st = (temp_xe['VAL-ICMS-ST'] > 0) | (temp_xe['CST-ICMS'].astype(str).isin(['10', '60', '70']))
+        ncms_com_st_na_compra = temp_xe[mask_st]['NCM_LIMP'].unique().tolist()
+
+    def audit_icms_linha(r):
+        uf_orig = str(r.get('UF_EMIT', '')).strip().upper()
+        uf_dest = str(r.get('UF_DEST', '')).strip().upper()
+        cfop = str(r.get('CFOP', '')).strip()
+        ncm_xml = re.sub(r'\D', '', str(r.get('NCM', ''))).strip()
         
-        # Merge com a Base de Dados (Alíquotas e Exceções)
-        audit_df = pd.merge(
-            audit_df, 
-            df_base_emp[['NCM', 'ALQ_INTERNA', 'ALQ_EXTERNA', 'REDUCAO_BC', 'EXCECAO_NCM']], 
-            on='NCM', 
-            how='left'
-        )
-    else:
-        audit_df['ALQ_INTERNA'] = 0.0
-        audit_df['ALQ_EXTERNA'] = 0.0
-        audit_df['REDUCAO_BC'] = 0.0
-        audit_df['EXCECAO_NCM'] = "MODO CEGAS"
+        cst_xml = str(r.get('CST-ICMS', '00')).zfill(2)
+        alq_xml = float(r.get('ALQ-ICMS', 0.0))
+        bc_icms_xml = float(r.get('BC-ICMS', 0.0))
+        vlr_icms_xml = float(r.get('VLR-ICMS', 0.0))
 
-    # --- COLUNAS DE DIAGNÓSTICO (O CORAÇÃO DA AUDITORIA) ---
-    
-    # 1. Definição da Alíquota de Referência (Baseada no fluxo UF_EMIT -> UF_DEST)
-    audit_df['ALQ_REF_BASE'] = audit_df.apply(
-        lambda x: x['ALQ_INTERNA'] if x['UF_EMIT'] == x['UF_DEST'] else x['ALQ_EXTERNA'], 
-        axis=1
-    )
+        alq_esp = None
+        cst_esp = None
+        fundamentacao = ""
 
-    # 2. Diagnóstico de Base de Cálculo (Verifica se houve redução indevida)
-    audit_df['BC_ESPERADA'] = audit_df.apply(
-        lambda x: round(x['VPROD'] * (1 - (x['REDUCAO_BC'] / 100)), 2) if x['REDUCAO_BC'] > 0 else x['VPROD'],
-        axis=1
-    )
-    audit_df['DIF_BC'] = round(audit_df['BC-ICMS'] - audit_df['BC_ESPERADA'], 2)
+        # PASSO 1: BASE DE DADOS (PRIORIDADE ABSOLUTA)
+        if not base_gabarito.empty and 'NCM_KEY' in base_gabarito.columns:
+            if ncm_xml in base_gabarito['NCM_KEY'].values:
+                g = base_gabarito[base_gabarito['NCM_KEY'] == ncm_xml].iloc[0]
+                
+                # Busca ALIQ e CST (Interna ou Geral)
+                col_alq = [c for c in base_gabarito.columns if 'ALIQ' in c and ('INTERNA' in c or ' IN' in c)]
+                col_cst = [c for c in base_gabarito.columns if 'CST' in c and ('INTERNA' in c or ' IN' in c)]
+                
+                try:
+                    if col_alq: alq_esp = float(g[col_alq[0]])
+                    if col_cst: cst_esp = str(g[col_cst[0]]).strip().split('.')[0].zfill(2)
+                    fundamentacao = f"Puxado da Base de Dados (NCM {ncm_xml})."
+                except: pass
 
-    # 3. Diagnóstico de Alíquota (XML vs Base do Cliente)
-    audit_df['DIF_ALQ'] = round(audit_df['ALQ-ICMS'] - audit_df['ALQ_REF_BASE'], 2)
+        # PASSO 2: REGRAS DE ST (FALHA DE GABARITO OU CFOP)
+        if alq_esp is None or alq_esp == 0:
+            if cfop in ['5405', '6405', '6404', '5667'] or ncm_xml in ncms_com_st_na_compra:
+                cst_esp = "60"
+                alq_esp = 0.0
+                fundamentacao = "Identificado como ST (CFOP ou Histórico de Compra)."
 
-    # 4. Diagnóstico de Valor de Imposto (Cálculo Matemático)
-    audit_df['VLR_ICMS_CALC'] = audit_df.apply(
-        lambda x: round(x['BC-ICMS'] * (x['ALQ_REF_BASE'] / 100), 2) if x['ALQ_REF_BASE'] > 0 else 0.0,
-        axis=1
-    )
-    audit_df['DIF_VLR_ICMS'] = round(audit_df['VLR-ICMS'] - audit_df['VLR_ICMS_CALC'], 2)
-
-    # 5. Status Final por Critério
-    def definir_status(row):
-        if abs(row['DIF_VLR_ICMS']) > 0.01: return "🚨 ERRO VALOR"
-        if abs(row['DIF_ALQ']) > 0.01: return "⚠️ ALQ DIVERGENTE"
-        if abs(row['DIF_BC']) > 0.10: return "📉 BC DIVERGENTE"
-        return "✔️ OK"
-
-    audit_df['DIAGNOSTICO_FINAL'] = audit_df.apply(definir_status, axis=1)
-
-    # --- ESCRITA NO EXCEL COM FORMATAÇÃO ---
-    workbook = writer.book
-    worksheet = workbook.add_worksheet('AUDIT_ICMS')
-    
-    # Formatos
-    f_header = workbook.add_format({'bold': True, 'bg_color': '#FF8C00', 'font_color': 'white', 'border': 1, 'align': 'center'})
-    f_erro = workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006', 'border': 1})
-    f_aviso = workbook.add_format({'bg_color': '#FFEB9C', 'font_color': '#9C6500', 'border': 1})
-    f_ok = workbook.add_format({'bg_color': '#C6EFCE', 'font_color': '#006100', 'border': 1})
-    f_num = workbook.add_format({'num_format': '#,##0.00', 'border': 1})
-    f_text = workbook.add_format({'border': 1})
-
-    # Cabeçalhos
-    for col_num, value in enumerate(audit_df.columns.values):
-        worksheet.write(0, col_num, value, f_header)
-
-    # Escrita das linhas com lógica de cores nos diagnósticos
-    for row_num, row_data in enumerate(audit_df.values):
-        diag = audit_df.iloc[row_num]['DIAGNOSTICO_FINAL']
-        
-        for col_num, cell_value in enumerate(row_data):
-            col_name = audit_df.columns[col_num]
-            
-            # Formatação condicional na coluna de Status e Diferenças
-            if "DIAGNOSTICO" in col_name:
-                fmt = f_ok if "OK" in diag else (f_erro if "ERRO" in diag else f_aviso)
-                worksheet.write(row_num + 1, col_num, cell_value, fmt)
-            elif isinstance(cell_value, (int, float)):
-                worksheet.write(row_num + 1, col_num, cell_value, f_num)
+        # PASSO 3: REGRAS GERAIS E INTERESTADUAIS (O CORAÇÃO DO 2.0)
+        if alq_esp is None:
+            if uf_orig == uf_dest:
+                alq_esp = 18.0 # Padrão Interno
+                fundamentacao = "Alíquota Interna Padrão (Base não localizada)."
             else:
-                worksheet.write(row_num + 1, col_num, str(cell_value) if not pd.isna(cell_value) else "", f_text)
+                # Lógica Interestadual (7% ou 12%)
+                sul_sudeste = ['SP', 'RJ', 'MG', 'PR', 'RS', 'SC']
+                if (uf_orig in sul_sudeste and uf_dest not in sul_sudeste + ['ES']):
+                    alq_esp = 7.0
+                else:
+                    alq_esp = 12.0
+                fundamentacao = f"Regra Interestadual {uf_orig}->{uf_dest}."
+            
+            cst_esp = "00" if cst_esp is None else cst_esp
 
-    worksheet.set_column(0, len(audit_df.columns) - 1, 15)
-    worksheet.freeze_panes(1, 4)
+        # --- CÁLCULOS E DIAGNÓSTICOS ---
+        # Tratamento para CSTs que não tributam (060, 040, 041)
+        if cst_esp in ['60', '40', '41']:
+            alq_esp = 0.0
+
+        vlr_icms_devido = round(bc_icms_xml * (alq_esp / 100), 2)
+        # Diferença de imposto (Complementar)
+        vlr_comp_final = max(0.0, round(vlr_icms_devido - vlr_icms_xml, 2))
+
+        # Diagnósticos Visuais
+        diag_alq = "✅ OK" if abs(alq_xml - alq_esp) < 0.01 else f"❌ Erro (XML:{alq_xml}%|Esp:{alq_esp}%)"
+        diag_cst = "✅ OK" if cst_xml == cst_esp else f"❌ Divergente (XML:{cst_xml}|Esp:{cst_esp})"
+        
+        status_base = "✅ Integral"
+        if cst_xml in ['60', '10', '70']: status_base = "✅ ST/Retido"
+        elif cst_xml == '20' or cst_esp == '20': status_base = "✅ Redução Base (CST 20)"
+        
+        return pd.Series([cst_esp, alq_esp, diag_cst, diag_alq, status_base, vlr_comp_final, fundamentacao])
+
+    # --- EXECUÇÃO DA ANÁLISE ---
+    analises_nomes = ['CST_ESPERADA', 'ALQ_ESPERADA', 'DIAG_CST', 'DIAG_ALQUOTA', 'STATUS_PRODUTO', 'ICMS_A_COMPLEMENTAR', 'MOTIVO_REGRA']
+    df_analise = df_i.apply(audit_icms_linha, axis=1)
+    df_analise.columns = analises_nomes
+    
+    # Organização das Colunas para o Excel
+    df_final = pd.concat([df_i, df_analise], axis=1)
+
+    # --- ESCRITA FORMATADA ---
+    df_final.to_excel(writer, sheet_name='AUDIT_ICMS', index=False)
+    
+    # Formatação Automática de Colunas
+    workbook = writer.book
+    worksheet = writer.sheets['AUDIT_ICMS']
+    
+    f_header = workbook.add_format({'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white', 'border': 1})
+    f_erro = workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006'})
+    f_ok = workbook.add_format({'bg_color': '#C6EFCE', 'font_color': '#006100'})
+
+    # Aplica as cores de erro/ok nas colunas de diagnóstico
+    for row_num in range(1, len(df_final) + 1):
+        # Coluna DIAG_CST (ajustar índice conforme posição)
+        val_cst = df_final.iloc[row_num-1]['DIAG_CST']
+        worksheet.write(row_num, df_final.columns.get_loc('DIAG_CST'), val_cst, f_ok if "OK" in val_cst else f_erro)
+        
+        # Coluna DIAG_ALQUOTA
+        val_alq = df_final.iloc[row_num-1]['DIAG_ALQUOTA']
+        worksheet.write(row_num, df_final.columns.get_loc('DIAG_ALQUOTA'), val_alq, f_ok if "OK" in val_alq else f_erro)
+
+    worksheet.freeze_panes(1, 4) # Congela cabeçalho e primeiras colunas
