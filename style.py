@@ -14,22 +14,22 @@ def aplicar_estilo_sentinela():
             visibility: hidden !important;
         }
         
-        /* FUNDO DE ESTÚDIO LIMPO */
+        /* FUNDO AREIA QUENTE (O QUE VOCÊ APROVOU) */
         .stApp {
-            background: #FDFBF9 !important;
+            background: radial-gradient(circle at top left, #FCF8F4 0%, #F3E9DC 100%) !important;
         }
 
         .block-container { padding-top: 2.5rem !important; }
         
-        /* FONTE PRINCIPAL */
+        /* FONTE DE GRIFE */
         html, body, [class*="st-"] { 
             font-family: 'Plus Jakarta Sans', sans-serif !important; 
         }
 
-        /* --- O TÍTULO "DESIGNER" (FINO E IMPACTANTE) --- */
+        /* --- TÍTULO DESIGNER (RESTAURANDO O CARAMELO) --- */
         .titulo-principal { 
             font-family: 'Montserrat', sans-serif !important;
-            color: #3D2B1F; 
+            color: #5D3A1A; /* Volta o Mocha Mousse Profundo */
             font-size: 3.2rem; 
             font-weight: 800; 
             margin-bottom: 0px;
@@ -39,22 +39,22 @@ def aplicar_estilo_sentinela():
         }
         
         .titulo-principal span {
-            font-weight: 200 !important; /* O "2.1" fica ultra fino e elegante */
-            color: #A67B5B;
+            font-weight: 200 !important; 
+            color: #A67B5B; /* Mocha Mousse Claro */
         }
 
-        /* LINHA DE LUZ (SAI A BARRA GORDA, ENTRA A LINHA FINA) */
+        /* LINHA DE LUZ FILIFORME (PINK MARIANA) */
         .barra-marsala { 
             width: 60px; 
-            height: 3px; /* Super fina */
+            height: 3px; 
             background: #FF69B4; 
             border-radius: 50px; 
             margin-top: 10px;
             margin-bottom: 50px;
-            box-shadow: 0 0 15px rgba(255, 105, 180, 0.6); /* Brilho neon suave */
+            box-shadow: 0 0 15px rgba(255, 105, 180, 0.6);
         }
 
-        /* ABAS PÍLULA FLUTUANTES (MAIS REFINADAS) */
+        /* ABAS PÍLULA (RESTAURANDO O CARAMELO) */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         .stTabs [data-baseweb="tab-list"] {
             gap: 12px !important;
@@ -62,13 +62,13 @@ def aplicar_estilo_sentinela():
         }
 
         .stTabs [data-baseweb="tab"] {
-            height: 48px !important; /* Mais baixinha e elegante */
-            background: rgba(230, 213, 195, 0.2) !important;
+            height: 48px !important;
+            background: rgba(166, 123, 91, 0.15) !important; /* Caramelo Mocha Suave */
             border-radius: 25px !important; 
             padding: 0px 30px !important;
             font-size: 15px !important; 
             font-weight: 400 !important;
-            color: #5D4D42 !important;
+            color: #5D3A1A !important;
             border: 1px solid rgba(255, 255, 255, 0.8) !important;
             transition: all 0.4s ease !important;
         }
@@ -77,31 +77,30 @@ def aplicar_estilo_sentinela():
             transform: translateY(-2px) !important;
             background: white !important;
             color: #FF69B4 !important;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+            box-shadow: 0 10px 20px rgba(255, 105, 180, 0.2) !important;
         }
 
         .stTabs [aria-selected="true"] {
-            background: #3D2B1F !important;
+            background: #5D3A1A !important; /* Caramelo Mocha Ativo */
             color: white !important;
             font-weight: 600 !important;
-            box-shadow: 0 8px 20px rgba(61, 43, 31, 0.2) !important;
+            box-shadow: 0 8px 20px rgba(93, 58, 26, 0.2) !important;
         }
 
-        /* --- BOTÃO ADMINISTRATIVO (PINK MARIANA REFINADO) --- */
+        /* --- BOTÃO ADMINISTRATIVO (RESTABELECIDO: PINK & LETRAS MARROM) --- */
         div.stButton > button:has(div:contains("ABRIR GESTÃO ADMINISTRATIVA")) {
-            background: #FF69B4 !important;
-            color: #3D2B1F !important; 
+            background: linear-gradient(145deg, #FF69B4, #FF1493) !important;
+            color: #5D3A1A !important; /* Letras no Mocha */
             border-radius: 40px !important;
-            border: 1.5px solid #3D2B1F !important;
-            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3) !important;
-            font-weight: 700 !important;
-            height: 45px !important;
+            border: 2px solid #5D3A1A !important;
+            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4) !important;
+            font-weight: 800 !important;
         }
 
-        /* --- BOTÕES DO SISTEMA (MOCA MOUSSE SLIM) --- */
+        /* --- BOTÕES DO SISTEMA (VOLTA O CARAMELO MOCHA) --- */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
-            background: #5D3A1A !important; /* Cor sólida Mocha Mousse Nobre */
+            background: linear-gradient(145deg, #A67B5B, #5D3A1A) !important;
             color: #FFFFFF !important;
             border-radius: 40px !important;
             padding: 12px 25px !important;
@@ -110,14 +109,15 @@ def aplicar_estilo_sentinela():
             border: none !important;
             transition: all 0.3s ease !important;
             letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
 
         .stButton > button:hover, .stDownloadButton > button:hover {
-            background: #3D2B1F !important;
+            transform: scale(1.02) !important;
             box-shadow: 0 10px 25px rgba(255, 105, 180, 0.3) !important; 
         }
 
-        /* CONTAINER DE STATUS REFINADO */
+        /* CONTAINER DE STATUS */
         .status-container {
             background: white;
             padding: 20px;
