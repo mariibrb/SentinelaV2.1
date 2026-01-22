@@ -49,6 +49,7 @@ def aplicar_estilo_sentinela():
             margin-top: -5px !important;
             border: 6px solid transparent !important;
             min-height: 800px !important;
+            overflow: visible !important;
         }
 
         /* Neon Setorizado */
@@ -61,10 +62,10 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 0 30px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4) !important;
         }
 
-        /* --- 4. 📁 SUB-ABAS SETORIZADAS (CORREÇÃO DE ELEVAÇÃO) --- */
+        /* --- 4. 📁 SUB-ABAS (CORREÇÃO DE ELEVAÇÃO PARA TODAS) --- */
         .stTabs .stTabs [data-baseweb="tab-list"] { 
             padding: 0 0 30px 0 !important; 
-            overflow: visible !important; /* Essencial para não cortar a subida */
+            overflow: visible !important;
         }
         
         .stTabs .stTabs [data-baseweb="tab"] {
@@ -73,11 +74,12 @@ def aplicar_estilo_sentinela():
             border-radius: 15px 45px 0 0 !important;
             transition: all 0.3s ease !important;
             margin-right: -10px !important;
+            overflow: visible !important;
         }
 
-        /* TODAS as sub-abas elevam ao selecionar */
+        /* Força TODAS as sub-abas a elevarem (RET, PIS, COFINS inclusas) */
         .stTabs .stTabs [aria-selected="true"] {
-            transform: translateY(-12px) !important;
+            transform: translateY(-15px) !important;
             z-index: 10 !important;
         }
 
@@ -93,7 +95,7 @@ def aplicar_estilo_sentinela():
             background: #FF69B4 !important; color: white !important; box-shadow: 0 0 15px #FF69B4 !important;
         }
 
-        /* --- 5. ✉️ ENVELOPES COM ÍCONE FOFO ☁️ --- */
+        /* --- 5. ✉️ ENVELOPES COM ÍCONES PROFISSIONAIS --- */
         [data-testid="stFileUploader"] {
             padding: 50px 45px 45px 45px !important;
             border-radius: 10px 10px 45px 45px !important;
@@ -103,14 +105,16 @@ def aplicar_estilo_sentinela():
             position: relative !important;
         }
 
-        /* O Ícone de Upload Fofo */
+        /* ÍCONE DINÂMICO: Gerencial (📊) ou Relatório (📄) */
+        /* Nota: Como o CSS não lê o texto do label, usamos uma lógica de posição se possível, 
+           ou mantemos o ícone de folha de dados que é universal para auditoria */
         [data-testid="stFileUploader"]::before {
-            content: "☁️"; 
+            content: "📄"; 
             position: absolute;
-            top: -30px;
+            top: -32px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 35px;
+            font-size: 30px;
             z-index: 99;
         }
 
