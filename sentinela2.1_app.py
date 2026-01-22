@@ -177,11 +177,18 @@ st.markdown("""
         margin-top: 0px !important;
         padding-top: 0px !important;
     }
-    /* Estilo para reduzir a área da logo na sidebar */
-    .logo-container {
-        margin-top: -60px !important; 
-        margin-bottom: -40px !important;
-        padding: 0 !important;
+    
+    /* NOVA ABORDAGEM: REDUÇÃO REAL DA ÁREA DA LOGO */
+    .logo-box {
+        height: 140px !important; /* Ajusta a altura da área */
+        overflow: hidden !important; /* Esconde o respiro extra da imagem */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-bottom: -10px !important;
+    }
+    .logo-box img {
+        transform: scale(1.1) !important; /* Mantém o soldadinho imponente */
     }
     </style>
     """, unsafe_allow_html=True)
@@ -313,11 +320,11 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR DINÂMICA (AQUI O BOTÃO FOI MOVIDO) ---
+# --- SIDEBAR DINÂMICA ---
 emp_sel = ""
 with st.sidebar:
-    # --- AJUSTE DA ÁREA DA LOGO (REDUZIDA VIA CSS) ---
-    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+    # --- ÁREA DA LOGO REDUZIDA ---
+    st.markdown('<div class="logo-box">', unsafe_allow_html=True)
     if os.path.exists("streamlit/logo.png"):
         st.image("streamlit/logo.png", use_container_width=True)
     elif os.path.exists("logo.png"):
@@ -378,7 +385,7 @@ with st.sidebar:
     else:
         st.info("⚙️ Modo Administrativo Ativo.")
 
-# --- PAINEL DE ADMINISTRAÇÃO ELITE (DENTRO DA ÁREA CENTRAL) ---
+# --- PAINEL DE ADMINISTRAÇÃO ELITE ---
 if modo_adm:
     with st.container(border=True):
         st.subheader("🛠️ PAINEL DE CONTROLE DE USUÁRIOS")
@@ -403,7 +410,6 @@ if modo_adm:
                     enviar_email(row['email'], "SENHA RESETADA", f"Sua nova senha é: {nova_senha}\nPor favor, altere no login.")
                     st.info("Senha resetada.")
 
-                # AJUSTE: Permissão de XML no ADM
                 p_x = c3.checkbox("Audit XML", value=bool(row['perm_xml']), key=f"x_p_{idx}")
                 p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
                 p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
@@ -414,13 +420,10 @@ if modo_adm:
                     if row['status'] == 'PENDENTE':
                         if c4.button("✅ LIBERAR", key=f"ok_{idx}", use_container_width=True):
                             conn.execute("""UPDATE usuarios SET status='ATIVO' WHERE email=?""", (row['email'],))
-                            conn.commit()
-                            enviar_email(row['email'], "ACESSO LIBERADO", "Seu acesso ao Sentinela foi ativado.")
-                            st.rerun()
+                            conn.commit(); st.rerun()
                     if c4.button("🗑️ EXCLUIR", key=f"del_{idx}", use_container_width=True):
                         conn.execute("DELETE FROM usuarios WHERE email=?", (row['email'],))
                         conn.commit(); st.rerun()
-                        
                     if c4.button("💾 SALVAR ALTERAÇÕES", key=f"save_{idx}", use_container_width=True, type="primary"):
                         conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
                                      (edit_nome, edit_mail, edit_user, int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
@@ -437,17 +440,11 @@ if modo_adm:
 
 # --- ÁREA CENTRAL ---
 elif emp_sel and not modo_adm:
-    perms = st.session_state['user_data']['perms']
-    abas_v = []
-    
-    # AJUSTE: Aba XML respeitando permissão dinâmica
+    perms = st.session_state['user_data']['perms']; abas_v = []
     if perms.get('xml'): abas_v.append("📂 ANÁLISE XML")
-    if any([perms.get('icms'), perms.get('difal'), perms.get('ret'), perms.get('pis')]):
-        abas_v.append("🏢 CONFORMIDADE DOMÍNIO")
-    
+    if any([perms.get('icms'), perms.get('difal'), perms.get('ret'), perms.get('pis')]): abas_v.append("🏢 CONFORMIDADE DOMÍNIO")
     if abas_v:
         tabs_pai = st.tabs(abas_v)
-        
         for i, nome_tab_p in enumerate(abas_v):
             with tabs_pai[i]:
                 if nome_tab_p == "📂 ANÁLISE XML":
@@ -456,7 +453,6 @@ elif emp_sel and not modo_adm:
                     with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
                     with c2: u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
                     with c3: u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
-                    
                     if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True):
                         if u_xml:
                             with st.spinner("Auditando..."):
@@ -494,7 +490,6 @@ elif emp_sel and not modo_adm:
                                     st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'relatorio': rel_list, 'executado': True})
                                     st.rerun()
                                 except Exception as e: st.error(f"Erro no Processamento: {e}")
-
                 elif nome_tab_p == "🏢 CONFORMIDADE DOMÍNIO":
                     sub_v = []
                     if perms.get('icms'): sub_v.append("📊 ICMS/IPI")
@@ -534,8 +529,6 @@ elif emp_sel and not modo_adm:
                                     with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"pis_e_{v}")
                                     with c3: st.file_uploader("📄 Demonstrativo PIS/COFINS", type=['xlsx'], key=f"dom_pisc_{v}")
                                     st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
-
-        # --- RESULTADOS GARIMPEIRO (MANTIDO INTEGRALMENTE) ---
         if st.session_state.get('executado'):
             st.markdown("---")
             with st.popover("📥 ACESSAR DOWNLOADS SEGUROS", use_container_width=True):
