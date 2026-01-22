@@ -50,54 +50,53 @@ def aplicar_estilo_sentinela():
             box-shadow: 5px 0 10px rgba(0,0,0,0.05) !important;
         }
 
-        /* --- O BRILHO NEON (GLOW) E METALIZADO --- */
+        /* --- CORREÇÃO: CORES ETERNAS NAS ABAS MÃE --- */
 
-        /* 🔵 ANÁLISE XML: AZUL BEBÊ COM NEON INTENSO */
-        .stTabs [data-baseweb="tab"]:has(div:contains("XML"))[aria-selected="true"] {
-            background: linear-gradient(145deg, #E0FFFF 0%, #87CEEB 100%) !important; /* Efeito Metal */
+        /* 🔵 ANÁLISE XML: AZUL BEBÊ (Sempre que estiver ativa ou selecionada) */
+        .stTabs [data-baseweb="tab"]:has(div:contains("XML"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("XML")):focus {
+            background: linear-gradient(145deg, #E0FFFF 0%, #87CEEB 100%) !important;
             color: #0056b3 !important;
-            transform: translateY(-15px) !important; /* Pulo maior */
+            transform: translateY(-15px) !important;
             border: 2px solid #00D1FF !important;
-            /* EFEITO GLOW MULTICAMADAS: */
             box-shadow: 0 0 15px #00D1FF, 0 0 30px #00D1FF, 0 0 45px rgba(0, 209, 255, 0.3) !important; 
             z-index: 100 !important;
-            text-shadow: 0 0 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* 💗 FAMÍLIA FISCAL: ROSA BEBÊ COM NEON INTENSO (ICMS, PIS, RET, DIFAL) */
-        .stTabs [data-baseweb="tab"]:has(div:contains("ICMS"))[aria-selected="true"],
-        .stTabs [data-baseweb="tab"]:has(div:contains("PIS"))[aria-selected="true"],
-        .stTabs [data-baseweb="tab"]:has(div:contains("RET"))[aria-selected="true"],
-        .stTabs [data-baseweb="tab"]:has(div:contains("DIFAL"))[aria-selected="true"],
-        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE"))[aria-selected="true"] {
-            background: linear-gradient(145deg, #FFF0F5 0%, #FFB6C1 100%) !important; /* Efeito Metal Rosé */
+        /* 💗 CONFORMIDADE: ROSA BEBÊ (Sempre que estiver ativa ou selecionada) */
+        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE")):focus {
+            background: linear-gradient(145deg, #FFF0F5 0%, #FFB6C1 100%) !important;
             color: #C71585 !important;
-            transform: translateY(-15px) !important; /* Pulo maior */
+            transform: translateY(-15px) !important;
             border: 2px solid #FF69B4 !important;
-            /* EFEITO GLOW MULTICAMADAS: */
             box-shadow: 0 0 15px #FF69B4, 0 0 30px #FF69B4, 0 0 45px rgba(255, 105, 180, 0.3) !important;
             z-index: 100 !important;
-            text-shadow: 0 0 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* BRILHO NO HOVER (QUANDO PASSA O MOUSE) */
-        .stTabs [data-baseweb="tab"]:hover {
-            transform: translateY(-8px) !important;
-            filter: brightness(1.2) !important;
-            cursor: pointer !important;
-        }
-
-        /* SUB-ABAS (TAMBÉM COM BRILHO ROSA) */
+        /* --- SUB-ABAS (Sempre em Rosa Bebê e com Brilho) --- */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 48px !important;
             padding: 0px 25px !important;
             border-radius: 12px 30px 0 0 !important;
             margin-right: -10px !important;
+            background: #FFFFFF !important;
+            color: #888888 !important;
         }
         
-        .stTabs .stTabs [aria-selected="true"] {
-            background: #FFD1DC !important;
-            box-shadow: 0 0 20px #FFB6C1 !important; /* Glow nas sub-abas */
+        .stTabs .stTabs [data-baseweb="tab"][aria-selected="true"] {
+            background: linear-gradient(145deg, #FFF0F5 0%, #FFD1DC 100%) !important;
+            color: #C71585 !important;
+            transform: translateY(-5px) !important;
+            box-shadow: 0 0 20px #FFB6C1 !important; /* Brilho rosa nas sub-abas */
+            border-top: 2px solid #FF69B4 !important;
+        }
+
+        /* BRILHO NO HOVER (QUANDO PASSA O MOUSE) */
+        .stTabs [data-baseweb="tab"]:hover {
+            transform: translateY(-8px) !important;
+            filter: brightness(1.1) !important;
+            cursor: pointer !important;
         }
 
         /* BOTÃO ADM COM BRILHO PULSANTE */
