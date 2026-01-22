@@ -6,7 +6,18 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- UTILITÁRIOS ORIGINAIS ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (VOLTANDO AO SEU PADRÃO ORIGINAL) ---
+try:
+    from audit_resumo import gerar_aba_resumo
+    from Auditorias.audit_icms import processar_icms
+    from Auditorias.audit_ipi import processar_ipi
+    from Auditorias.audit_pis_cofins import processar_pc
+    from Auditorias.audit_difal import processar_difal
+    from Apuracoes.apuracao_difal import gerar_resumo_uf
+    from Gerenciais.audit_gerencial import gerar_abas_gerenciais
+except ImportError as e:
+    st.error(f"⚠️ Erro de Dependência: {e}")
+
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -46,9 +57,9 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
         chave = inf.attrib.get('Id', '')[3:]
 
         for det in root.findall('.//det'):
-            prod = det.find('prod'); imp = det.find('imposto')
-            icms_no = det.find('.//ICMS')
+            prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
             
+            # Tags para DIFAL e FCP
             v_icms_uf_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
             v_fcp_uf_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
 
@@ -60,7 +71,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "CNPJ_EMIT": cnpj_emit,                        # 5
                 "UF_EMIT": buscar_tag_recursiva('UF', emit),   # 6
                 "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), # 7
-                "IE_DEST": buscar_tag_recursiva('IE', dest),   # 8
+                "IE_DEST": buscar_tag_recursiva('IE', dest),   # 8 (IE ACRESCENTADA AQUI)
                 "UF_DEST": buscar_tag_recursiva('UF', dest),   # 9
                 "CFOP": buscar_tag_recursiva('CFOP', prod),    # 10
                 "NCM": tratar_ncm_texto(buscar_tag_recursiva('NCM', prod)), # 11
@@ -74,7 +85,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-DIFAL": v_icms_uf_dest + v_fcp_uf_dest,    # 19
                 "VAL-FCP-DEST": v_fcp_uf_dest,                  # 20
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),    # 21
-                "Status": "AGUARDANDO"                          # 22
+                "Status": "A PROCESSAR"                         # 22 (Para merge)
             }
             dados_lista.append(linha)
     except: pass
@@ -94,38 +105,24 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DO EXCEL FINAL (AUDITORIA MESMO SEM IMPOSTO NO XML) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
-    # Importação interna para blindar contra erros de ciclo
-    try:
-        from audit_resumo import gerar_aba_resumo
-        from Auditorias.audit_icms import processar_icms
-        from Auditorias.audit_ipi import processar_ipi
-        from Auditorias.audit_pis_cofins import processar_pc
-        from Auditorias.audit_difal import processar_difal
-        from Apuracoes.apuracao_difal import gerar_resumo_uf
-        from Gerenciais.audit_gerencial import gerar_abas_gerenciais
-    except ImportError as e:
-        st.error(f"⚠️ Erro ao carregar módulos especialistas: {e}")
-        return
-
     try: gerar_aba_resumo(writer)
     except: pass
     
     if not df_xs.empty:
-        # CRUZAMENTO COM GARIMPO
-        st_map = {}
-        for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
+        # CRUZAMENTO COM GARIMPO (AUTENTICIDADE)
+        mapa_status = {}
+        for arquivo_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
             try:
-                f_auth.seek(0)
-                df_a = pd.read_excel(f_auth, header=None) if f_auth.name.endswith('.xlsx') else pd.read_csv(f_auth, header=None, sep=None, engine='python')
-                df_a[0] = df_a[0].astype(str).str.replace('NFe', '').str.strip()
-                st_map.update(df_a.set_index(0)[5].to_dict())
+                arquivo_auth.seek(0)
+                df_auth = pd.read_excel(arquivo_auth, header=None) if arquivo_auth.name.endswith('.xlsx') else pd.read_csv(arquivo_auth, header=None, sep=None, engine='python')
+                df_auth[0] = df_auth[0].astype(str).str.replace('NFe', '').str.strip()
+                mapa_status.update(df_auth.set_index(0)[5].to_dict())
             except: continue
 
-        df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada no Garimpo')
+        df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(mapa_status).fillna('⚠️ N/Encontrada no Garimpo')
         
-        # Chamada das Auditorias - O motor de IPI vai analisar a OMISSÃO se o XML estiver zerado
+        # Chamada dos módulos especialistas
         processar_icms(df_xs, writer, cod_cliente, df_xe)
         processar_ipi(df_xs, writer, cod_cliente)
         processar_pc(df_xs, writer, cod_cliente, regime)
