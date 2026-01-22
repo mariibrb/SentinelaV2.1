@@ -55,7 +55,7 @@ def init_db():
     c.execute("SELECT * FROM usuarios WHERE email=?", (email_admin,))
     if not c.fetchone():
         c.execute("""INSERT INTO usuarios 
-                     (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
+                     (nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
                      VALUES (?, ?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1, 1)""", 
                   ('Mariana Mendes', 'mariana', email_admin, nova_senha_hash))
     else:
@@ -158,9 +158,18 @@ st.markdown("""
     .stAppHeader {display: none !important;}
     header {visibility: hidden !important;}
     footer {visibility: hidden !important;}
+    
+    /* Remove os botões flutuantes invisíveis do topo */
     .st-emotion-cache-h5rgaw, .st-emotion-cache-18ni7ap, .st-emotion-cache-12fmjuu {display: none !important;}
+    
+    /* Ajusta o espaçamento para o título SENTINELA não ficar colado no topo */
     .block-container {padding-top: 1rem !important;}
-    .titulo-principal { margin-top: 0px !important; padding-top: 0px !important; }
+    
+    /* Garante que o título laranja seja a primeira coisa visual */
+    .titulo-principal {
+        margin-top: 0px !important;
+        padding-top: 0px !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -240,7 +249,7 @@ if not st.session_state['user_data']:
                                          (n_nome, n_user, n_email, hash_senha(n_pass)))
                             conn.commit()
                             conn.close()
-                            st.success("Solicitação enviada!")
+                            st.success("Solicitação enviada! Você será notificado após a análise.")
                         except Exception:
                             st.error("Este e-mail ou usuário já está cadastrado.")
                     else:
@@ -254,6 +263,7 @@ st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-
 modo_adm = st.session_state.get('show_adm', False)
 
 if st.session_state['user_data']['nivel'] == 'ADMIN':
+    # Botão para alternar entre ADM e Auditoria
     if not modo_adm:
         if st.button("🛠️ ABRIR GESTÃO ADMINISTRATIVA", use_container_width=True):
             st.session_state['show_adm'] = True
@@ -274,6 +284,7 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                 with st.container(border=True):
                     c1, c2, c3, c4 = st.columns([2.5, 1.5, 3, 2])
                     
+                    # Edição de Cadastro - AGORA COM USUARIO
                     edit_nome = c1.text_input("Nome Completo", value=row['nome'], key=f"n_{idx}")
                     edit_user = c1.text_input("Usuário Login", value=row['usuario'], key=f"u_{idx}")
                     edit_mail = c2.text_input("E-mail", value=row['email'], key=f"m_{idx}")
@@ -285,17 +296,16 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                         conn.commit()
                         st.info("Senha resetada para: 123456")
 
-                    p_x = c3.checkbox("Análise XML", value=bool(row['perm_xml']), key=f"px_{idx}")
-                    p_i = c3.checkbox("Audit ICMS", value=bool(row['perm_icms']), key=f"i_{idx}")
-                    p_d = c3.checkbox("Audit DIFAL", value=bool(row['perm_difal']), key=f"d_{idx}")
-                    p_p = c3.checkbox("Audit PIS", value=bool(row['perm_pis']), key=f"p_{idx}")
+                    p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
+                    p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
+                    p_p = c3.checkbox("Audit PIS/COFINS", value=bool(row['perm_pis']), key=f"p_{idx}")
                     p_r = c3.checkbox("Audit RET", value=bool(row['perm_ret']), key=f"r_{idx}")
 
                     if not is_me:
                         if row['status'] == 'PENDENTE':
                             if c4.button("✅ LIBERAR", key=f"ok_{idx}", use_container_width=True):
-                                conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, status='ATIVO', perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                             (edit_nome, edit_user, edit_mail, int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                                conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, status='ATIVO', perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                             (edit_nome, edit_user, edit_mail, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                                 conn.commit(); st.rerun()
                         else:
                             if c4.button("⛔ BLOQUEAR", key=f"bk_{idx}", use_container_width=True):
@@ -307,14 +317,14 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                             conn.commit(); st.rerun()
                             
                         if c4.button("💾 SALVAR ALTERAÇÕES", key=f"save_{idx}", use_container_width=True, type="primary"):
-                            conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                         (edit_nome, edit_user, edit_mail, int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                            conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                         (edit_nome, edit_user, edit_mail, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit(); st.success("Salvo!")
                     else:
                         c4.write("🛡️ Conta Mestre")
                         if c4.button("💾 ATUALIZAR PERFIL", key=f"sv_me_{idx}", use_container_width=True, type="primary"):
-                            conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                         (edit_nome, edit_user, edit_mail, int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                            conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                         (edit_nome, edit_user, edit_mail, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit()
                             st.session_state['user_data'].update({"nome": edit_nome, "usuario": edit_user, "email": edit_mail})
                             st.success("Atualizado!"); st.rerun()
@@ -323,7 +333,7 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
 # --- CARREGAMENTO DE CLIENTES ---
 @st.cache_data(ttl=600)
 def carregar_clientes():
-    p_lista = ["Clientes Ativos.xlsx", ".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx", "Bases_Tributarias/Clientes Ativos.xlsx"]
+    p_lista = ["Clientes Ativos.xlsx", ".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx"]
     for p in p_lista:
         if os.path.exists(p):
             try:
@@ -337,13 +347,13 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR DINÂMICA (COM CORREÇÃO DOS AVISOS GITHUB/RECURSIVO) ---
+# --- SIDEBAR DINÂMICA (SOMENTE AJUSTE DO AVISO RET) ---
 emp_sel = ""
 with st.sidebar:
     if os.path.exists(".streamlit/Sentinela.png"):
         st.image(".streamlit/Sentinela.png", use_container_width=True)
     st.markdown("---")
-    st.write(f"👋 Olá, **{st.session_state['user_data']['nome']}**")
+    st.write(f"👤 Olá, **{st.session_state['user_data']['nome']}**")
     if st.button("🚪 SAIR DO SISTEMA", use_container_width=True):
         st.session_state.clear()
         st.rerun()
@@ -362,36 +372,26 @@ with st.sidebar:
             cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
             st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}</div>", unsafe_allow_html=True)
             
-            # --- LÓGICA DE VERIFICAÇÃO DE ARQUIVOS (CORRIGIDA PARA ENXERGAR O GITHUB) ---
-            # Procuramos em múltiplos locais comuns de sincronização
-            locais_busca = ["Bases_Tributarias", ".", ".streamlit", "Bases"]
-            
-            path_base_encontrado = False
-            path_ret_encontrado = False
-            
-            for local in locais_busca:
-                p_base = f"{local}/{cod_c}-Bases_Tributarias.xlsx"
-                p_ret = f"{local}/{cod_c}-RET.xlsx"
-                if os.path.exists(p_base): path_base_encontrado = p_base
-                if os.path.exists(p_ret): path_ret_encontrado = p_ret
-
-            # Aviso 1: Bases de Impostos
-            if path_base_encontrado: 
-                st.success("💎 Bases de Impostos Localizada")
-            else: 
-                st.warning("🔍 Bases de Impostos não localizada")
-                
-            # Aviso 2: Base RET (RESTAURADO)
-            if path_ret_encontrado:
-                st.success("💎 Base RET Localizada")
+            # --- VERIFICAÇÃO DOS AVISOS NO SIDEBAR ---
+            # 1. Base de Impostos
+            path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
+            if os.path.exists(path_base):
+                st.success("💎 Modo Elite: Base Localizada")
             else:
-                st.warning("🔍 Base RET não localizada")
-            
+                st.warning("🔍 Modo Cegas: Base não localizada")
+                
+            # 2. Base RET (AJUSTADO CONFORME VOCÊ PEDIU)
+            path_ret_base = f"RET/{cod_c}-RET_MG.xlsx"
+            if os.path.exists(path_ret_base):
+                st.success("💎 Modo Elite: Base RET Localizada")
+            else:
+                st.warning("🔍 Modo Cegas: Base RET não localizada")
+                
             with st.popover("📥 Modelo Bases", use_container_width=True):
                 if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
                     st.download_button("Baixar Modelo", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
     else:
-        st.info("⚙️ Modo Administrativo Ativo.\nClique em 'FECHAR PAINEL ADM' para voltar à auditoria.")
+        st.info("⚙️ Modo Administrativo Ativo.\nClique em 'FECHAR PAINEL ADM' no centro da tela para voltar à auditoria.")
 
 # --- ÁREA CENTRAL (RESPEITANDO PERMISSÕES DINÂMICAS) ---
 if emp_sel and not modo_adm:
@@ -408,7 +408,6 @@ if emp_sel and not modo_adm:
         
         for i, nome_tab_p in enumerate(abas_v):
             with tabs_pai[i]:
-                # --- ABA 1: GARIMPEIRO ---
                 if nome_tab_p == "📂 ANÁLISE XML":
                     st.markdown("### 📥 Central de Importação e Garimpo")
                     c1, c2, c3 = st.columns(3)
@@ -421,8 +420,7 @@ if emp_sel and not modo_adm:
                             with st.spinner("Auditando..."):
                                 try:
                                     u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
-                                    # Usa o path base encontrado na sidebar
-                                    df_base_emp = pd.read_excel(path_base_encontrado) if path_base_encontrado else None
+                                    df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
                                     xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
                                     
                                     buf = io.BytesIO()
@@ -440,7 +438,7 @@ if emp_sel and not modo_adm:
                                                 for name in zi.namelist():
                                                     if name.lower().endswith('.xml'):
                                                         xml_d = zi.read(name)
-                                                        res, is_p = identify_xml_info(xml_d, cnpj_Limpo, name)
+                                                        res, is_p = identify_xml_info(xml_d, cnpj_limpo, name)
                                                         if res and res["Chave"] not in p_keys:
                                                             p_keys.add(res["Chave"])
                                                             z_org.writestr(f"{res['Pasta']}/{name}", xml_d)
@@ -465,7 +463,6 @@ if emp_sel and not modo_adm:
                                 except Exception as e:
                                     st.error(f"Erro no Processamento: {e}")
 
-                # --- ABA 2: CONFORMIDADE DOMÍNIO ---
                 elif nome_tab_p == "🏢 CONFORMIDADE DOMÍNIO":
                     sub_abas_v = []
                     if perms.get('icms'): sub_abas_v.append("📊 ICMS/IPI")
