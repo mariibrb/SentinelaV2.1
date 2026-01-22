@@ -17,16 +17,20 @@ def init_db():
     conn = sqlite3.connect('sentinela_usuarios.db')
     c = conn.cursor()
     
-    # Criamos a tabela base caso não exista
+    # Criamos a tabela base caso não exista - AGORA COM CAMPO USUARIO
     c.execute('''CREATE TABLE IF NOT EXISTS usuarios 
                  (nome TEXT, 
                   usuario TEXT,
                   email TEXT PRIMARY KEY, 
                   senha TEXT, 
                   status TEXT, 
-                  nivel TEXT)''')
+                  nivel TEXT,
+                  perm_icms INTEGER DEFAULT 0,
+                  perm_difal INTEGER DEFAULT 0,
+                  perm_pis INTEGER DEFAULT 0,
+                  perm_ret INTEGER DEFAULT 0)''')
     
-    # Lógica de Migração de Colunas (Evita o KeyError: perm_icms)
+    # Lógica de Migração de Colunas (Garante integridade total do esquema)
     c.execute("PRAGMA table_info(usuarios)")
     colunas_atuais = [col[1] for col in c.fetchall()]
     
@@ -51,11 +55,11 @@ def init_db():
         c.execute("""INSERT INTO usuarios 
                      (nome, usuario, email, senha, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret) 
                      VALUES (?, ?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1)""", 
-                  ('mariana', 'mariana', email_admin, nova_senha_hash))
+                  ('Mariana Mendes', 'mariana', email_admin, nova_senha_hash))
     else:
-        # Garante que as permissões da Mariana estejam sempre no máximo e o nível seja ADMIN
+        # Garante que Mariana tenha sempre acesso total e nome correto
         c.execute("""UPDATE usuarios 
-                     SET nome='mariana', nivel='ADMIN', 
+                     SET nome='mariana', usuario='mariana', nivel='ADMIN', 
                          perm_icms=1, perm_difal=1, perm_pis=1, perm_ret=1 
                      WHERE email=?""", 
                   (email_admin,))
@@ -155,7 +159,7 @@ st.markdown("""
     footer {visibility: hidden !important;}
     
     /* Remove os botões flutuantes invisíveis do topo */
-    .st-emotion-cache-h5rgaw, .st-emotion-cache-18ni7ap {display: none !important;}
+    .st-emotion-cache-h5rgaw, .st-emotion-cache-18ni7ap, .st-emotion-cache-12fmjuu {display: none !important;}
     
     /* Ajusta o espaçamento para o título SENTINELA não ficar colado no topo */
     .block-container {padding-top: 1rem !important;}
@@ -194,29 +198,30 @@ if not st.session_state['user_data']:
         
         with aba_l:
             with st.container(border=True):
-                u_input = st.text_input("Usuário ou E-mail")
+                login_in = st.text_input("Usuário ou E-mail")
                 pass_l = st.text_input("Senha", type="password")
                 if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                     conn = sqlite3.connect('sentinela_usuarios.db')
                     c = conn.cursor()
-                    c.execute("""SELECT nome, email, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret 
+                    c.execute("""SELECT nome, usuario, email, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret 
                                  FROM usuarios 
-                                 WHERE (nome=? OR email=?) AND senha=?""", 
-                              (u_input, u_input, hash_senha(pass_l)))
+                                 WHERE (usuario=? OR email=?) AND senha=?""", 
+                              (login_in, login_in, hash_senha(pass_l)))
                     user = c.fetchone()
                     conn.close()
                     
                     if user:
-                        if user[2] == 'ATIVO':
+                        if user[3] == 'ATIVO':
                             st.session_state['user_data'] = {
                                 "nome": user[0], 
-                                "email": user[1], 
-                                "nivel": user[3],
+                                "usuario": user[1],
+                                "email": user[2], 
+                                "nivel": user[4],
                                 "perms": {
-                                    "icms": user[4], 
-                                    "difal": user[5], 
-                                    "pis": user[6], 
-                                    "ret": user[7]
+                                    "icms": user[5], 
+                                    "difal": user[6], 
+                                    "pis": user[7], 
+                                    "ret": user[8]
                                 }
                             }
                             st.rerun()
@@ -228,22 +233,23 @@ if not st.session_state['user_data']:
         with aba_c:
             with st.container(border=True):
                 st.write("### Solicite seu acesso:")
-                n_nome = st.text_input("Nome Completo")
+                n_nome = st.text_input("Nome Completo (Ex: Mariana Mendes)")
+                n_user = st.text_input("Usuário de Login (Ex: mariana)")
                 n_email = st.text_input("E-mail Profissional")
                 n_pass = st.text_input("Defina uma Senha", type="password")
                 if st.button("SOLICITAR LIBERAÇÃO", use_container_width=True):
-                    if n_nome and n_email and n_pass:
+                    if n_nome and n_user and n_email and n_pass:
                         try:
                             conn = sqlite3.connect('sentinela_usuarios.db')
                             conn.execute("""INSERT INTO usuarios 
-                                            (nome, email, senha, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret) 
-                                            VALUES (?, ?, ?, 'PENDENTE', 'USER', 0, 0, 0, 0)""", 
-                                         (n_nome, n_email, hash_senha(n_pass)))
+                                            (nome, usuario, email, senha, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret) 
+                                            VALUES (?, ?, ?, ?, 'PENDENTE', 'USER', 0, 0, 0, 0)""", 
+                                         (n_nome, n_user, n_email, hash_senha(n_pass)))
                             conn.commit()
                             conn.close()
                             st.success("Solicitação enviada! Você será notificado após a análise do sistema.")
                         except Exception:
-                            st.error("Este e-mail já está cadastrado ou possui pedido pendente.")
+                            st.error("Este e-mail ou usuário já está cadastrado.")
                     else:
                         st.warning("Por favor, preencha todos os campos obrigatórios.")
     st.stop()
@@ -274,11 +280,12 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
             for idx, row in df_u.iterrows():
                 is_me = (row['email'] == st.session_state['user_data']['email'])
                 with st.container(border=True):
-                    c1, c2, c3, c4 = st.columns([2, 2, 3, 2])
+                    c1, c2, c3, c4 = st.columns([2.5, 1.5, 3, 2])
                     
-                    # Edição de Cadastro
-                    novo_nome = c1.text_input("Nome", value=row['nome'], key=f"nome_{idx}")
-                    novo_email = c1.text_input("E-mail", value=row['email'], key=f"mail_{idx}")
+                    # Edição de Cadastro - AGORA COM USUARIO
+                    edit_nome = c1.text_input("Nome Completo", value=row['nome'], key=f"n_{idx}")
+                    edit_user = c1.text_input("Usuário Login", value=row['usuario'], key=f"u_{idx}")
+                    edit_mail = c2.text_input("E-mail", value=row['email'], key=f"m_{idx}")
                     
                     st_txt = "🟢 ATIVO" if row['status'] == 'ATIVO' else "🟡 PENDENTE"
                     c2.write(f"Status Atual: {st_txt}")
@@ -287,16 +294,16 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                         conn.commit()
                         st.info("Senha resetada para: 123456")
 
-                    p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
-                    p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
-                    p_p = c3.checkbox("Audit PIS/COFINS", value=bool(row['perm_pis']), key=f"p_{idx}")
+                    p_i = c3.checkbox("Audit ICMS", value=bool(row['perm_icms']), key=f"i_{idx}")
+                    p_d = c3.checkbox("Audit DIFAL", value=bool(row['perm_difal']), key=f"d_{idx}")
+                    p_p = c3.checkbox("Audit PIS", value=bool(row['perm_pis']), key=f"p_{idx}")
                     p_r = c3.checkbox("Audit RET", value=bool(row['perm_ret']), key=f"r_{idx}")
 
                     if not is_me:
                         if row['status'] == 'PENDENTE':
                             if c4.button("✅ LIBERAR", key=f"ok_{idx}", use_container_width=True):
-                                conn.execute("""UPDATE usuarios SET nome=?, email=?, status='ATIVO', perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                             (novo_nome, novo_email, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                                conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, status='ATIVO', perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                             (edit_nome, edit_user, edit_mail, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                                 conn.commit(); st.rerun()
                         else:
                             if c4.button("⛔ BLOQUEAR", key=f"bk_{idx}", use_container_width=True):
@@ -307,19 +314,18 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                             conn.execute("DELETE FROM usuarios WHERE email=?", (row['email'],))
                             conn.commit(); st.rerun()
                             
-                        if c4.button("💾 SALVAR ALTERAÇÕES", key=f"save_{idx}", use_container_width=True, type="primary"):
-                            conn.execute("""UPDATE usuarios SET nome=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                         (novo_nome, novo_email, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                        if c4.button("💾 SALVAR", key=f"save_{idx}", use_container_width=True, type="primary"):
+                            conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                         (edit_nome, edit_user, edit_mail, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit(); st.success("Salvo!")
                     else:
                         c4.write("🛡️ Conta Mestre")
-                        if c4.button("💾 ATUALIZAR MEU PERFIL", key=f"save_me_{idx}", use_container_width=True, type="primary"):
-                            conn.execute("""UPDATE usuarios SET nome=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                         (novo_nome, novo_email, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                        if c4.button("💾 ATUALIZAR PERFIL", key=f"sv_me_{idx}", use_container_width=True, type="primary"):
+                            conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                         (edit_nome, edit_user, edit_mail, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit()
-                            st.session_state['user_data']['nome'] = novo_nome
-                            st.session_state['user_data']['email'] = novo_email
-                            st.success("Seu perfil foi atualizado!")
+                            st.session_state['user_data'].update({"nome": edit_nome, "usuario": edit_user, "email": edit_mail})
+                            st.success("Atualizado!"); st.rerun()
             conn.close()
 
 # --- CARREGAMENTO DE CLIENTES ---
@@ -374,7 +380,7 @@ with st.sidebar:
                 if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
                     st.download_button("Baixar Modelo", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
     else:
-        st.info("⚙️ Modo Administrativo Ativo.\nClique em 'FECHAR PAINEL ADM' no centro da tela para voltar à auditoria.")
+        st.info("⚙️ Modo Administrativo Ativo.\nClique em 'FECHAR PAINEL ADM' para voltar.")
 
 # --- ÁREA CENTRAL ---
 if emp_sel and not modo_adm:
@@ -497,7 +503,7 @@ if emp_sel and not modo_adm:
         c1, c2, c3 = st.columns(3)
         c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
         c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0))
-        c3.metric("🚫 INUTILIZADOS", sc.get("INUTILIZADOS", 0))
+        c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
         cr, cf = st.columns(2)
         with cr:
             st.write("**Resumo por Série:**"); st.dataframe(st.session_state['df_resumo'], hide_index=True)
