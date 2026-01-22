@@ -178,17 +178,15 @@ st.markdown("""
         padding-top: 0px !important;
     }
     
-    /* NOVA ABORDAGEM: REDUÇÃO REAL DA ÁREA DA LOGO */
-    .logo-box {
-        height: 140px !important; /* Ajusta a altura da área */
-        overflow: hidden !important; /* Esconde o respiro extra da imagem */
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        margin-bottom: -10px !important;
+    /* AJUSTE DEFINITIVO DE ESPAÇAMENTO DA LOGO */
+    [data-testid="stSidebar"] div.stImage {
+        margin-top: -65px !important; /* SOBE A LOGO PARA O TOPO */
+        margin-bottom: -55px !important; /* ELIMINA O VÃO ABAIXO DA LOGO */
+        padding: 0px !important;
     }
-    .logo-box img {
-        transform: scale(1.1) !important; /* Mantém o soldadinho imponente */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        gap: 0rem !important; /* REMOVE ESPAÇO ENTRE ITENS DA SIDEBAR */
+        padding-top: 0rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -323,15 +321,13 @@ v = st.session_state['v_ver']
 # --- SIDEBAR DINÂMICA ---
 emp_sel = ""
 with st.sidebar:
-    # --- ÁREA DA LOGO REDUZIDA ---
-    st.markdown('<div class="logo-box">', unsafe_allow_html=True)
+    # CHAMADA DIRETA DA LOGO (O CSS ACIMA RESOLVE O ESPAÇO)
     if os.path.exists("streamlit/logo.png"):
         st.image("streamlit/logo.png", use_container_width=True)
     elif os.path.exists("logo.png"):
         st.image("logo.png", use_container_width=True)
     elif os.path.exists(".streamlit/logo.png"):
         st.image(".streamlit/logo.png", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
     st.write(f"👤 Olá, **{st.session_state['user_data']['nome']}**")
