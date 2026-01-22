@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* --- 1. SIDEBAR E FUNDO MOCHA --- */
+        /* --- 1. SIDEBAR E FUNDO --- */
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             max-width: 350px !important;
@@ -29,7 +29,7 @@ def aplicar_estilo_sentinela():
             text-transform: uppercase;
         }
 
-        /* --- 3. ABAS MESTRE (ELEGANTES E METALIZADAS) --- */
+        /* --- 3. ABAS MESTRE (SETORIZADAS) --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         .stTabs [data-baseweb="tab-list"] { gap: 20px !important; padding: 40px 0 !important; }
 
@@ -43,23 +43,13 @@ def aplicar_estilo_sentinela():
             font-size: 1.7rem !important;
             font-weight: 800 !important;
             color: #8B5A2B !important;
-            transition: all 0.3s ease !important;
         }
 
-        /* Abas Ativas por Setor */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { 
-            background: #00BFFF !important; 
-            color: white !important;
-            transform: translateY(-15px) !important;
-        }
-        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { 
-            background: #FF69B4 !important; 
-            color: white !important;
-            transform: translateY(-15px) !important;
-        }
+        /* Cores das Abas Ativas */
+        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; color: white !important; }
+        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
 
-        /* --- 4. 📦 O CAIXOTÃO BRANCO GIGANTE (ÁREA DE UPLOAD) --- */
-        /* Aqui é onde a mágica da borda neon acontece */
+        /* --- 4. 📦 O CAIXOTÃO BRANCO COM A BORDA NEON (O QUE VOCÊ PEDIU) --- */
         div[data-testid="stHorizontalBlock"] {
             background: #FFFFFF !important;
             padding: 60px !important; 
@@ -67,21 +57,23 @@ def aplicar_estilo_sentinela():
             margin: 40px 0 !important;
             min-height: 450px !important;
             transition: all 0.4s ease !important;
+            /* A bordinha neon que voce amou: */
+            border: 5px solid transparent !important;
         }
 
-        /* 🔵 BORDA NEON AZUL (Setor XML) */
+        /* 🔵 Borda Neon Azul no XML */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) div[data-testid="stHorizontalBlock"] {
-            border: 5px solid #00D1FF !important; /* A bordinha azul da foto */
-            box-shadow: 0 0 20px #00D1FF, 0 0 40px rgba(0, 209, 255, 0.3) !important; /* O brilho neon */
+            border: 5px solid #00D1FF !important;
+            box-shadow: 0 0 30px #00D1FF, 0 0 60px rgba(0, 209, 255, 0.2) !important;
         }
 
-        /* 💗 BORDA NEON ROSA (Setor Conformidade) */
+        /* 💗 Borda Neon Rosa na Conformidade */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) div[data-testid="stHorizontalBlock"] {
-            border: 5px solid #FF69B4 !important; /* A bordinha rosa da foto */
-            box-shadow: 0 0 20px #FF69B4, 0 0 40px rgba(255, 105, 180, 0.3) !important; /* O brilho neon */
+            border: 5px solid #FF69B4 !important;
+            box-shadow: 0 0 30px #FF69B4, 0 0 60px rgba(255, 105, 180, 0.2) !important;
         }
 
-        /* --- 5. SUB-ABAS (SEM CARNAVAL) --- */
+        /* --- 5. SUB-ABAS SETORIZADAS --- */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #FDFDFD !important;
@@ -93,7 +85,7 @@ def aplicar_estilo_sentinela():
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
 
-        /* Ajuste do Uploader dentro do Caixote */
+        /* Estilo do Uploader */
         [data-testid="stFileUploader"] {
             background: #F8F9FA !important;
             border: 1px dashed #D8C7B1 !important;
