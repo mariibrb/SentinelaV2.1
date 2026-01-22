@@ -1,121 +1,108 @@
 import pandas as pd
-import io
-import zipfile
-import streamlit as st
-import xml.etree.ElementTree as ET
-import re
 import os
+import re
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
-try:
-    from audit_resumo import gerar_aba_resumo             
-    from Auditorias.audit_icms import processar_icms       
-    from Auditorias.audit_ipi import processar_ipi         
-    from Auditorias.audit_pis_cofins import processar_pc   
-    from Auditorias.audit_difal import processar_difal      
-    from Apuracoes.apuracao_difal import gerar_resumo_uf    
-    from Gerenciais.audit_gerencial import gerar_abas_gerenciais
-except ImportError as e:
-    st.error(f"⚠️ Erro de Dependência no Core: {e}")
+def processar_ipi(df, writer, cod_cliente=None):
+    """
+    AUDITORIA ESPECIALISTA IPI 2.1 - INTEGRADA AO CORE 
+    """
+    if df.empty:
+        return
 
-# ... (Funções safe_float e buscar_tag_recursiva permanecem iguais) ...
+    df_ipi = df.copy()
 
-def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
-    try:
-        xml_str = content.decode('utf-8', errors='replace')
-        xml_str_limpa = re.sub(r'\sxmlns(:\w+)?="[^"]+"', '', xml_str) 
-        root = ET.fromstring(xml_str_limpa)
-        inf = root.find('.//infNFe')
-        if inf is None: return 
+    # --- 1. CARREGAMENTO DA BASE TRIBUTÁRIA (GABARITO) ---
+    caminho_base = f"Bases_Tributárias/{cod_cliente}-Bases_Tributarias.xlsx"
+    base_gabarito = pd.DataFrame()
+    
+    if cod_cliente and os.path.exists(caminho_base):
+        try:
+            # Lemos como string para não perder zeros à esquerda no match do NCM
+            base_gabarito = pd.read_excel(caminho_base, dtype=str)
+            base_gabarito.columns = [str(c).strip().upper() for c in base_gabarito.columns]
+            if 'NCM' in base_gabarito.columns:
+                base_gabarito['NCM'] = base_gabarito['NCM'].str.replace(r'\D', '', regex=True).str.strip().str.zfill(8)
+        except:
+            pass
+
+    def audit_ipi_completa(r):
+        # --- Dados vindos do CORE ---
+        ncm = str(r.get('NCM', '')).strip().zfill(8)
+        cst_xml = str(r.get('CST-IPI', '')).strip().zfill(2)
+        # O Core já entrega valores limpos via safe_float
+        alq_xml = float(r.get('ALQ-IPI', 0.0))
+        vlr_ipi_xml = float(r.get('VLR-IPI', 0.0))
+        vprod = float(r.get('VPROD', 0.0))
         
-        ide = root.find('.//ide'); emit = root.find('.//emit'); dest = root.find('.//dest')
-        cnpj_emit = re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', emit))
-        cnpj_alvo = re.sub(r'\D', '', str(cnpj_empresa_auditada))
-        tipo_nf = buscar_tag_recursiva('tpNF', ide)
-        tipo_operacao = "SAIDA" if (cnpj_emit == cnpj_alvo and tipo_nf == '1') else "ENTRADA"
-        chave = inf.attrib.get('Id', '')[3:]
-
-        for det in root.findall('.//det'):
-            prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
-            v_prod = safe_float(buscar_tag_recursiva('vProd', prod))
-            ncm = buscar_tag_recursiva('NCM', prod)
+        # --- Gabarito e Regras de Esperado ---
+        cst_esp = "50" # Padrão: Saída Tributada
+        alq_esp = 0.0
+        
+        # CONSULTA AO GABARITO
+        if not base_gabarito.empty and ncm in base_gabarito['NCM'].values:
+            g = base_gabarito[base_gabarito['NCM'] == ncm].iloc[0]
             
-            origem = buscar_tag_recursiva('orig', icms_no)
-            cst_parcial = buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no)
-            cst_full = origem + cst_parcial if cst_parcial else origem
+            # Mapeamento dinâmico para CST IPI
+            col_cst_gab = [c for c in base_gabarito.columns if 'CST' in c and 'IPI' in c]
+            if col_cst_gab:
+                # Limpa o valor do gabarito (remove .0 se houver)
+                val_cst = str(g[col_cst_gab[0]]).strip().split('.')[0]
+                cst_esp = val_cst.zfill(2) if val_cst != 'nan' else "50"
+                
+            # Mapeamento dinâmico para ALIQ IPI
+            col_alq_gab = [c for c in base_gabarito.columns if 'ALQ' in c and 'IPI' in c]
+            if col_alq_gab:
+                try: alq_esp = float(g[col_alq_gab[0]])
+                except: alq_esp = 0.0
 
-            linha = {
-                "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
-                "NUM_NF": buscar_tag_recursiva('nNF', ide), 
-                "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
-                "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
-                "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), 
-                "IE_DEST": buscar_tag_recursiva('IE', dest),
-                "UF_DEST": buscar_tag_recursiva('UF', dest), 
-                "CFOP": buscar_tag_recursiva('CFOP', prod),
-                "NCM": ncm, "VPROD": v_prod, 
-                "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)), 
-                "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)), 
-                "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)),
-                "CST-ICMS": cst_full,
-                "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
-                "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
-                "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
-                "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
-                "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no))
-            }
-            dados_lista.append(linha)
-    except: pass
+        # --- CÁLCULOS ---
+        vlr_ipi_devido = round(vprod * (alq_esp / 100), 2)
+        vlr_complementar = round(vlr_ipi_devido - vlr_ipi_xml, 2)
+        vlr_comp_final = vlr_complementar if vlr_complementar > 0.01 else 0.0
 
-def extrair_dados_xml_recursivo(files, cnpj_auditado):
-    dados = []
-    for f in files:
-        f.seek(0)
-        if zipfile.is_zipfile(f):
-            with zipfile.ZipFile(f) as z:
-                for n in z.namelist():
-                    if n.lower().endswith('.xml'):
-                        with z.open(n) as xml: processar_conteudo_xml(xml.read(), dados, cnpj_auditado)
+        # --- DIAGNÓSTICOS ---
+        diag_alq = "✅ OK" if abs(alq_xml - alq_esp) < 0.01 else f"❌ Erro (XML: {alq_xml}% | Esp: {alq_esp}%)"
+        diag_cst = "✅ OK" if cst_xml == cst_esp else f"❌ Divergente (XML: {cst_xml} | Esp: {cst_esp})"
+
+        status_destaque = "✅ OK"
+        if cst_esp in ['50'] and vlr_ipi_xml <= 0 and alq_esp > 0: 
+            status_destaque = "❌ Falta Destaque IPI"
+        elif cst_esp in ['52', '53'] and vlr_ipi_xml > 0: 
+            status_destaque = "⚠️ Destaque Indevido IPI"
+
+        # --- AÇÃO CORRETIVA ---
+        acao = "Nenhuma"
+        fundamentacao = f"IPI em conformidade com as regras do NCM {ncm}."
+
+        if vlr_comp_final > 0:
+            acao = "Emitir NF Complementar"
+            fundamentacao = f"Detectada insuficiência de IPI: R$ {vlr_comp_final}."
+        elif alq_xml > alq_esp and alq_esp > 0:
+            acao = "Recuperar Imposto"
+            fundamentacao = f"Alíquota XML ({alq_xml}%) superior à legal ({alq_esp}%)."
+        elif "❌" in diag_cst:
+            acao = "Registrar CC-e"
+            fundamentacao = f"A CST {cst_xml} informada não condiz com a operação esperada {cst_esp}."
+
+        return pd.Series([
+            cst_esp, alq_esp, status_destaque, diag_alq, vlr_comp_final, diag_cst, acao, fundamentacao
+        ])
+
+    # --- PROCESSAMENTO ---
+    analises_nomes = [
+        'IPI_CST_ESPERADA', 'IPI_ALQUOTA_ESPERADA', 'IPI_STATUS_DESTAQUE', 
+        'IPI_DIAG_ALQUOTA', 'VALOR_IPI_COMPLEMENTAR', 'IPI_DIAG_CST', 
+        'AÇÃO_CORRETIVA_IPI', 'FUNDAMENTAÇÃO_IPI'
+    ]
     
-    df = pd.DataFrame(dados)
-    if df.empty: return pd.DataFrame(), pd.DataFrame()
+    df_ipi[analises_nomes] = df_ipi.apply(audit_ipi_completa, axis=1)
 
-    # --- LÓGICA DE CRUZAMENTO COM PLANILHA DE AUTENTICIDADE ---
-    if 'relatorio' in st.session_state and st.session_state['relatorio']:
-        df_rel = pd.DataFrame(st.session_state['relatorio'])
-        # Ajusta nomes de colunas do relatório de autenticidade para o merge
-        df_rel = df_rel.rename(columns={'Chave': 'CHAVE_ACESSO', 'Status': 'Situação Nota'})
-        df = pd.merge(df, df_rel[['CHAVE_ACESSO', 'Situação Nota']], on='CHAVE_ACESSO', how='left')
-        # Se a chave não existir no relatório, avisa que falta referência
-        df['Situação Nota'] = df['Situação Nota'].fillna("SEM REFERÊNCIA (FAZER GARIMPO)")
-    else:
-        # Se nem subiram a planilha, avisa em todas as linhas
-        df['Situação Nota'] = "⚠️ PLANILHA DE AUTENTICIDADE NÃO CARREGADA"
-
-    return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
-
-def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo=None):
-    if df_xs.empty and df_xe.empty: return
+    # --- REORGANIZAÇÃO ---
+    # Pegamos as colunas que o Core enviou e adicionamos as análises
+    cols_originais = [c for c in df_ipi.columns if c not in analises_nomes and c != 'Situação Nota']
+    cols_status = ['Situação Nota'] if 'Situação Nota' in df_ipi.columns else []
     
-    try: gerar_aba_resumo(writer)
-    except: pass
-    
-    # Reorganização de colunas (Status sempre depois dos dados da nota)
-    for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
-        if not df_temp.empty:
-            cols_originais = [c for c in df_temp.columns if c != 'Situação Nota']
-            cols_status = ['Situação Nota'] 
-            df_final = df_temp[cols_originais + cols_status]
-            df_final.to_excel(writer, sheet_name=nome, index=False)
+    df_final = pd.concat([df_ipi[cols_originais], df_ipi[cols_status], df_ipi[analises_nomes]], axis=1)
 
-    if not df_xs.empty:
-        processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
-    
-    try: processar_ipi(df_xs, writer, cod_cliente)
-    except: pass
-    try: processar_pc(df_xs, writer, cod_cliente, regime)
-    except: pass
-    try: processar_difal(df_xs, writer)
-    except: pass
-    try: gerar_resumo_uf(df_xs, writer, df_xe)
-    except: pass
+    # Gravação
+    df_final.to_excel(writer, sheet_name='IPI_AUDIT', index=False)
