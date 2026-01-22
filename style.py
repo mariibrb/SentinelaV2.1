@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* --- TRAVA MESTRE: SIDEBAR --- */
+        /* --- CONFIGURAÇÃO DA SIDEBAR --- */
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             max-width: 350px !important;
@@ -33,22 +33,15 @@ def aplicar_estilo_sentinela():
             text-transform: uppercase;
         }
 
-        /* --- ESTILIZAÇÃO DIVISÓRIAS DE FICHÁRIO (ASPECTO FÍSICO) --- */
+        /* --- ASPECTO DIVISÓRIA DE FICHÁRIO METALIZADA --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 10px !important;
-            background-color: transparent !important;
-            padding: 20px 0 !important;
-        }
-
-        /* Estilo Inativo: Metal Fosco com Curva de Fichário */
         .stTabs [data-baseweb="tab"] {
             height: 70px !important;
             background: linear-gradient(180deg, #FFFFFF 0%, #E0E0E0 100%) !important;
-            border-radius: 25px 60px 0 0 !important; /* FORMATO DE DIVISÓRIA */
-            margin-right: -20px !important; /* SOBREPOSIÇÃO TIPO FICHÁRIO */
-            padding: 0px 50px !important;
+            border-radius: 25px 60px 0 0 !important; /* CURVA DE FICHÁRIO */
+            margin-right: -15px !important; 
+            padding: 0px 45px !important;
             border: 1px solid #D1D1D1 !important;
             font-weight: 600 !important;
             color: #A0A0A0 !important;
@@ -56,51 +49,38 @@ def aplicar_estilo_sentinela():
             box-shadow: 5px 0 15px rgba(0,0,0,0.05) !important;
         }
 
-        /* --- BRILHO E ELEVAÇÃO: ABAS MÃE --- */
+        /* --- LÓGICA DE CORES POR CONTEXTO (BRILHO E ELEVAÇÃO) --- */
 
-        /* 🔵 ANÁLISE XML: AZUL BEBÊ METALIZADO + GLOW */
-        .stTabs [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"] {
+        /* 🔵 FAMÍLIA XML (AZUL BEBÊ) */
+        .stTabs [data-baseweb="tab"]:has(div:contains("XML"))[aria-selected="true"] {
             background: linear-gradient(145deg, #E0FFFF 0%, #B0E0E6 100%) !important;
             color: #4682B4 !important;
             transform: translateY(-15px) scale(1.05) !important;
             border: 2px solid #00D1FF !important;
-            /* Efeito Glow Extremo */
             box-shadow: 0 -10px 20px rgba(0, 209, 255, 0.4), 0 0 30px rgba(0, 209, 255, 0.3) !important;
             z-index: 100 !important;
         }
 
-        /* 💗 CONFORMIDADE: ROSA BEBÊ METALIZADO + GLOW */
-        .stTabs [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"] {
+        /* 💗 FAMÍLIA FISCAL - MÃE E FILHAS (ROSA BEBÊ) */
+        /* Esta regra agora pega pelo nome, então ICMS/IPI ficará rosa! */
+        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("ICMS"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("PIS"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("RET"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("DIFAL"))[aria-selected="true"] {
             background: linear-gradient(145deg, #FFF0F5 0%, #FFB6C1 100%) !important;
             color: #DB7093 !important;
             transform: translateY(-15px) scale(1.05) !important;
             border: 2px solid #FF69B4 !important;
-            /* Efeito Glow Extremo */
             box-shadow: 0 -10px 20px rgba(255, 105, 180, 0.4), 0 0 30px rgba(255, 105, 180, 0.3) !important;
             z-index: 100 !important;
         }
 
-        /* --- SUB-ABAS: ROSA BEBÊ (IDENTIDADE FISCAL) --- */
+        /* --- SUB-ABAS (Sempre Rosa Bebê) --- */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 50px !important;
-            background: #FFFFFF !important;
             border-radius: 15px 35px 0 0 !important;
-            font-size: 13px !important;
-            border: 1px solid #FFD1DC !important;
-        }
-
-        .stTabs .stTabs [aria-selected="true"] {
-            background: linear-gradient(145deg, #FFF0F5 0%, #FFD1DC 100%) !important;
-            color: #C71585 !important;
-            transform: translateY(-8px) !important;
-            box-shadow: 0 0 20px rgba(255, 182, 193, 0.6) !important;
-            border-top: 3px solid #FF69B4 !important;
-        }
-
-        /* BRILHO NO HOVER (MOUUSE SOBRE A ABA) */
-        .stTabs [data-baseweb="tab"]:hover {
-            transform: translateY(-5px) !important;
-            filter: brightness(1.1) !important;
+            margin-right: -10px !important;
         }
 
         /* BOTÃO ADM COM BRILHO */
