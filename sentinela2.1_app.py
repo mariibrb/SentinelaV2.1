@@ -313,7 +313,7 @@ with st.sidebar:
     # --- LOGO DO SOLDADINHO SENTINELA NO TOPO ---
     if os.path.exists("logo.png"):
         st.image("logo.png", use_container_width=True)
-    elif os.path.exists(".streamlit/logo.png"):
+    elif os.path.exists("streamlit/logo.png"):
         st.image(".streamlit/logo.png", use_container_width=True)
 
     st.markdown("---")
