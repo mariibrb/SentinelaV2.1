@@ -20,16 +20,18 @@ def init_db():
     # Criamos a tabela base caso não exista
     c.execute('''CREATE TABLE IF NOT EXISTS usuarios 
                  (nome TEXT, 
+                  usuario TEXT,
                   email TEXT PRIMARY KEY, 
                   senha TEXT, 
                   status TEXT, 
                   nivel TEXT)''')
     
-    # Lógica de Migração de Colunas (Evita o KeyError: perm_icms)
+    # Lógica de Migração de Colunas (Garante integridade total do esquema)
     c.execute("PRAGMA table_info(usuarios)")
     colunas_atuais = [col[1] for col in c.fetchall()]
     
     colunas_novas = {
+        'usuario': 'TEXT',
         'perm_icms': 'INTEGER DEFAULT 0',
         'perm_difal': 'INTEGER DEFAULT 0',
         'perm_pis': 'INTEGER DEFAULT 0',
@@ -47,13 +49,13 @@ def init_db():
     c.execute("SELECT * FROM usuarios WHERE email=?", (email_admin,))
     if not c.fetchone():
         c.execute("""INSERT INTO usuarios 
-                     (nome, email, senha, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret) 
-                     VALUES (?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1)""", 
-                  ('mariana', email_admin, nova_senha_hash))
+                     (nome, usuario, email, senha, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret) 
+                     VALUES (?, ?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1)""", 
+                  ('Mariana Mendes', 'mariana', email_admin, nova_senha_hash))
     else:
-        # Garante que as permissões da Mariana estejam sempre no máximo e o nível seja ADMIN
+        # Garante que Mariana tenha sempre acesso total e nome correto
         c.execute("""UPDATE usuarios 
-                     SET nome='mariana', nivel='ADMIN', 
+                     SET nome='Mariana Mendes', usuario='mariana', nivel='ADMIN', 
                          perm_icms=1, perm_difal=1, perm_pis=1, perm_ret=1 
                      WHERE email=?""", 
                   (email_admin,))
@@ -166,7 +168,7 @@ def limpar_central():
     st.session_state.clear()
     st.rerun()
 
-# --- TELA DE ACESSO (LOGIN E SOLICITAÇÃO) ---
+# --- TELA DE ACESSO ---
 if not st.session_state['user_data']:
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 2, 1])
@@ -176,29 +178,30 @@ if not st.session_state['user_data']:
         
         with aba_l:
             with st.container(border=True):
-                u_input = st.text_input("Usuário ou E-mail")
+                login_in = st.text_input("Usuário ou E-mail")
                 pass_l = st.text_input("Senha", type="password")
                 if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                     conn = sqlite3.connect('sentinela_usuarios.db')
                     c = conn.cursor()
-                    c.execute("""SELECT nome, email, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret 
+                    c.execute("""SELECT nome, usuario, email, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret 
                                  FROM usuarios 
-                                 WHERE (nome=? OR email=?) AND senha=?""", 
-                              (u_input, u_input, hash_senha(pass_l)))
+                                 WHERE (usuario=? OR email=?) AND senha=?""", 
+                              (login_in, login_in, hash_senha(pass_l)))
                     user = c.fetchone()
                     conn.close()
                     
                     if user:
-                        if user[2] == 'ATIVO':
+                        if user[3] == 'ATIVO':
                             st.session_state['user_data'] = {
                                 "nome": user[0], 
-                                "email": user[1], 
-                                "nivel": user[3],
+                                "usuario": user[1],
+                                "email": user[2], 
+                                "nivel": user[4],
                                 "perms": {
-                                    "icms": user[4], 
-                                    "difal": user[5], 
-                                    "pis": user[6], 
-                                    "ret": user[7]
+                                    "icms": user[5], 
+                                    "difal": user[6], 
+                                    "pis": user[7], 
+                                    "ret": user[8]
                                 }
                             }
                             st.rerun()
@@ -210,95 +213,86 @@ if not st.session_state['user_data']:
         with aba_c:
             with st.container(border=True):
                 st.write("### Solicite seu acesso:")
-                n_nome = st.text_input("Nome Completo")
+                n_nome = st.text_input("Nome Completo (Ex: Mariana Mendes)")
+                n_user = st.text_input("Escolha um Usuário (Login)")
                 n_email = st.text_input("E-mail Profissional")
                 n_pass = st.text_input("Defina uma Senha", type="password")
                 if st.button("SOLICITAR LIBERAÇÃO", use_container_width=True):
-                    if n_nome and n_email and n_pass:
+                    if n_nome and n_user and n_email and n_pass:
                         try:
                             conn = sqlite3.connect('sentinela_usuarios.db')
                             conn.execute("""INSERT INTO usuarios 
-                                            (nome, email, senha, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret) 
-                                            VALUES (?, ?, ?, 'PENDENTE', 'USER', 0, 0, 0, 0)""", 
-                                         (n_nome, n_email, hash_senha(n_pass)))
+                                            (nome, usuario, email, senha, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret) 
+                                            VALUES (?, ?, ?, ?, 'PENDENTE', 'USER', 0, 0, 0, 0)""", 
+                                         (n_nome, n_user, n_email, hash_senha(n_pass)))
                             conn.commit()
                             conn.close()
-                            st.success("Solicitação enviada! Você será notificado após a análise do sistema.")
+                            st.success("Solicitação enviada! Você será notificado após a análise.")
                         except Exception:
-                            st.error("Este e-mail já está cadastrado ou possui pedido pendente.")
+                            st.error("Este e-mail ou usuário já está cadastrado.")
                     else:
-                        st.warning("Por favor, preencha todos os campos obrigatórios.")
+                        st.warning("Preencha todos os campos obrigatórios.")
     st.stop()
 
-# --- PAINEL DE ADMINISTRAÇÃO ELITE (MARIANA - COM EDIÇÃO) ---
+# --- PAINEL DE ADMINISTRAÇÃO ELITE ---
+modo_adm = False
 if st.session_state['user_data']['nivel'] == 'ADMIN':
-    with st.expander("🛠️ GESTÃO DE USUÁRIOS E PERMISSÕES (SISTEMA)", expanded=False):
+    with st.expander("🛠️ PAINEL DE CONTROLE ADMINISTRATIVO (GESTÃO)", expanded=False):
+        modo_adm = True
+        st.subheader("Gerenciamento de Usuários e Permissões")
         conn = sqlite3.connect('sentinela_usuarios.db')
         df_u = pd.read_sql_query("SELECT * FROM usuarios ORDER BY nivel ASC", conn)
         
         for idx, row in df_u.iterrows():
             is_me = (row['email'] == st.session_state['user_data']['email'])
             with st.container(border=True):
-                c1, c2, c3, c4 = st.columns([2, 2, 3, 2])
+                c1, c2, c3, c4 = st.columns([2.5, 2, 3, 2])
                 
-                # --- Campos de Edição de Cadastro ---
-                novo_nome = c1.text_input("Nome", value=row['nome'], key=f"nome_{idx}")
-                novo_email_input = c1.text_input("E-mail", value=row['email'], key=f"mail_{idx}")
+                # Edição de Cadastro
+                edit_nome = c1.text_input("Nome", value=row['nome'], key=f"n_{idx}")
+                edit_user = c1.text_input("Usuário", value=row['usuario'], key=f"u_{idx}")
+                edit_mail = c2.text_input("E-mail", value=row['email'], key=f"m_{idx}")
                 
-                # Controle de Status e Reset de Senha
                 st_txt = "🟢 ATIVO" if row['status'] == 'ATIVO' else "🟡 PENDENTE"
-                c2.write(f"Status Atual: {st_txt}")
+                c2.write(f"Status: {st_txt}")
                 if c2.button("🔄 Reset Senha", key=f"rs_{idx}"):
                     conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha("123456"), row['email']))
                     conn.commit()
-                    st.info(f"Senha resetada para: 123456")
+                    st.info("Resetada p/: 123456")
 
                 # Permissões Grânulares
-                p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
-                p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
-                p_p = c3.checkbox("Audit PIS/COFINS", value=bool(row['perm_pis']), key=f"p_{idx}")
+                p_i = c3.checkbox("Audit ICMS", value=bool(row['perm_icms']), key=f"i_{idx}")
+                p_d = c3.checkbox("Audit DIFAL", value=bool(row['perm_difal']), key=f"d_{idx}")
+                p_p = c3.checkbox("Audit PIS", value=bool(row['perm_pis']), key=f"p_{idx}")
                 p_r = c3.checkbox("Audit RET", value=bool(row['perm_ret']), key=f"r_{idx}")
 
                 # Botões de Ação
                 if not is_me:
                     if row['status'] == 'PENDENTE':
                         if c4.button("✅ LIBERAR", key=f"ok_{idx}", use_container_width=True):
-                            conn.execute("""UPDATE usuarios 
-                                            SET nome=?, email=?, status='ATIVO', perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? 
-                                            WHERE email=?""", 
-                                         (novo_nome, novo_email_input, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
-                            conn.commit()
-                            st.rerun()
+                            conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, status='ATIVO', perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                         (edit_nome, edit_user, edit_mail, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                            conn.commit(); st.rerun()
                     else:
                         if c4.button("⛔ BLOQUEAR", key=f"bk_{idx}", use_container_width=True):
                             conn.execute("UPDATE usuarios SET status='PENDENTE' WHERE email=?", (row['email'],))
-                            conn.commit()
-                            st.rerun()
+                            conn.commit(); st.rerun()
                     
                     if c4.button("🗑️ EXCLUIR", key=f"del_{idx}", use_container_width=True):
-                        conn.execute("DELETE FROM usuarios WHERE email=?", (row['email'],))
-                        conn.commit()
-                        st.rerun()
+                        conn.execute("DELETE FROM usuarios WHERE email=?", (row['email'],)); conn.commit(); st.rerun()
                     
-                    # Botão Salvar para usuários comuns
-                    if c4.button("💾 SALVAR ALTERAÇÕES", key=f"save_{idx}", use_container_width=True, type="primary"):
-                        conn.execute("""UPDATE usuarios 
-                                        SET nome=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? 
-                                        WHERE email=?""", 
-                                     (novo_nome, novo_email_input, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
-                        conn.commit()
-                        st.success("Cadastro atualizado!")
+                    if c4.button("💾 SALVAR", key=f"sv_{idx}", use_container_width=True, type="primary"):
+                        conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                     (edit_nome, edit_user, edit_mail, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                        conn.commit(); st.success("Salvo!")
                 else:
-                    c4.write("🛡️ Conta Mestre Protegida")
-                    if c4.button("💾 ATUALIZAR MEU PERFIL", key=f"save_me_{idx}", use_container_width=True, type="primary"):
-                        conn.execute("""UPDATE usuarios 
-                                        SET nome=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? 
-                                        WHERE email=?""", 
-                                     (novo_nome, novo_email_input, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                    c4.write("🛡️ Conta Mestre")
+                    if c4.button("💾 ATUALIZAR PERFIL", key=f"sv_me_{idx}", use_container_width=True, type="primary"):
+                        conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                     (edit_nome, edit_user, edit_mail, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                         conn.commit()
-                        st.session_state['user_data']['nome'] = novo_nome
-                        st.session_state['user_data']['email'] = novo_email_input
-                        st.success("Seu perfil foi atualizado!")
+                        st.session_state['user_data'].update({"nome": edit_nome, "usuario": edit_user, "email": edit_mail})
+                        st.success("Atualizado!"); st.rerun()
         conn.close()
 
 # --- CARREGAMENTO DE CLIENTES ---
@@ -311,51 +305,49 @@ def carregar_clientes():
                 df = pd.read_excel(p).dropna(subset=['CÓD', 'RAZÃO SOCIAL'])
                 df['CÓD'] = df['CÓD'].apply(lambda x: str(int(float(x))))
                 return df
-            except Exception:
-                continue
+            except Exception: continue
     return pd.DataFrame()
 
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR ---
+# --- SIDEBAR (DINÂMICA) ---
+emp_sel = ""
 with st.sidebar:
-    if os.path.exists(".streamlit/Sentinela.png"):
-        st.image(".streamlit/Sentinela.png", use_container_width=True)
+    if os.path.exists(".streamlit/Sentinela.png"): st.image(".streamlit/Sentinela.png", use_container_width=True)
     st.markdown("---")
-    st.write(f"👤 Olá, **{st.session_state['user_data']['nome']}**")
+    st.write(f"👋 Olá, **{st.session_state['user_data']['nome']}**")
     if st.button("🚪 SAIR DO SISTEMA", use_container_width=True):
-        st.session_state.clear()
-        st.rerun()
+        st.session_state.clear(); st.rerun()
     st.markdown("---")
     
-    emp_sel = st.selectbox("Passo 1: Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
-    
-    if emp_sel:
-        reg_sel = st.selectbox("Passo 2: Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="f_reg")
-        seg_sel = st.selectbox("Passo 3: Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
-        ret_sel = st.toggle("Passo 4: Habilitar MG (RET)", key="f_ret")
-        
-        cod_c = emp_sel.split(" - ")[0].strip()
-        dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
-        cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
-        st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}</div>", unsafe_allow_html=True)
-        
-        path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
-        if os.path.exists(path_base):
-            st.success("💎 Modo Elite: Base Localizada")
-        else:
-            st.warning("🔍 Modo Cegas: Base não localizada")
-            
-        with st.popover("📥 Modelo Bases", use_container_width=True):
-            if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
-                st.download_button("Baixar Modelo", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
+    if not modo_adm:
+        emp_sel = st.selectbox("Passo 1: Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
+        if emp_sel:
+            reg_sel = st.selectbox("Passo 2: Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"])
+            seg_sel = st.selectbox("Passo 3: Segmento", ["", "Comércio", "Indústria", "Equiparado"])
+            ret_sel = st.toggle("Passo 4: Habilitar MG (RET)")
+            cod_c = emp_sel.split(" - ")[0].strip()
+            dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
+            cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
+            st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}</div>", unsafe_allow_html=True)
+            path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
+            if os.path.exists(path_base): st.success("💎 Modo Elite: Base Localizada")
+            else: st.warning("🔍 Modo Cegas: Base não localizada")
+            with st.popover("📥 Modelo Bases", use_container_width=True):
+                if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
+                    st.download_button("Baixar Modelo", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
+    else:
+        st.info("⚙️ Modo Administrativo Ativo.\nFeche o Painel de Gestão para voltar à Auditoria Fiscal.")
 
-# --- CABEÇALHO ---
+# --- CORPO PRINCIPAL ---
 st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
-# --- ÁREA CENTRAL ---
-if emp_sel:
+if modo_adm:
+    st.write("---")
+    st.warning("⚠️ Você está na Área Administrativa. O fluxo de auditoria está pausado para garantir foco na gestão de usuários.")
+
+if emp_sel and not modo_adm:
     perms = st.session_state['user_data']['perms']
     abas_v = ["📂 ANÁLISE XML"]
     if perms['icms']: abas_v.append("📊 ICMS/IPI")
@@ -365,11 +357,11 @@ if emp_sel:
     
     tabs = st.tabs(abas_v)
 
-    # --- ABA XML (O GARIMPEIRO INTEGRAL) ---
+    # --- ABA XML (GARIMPEIRO E CORE) ---
     with tabs[0]:
         st.markdown("### 📥 Central de Importação e Garimpo")
         c1, c2, c3 = st.columns(3)
-        with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
+        with c1: u_xml = st.file_uploader("📁 ZIP de XMLs", accept_multiple_files=True, key=f"x_{v}")
         with c2: u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
         with c3: u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
         
@@ -380,54 +372,35 @@ if emp_sel:
                         u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
                         df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
                         xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
-                        
                         buf = io.BytesIO()
                         with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
                             gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, df_base_emp, "ELITE" if df_base_emp is not None else "CEGAS")
-                        
                         st.session_state['relat_buf'] = buf.getvalue()
-
-                        p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
-                        b_org, b_todos = io.BytesIO(), io.BytesIO()
-                        with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
+                        
+                        pk, rel, seq, cnt = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
+                        b_org, b_tod = io.BytesIO(), io.BytesIO()
+                        with zipfile.ZipFile(b_org, "w") as z_o, zipfile.ZipFile(b_tod, "w") as z_t:
                             for zf in u_validos:
                                 zf.seek(0)
                                 with zipfile.ZipFile(zf) as zi:
-                                    for name in zi.namelist():
-                                        if name.lower().endswith('.xml'):
-                                            xml_d = zi.read(name)
-                                            res, is_p = identify_xml_info(xml_d, cnpj_limpo, name)
-                                            if res and res["Chave"] not in p_keys:
-                                                p_keys.add(res["Chave"])
-                                                z_org.writestr(f"{res['Pasta']}/{name}", xml_d)
-                                                z_todos.writestr(name, xml_d)
-                                                rel_list.append(res)
+                                    for n in zi.namelist():
+                                        if n.lower().endswith('.xml'):
+                                            xml_d = zi.read(n); res, is_p = identify_xml_info(xml_d, cnpj_limpo, n)
+                                            if res and res["Chave"] not in pk:
+                                                pk.add(res["Chave"]); z_o.writestr(f"{res['Pasta']}/{n}", xml_d); z_t.writestr(n, xml_d); rel.append(res)
                                                 if is_p:
-                                                    if res["Status"] in st_counts: st_counts[res["Status"]] += 1
+                                                    if res["Status"] in cnt: cnt[res["Status"]] += 1
                                                     sk = (res["Tipo"], res["Série"])
-                                                    if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
-                                                    seq_map[sk]["nums"].add(res["Número"])
-                                                    seq_map[sk]["valor"] += res["Valor"]
-                        
-                        res_f, fal_f = [], []
-                        for (t, s), d in seq_map.items():
+                                                    if sk not in seq: seq[sk] = {"nums": set(), "valor": 0.0}
+                                                    seq[sk]["nums"].add(res["Número"]); seq[sk]["valor"] += res["Valor"]
+                        rf, ff = [], []
+                        for (t, s), d in seq.items():
                             ns = d["nums"]
-                            res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
-                            for b in sorted(list(set(range(min(ns), max(ns) + 1)) - ns)):
-                                fal_f.append({"Série": s, "Nº Faltante": b})
-                        
-                        st.session_state.update({
-                            'z_org': b_org.getvalue(), 
-                            'z_todos': b_todos.getvalue(), 
-                            'df_resumo': pd.DataFrame(res_f), 
-                            'df_faltantes': pd.DataFrame(fal_f), 
-                            'st_counts': st_counts, 
-                            'relatorio': rel_list, 
-                            'executado': True
-                        })
+                            rf.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
+                            for b in sorted(list(set(range(min(ns), max(ns) + 1)) - ns)): ff.append({"Série": s, "Nº Faltante": b})
+                        st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_tod.getvalue(), 'df_resumo': pd.DataFrame(rf), 'df_faltantes': pd.DataFrame(ff), 'st_counts': cnt, 'relatorio': rel, 'executado': True})
                         st.rerun()
-                    except Exception as e:
-                        st.error(f"Erro no Processamento: {e}")
+                    except Exception as e: st.error(f"Erro no Processamento: {e}")
 
     # --- ABAS DE CONFORMIDADE RESTAURADAS ---
     idx_aba = 1
@@ -459,8 +432,7 @@ if emp_sel:
                 with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"ret_e_{v}")
                 with c3: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"dom_ret_{v}")
                 st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
-            else:
-                st.warning("⚠️ Habilite o RET na Sidebar para este módulo.")
+            else: st.warning("⚠️ Ative o RET na sidebar.")
         idx_aba += 1
 
     if perms['pis']:
@@ -472,27 +444,21 @@ if emp_sel:
             with c3: st.file_uploader("📄 Demonstrativo PIS/COFINS", type=['xlsx'], key=f"dom_pisc_{v}")
             st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
 
-    # --- RESULTADOS E DOWNLOADS ---
+    # --- RESULTADOS ---
     if st.session_state.get('executado'):
         st.markdown("---")
         with st.popover("📥 ACESSAR DOWNLOADS SEGUROS", use_container_width=True):
             if st.text_input("Senha", type="password", key="p_down") == "Senhaforte@123":
-                st.download_button("💾 RELATÓRIO FINAL EXCEL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
-                st.download_button("📂 ZIP ORGANIZADO", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
-        
+                st.download_button("💾 RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
+                st.download_button("📂 ZIP ORGANIZADO", st.session_state['z_org'], "garimpo.zip", use_container_width=True)
         st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
         sc = st.session_state.get('st_counts')
         c1, c2, c3 = st.columns(3)
         c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
         c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0))
         c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
-        
         cr, cf = st.columns(2)
-        with cr:
-            st.write("**Resumo por Série:**")
-            st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
-        with cf:
-            st.write("**Notas Faltantes na Sequência:**")
-            st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
-else:
-    st.info("👈 Selecione a empresa na barra lateral para começar.")
+        with cr: st.write("**Resumo Série:**"); st.dataframe(st.session_state['df_resumo'], hide_index=True)
+        with cf: st.write("**Notas Faltantes:**"); st.dataframe(st.session_state['df_faltantes'], hide_index=True)
+elif not modo_adm:
+    st.info("👈 Selecione a empresa na barra lateral para começar a auditoria.")
