@@ -49,13 +49,8 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 10px 20px rgba(255, 105, 180, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.5);
         }
 
-        /* --- EXTERMINANDO O QUADRADO AO REDOR DAS ABAS --- */
-        /* Remove a linha de fundo e a borda da caixa das abas */
-        .stTabs [data-baseweb="tab-border"] {
-            display: none !important;
-        }
-        
-        /* Garante que o container das abas seja invisível */
+        /* EXTERMINANDO O QUADRADO AO REDOR DAS ABAS */
+        .stTabs [data-baseweb="tab-border"] { display: none !important; }
         .stTabs [data-baseweb="tab-list"] {
             gap: 15px !important;
             background-color: transparent !important;
@@ -63,7 +58,7 @@ def aplicar_estilo_sentinela():
             padding: 10px 0px !important;
         }
 
-        /* --- ABAS PÍLULA (DESIGN LIMPO) --- */
+        /* ABAS PÍLULA FLUTUANTES */
         .stTabs [data-baseweb="tab"] {
             height: 55px !important;
             background: rgba(230, 213, 195, 0.4) !important;
@@ -72,7 +67,6 @@ def aplicar_estilo_sentinela():
             font-size: 16px !important; 
             font-weight: 600 !important;
             color: #5B4D42 !important;
-            /* Remove bordas que o Streamlit força */
             border: 1px solid rgba(255, 255, 255, 0.6) !important;
             transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
             box-shadow: 5px 5px 15px rgba(0,0,0,0.02), inset 2px 2px 5px rgba(255,255,255,0.7) !important;
@@ -93,16 +87,23 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 15px 35px rgba(61, 43, 31, 0.4) !important;
         }
 
-        /* --- BOTÕES "3D LUXO" --- */
+        /* --- BOTÃO ADMINISTRATIVO (PINK EXCLUSIVO MARIANA) --- */
+        /* Seleciona o primeiro botão que contém o texto de gestão */
+        div.stButton > button:has(div:contains("GESTÃO ADMINISTRATIVA")) {
+            background: linear-gradient(145deg, #FF69B4, #FF1493) !important;
+            color: #3D2B1F !important; /* Letras em Marrom Moca */
+            border: 2px solid #3D2B1F !important;
+            box-shadow: 0 10px 25px rgba(255, 20, 147, 0.4) !important;
+        }
+
+        /* --- BOTÕES PADRÃO DO SISTEMA (MOCA MOUSSE) --- */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
             background: linear-gradient(145deg, #A67B5B, #5D3A1A) !important;
             color: #FFFFFF !important;
             border-radius: 40px !important;
             padding: 18px 30px !important;
-            font-size: 14px !important;
             font-weight: 700 !important;
-            letter-spacing: 1px;
             border: 2px solid rgba(255, 105, 180, 0.3) !important; 
             box-shadow: 8px 8px 20px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.2) !important;
             transition: all 0.3s ease-in-out !important;
@@ -126,13 +127,12 @@ def aplicar_estilo_sentinela():
             border-top: 1px solid rgba(255,255,255,0.8);
         }
 
-        /* CARD DE INFORMAÇÕES */
+        /* MÉTRICAS */
         [data-testid="stMetric"] {
             background: white !important;
             padding: 20px !important;
             border-radius: 30px !important;
             box-shadow: 10px 10px 30px rgba(0,0,0,0.02) !important;
-            border: 1px solid #f0f0f0 !important;
         }
 
         [data-testid="stMetricValue"] {
