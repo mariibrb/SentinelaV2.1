@@ -49,20 +49,30 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 10px 20px rgba(255, 105, 180, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.5);
         }
 
-        /* --- ABAS "SOFT UI" (O FIM DO QUADRADO) --- */
+        /* --- EXTERMINANDO O QUADRADO AO REDOR DAS ABAS --- */
+        /* Remove a linha de fundo e a borda da caixa das abas */
+        .stTabs [data-baseweb="tab-border"] {
+            display: none !important;
+        }
+        
+        /* Garante que o container das abas seja invisível */
         .stTabs [data-baseweb="tab-list"] {
             gap: 15px !important;
-            background: transparent !important;
+            background-color: transparent !important;
+            border-style: none !important;
+            padding: 10px 0px !important;
         }
 
+        /* --- ABAS PÍLULA (DESIGN LIMPO) --- */
         .stTabs [data-baseweb="tab"] {
             height: 55px !important;
             background: rgba(230, 213, 195, 0.4) !important;
-            border-radius: 30px !important; /* Totalmente curvas */
+            border-radius: 30px !important; 
             padding: 0px 35px !important;
             font-size: 16px !important; 
             font-weight: 600 !important;
             color: #5B4D42 !important;
+            /* Remove bordas que o Streamlit força */
             border: 1px solid rgba(255, 255, 255, 0.6) !important;
             transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
             box-shadow: 5px 5px 15px rgba(0,0,0,0.02), inset 2px 2px 5px rgba(255,255,255,0.7) !important;
@@ -93,7 +103,7 @@ def aplicar_estilo_sentinela():
             font-size: 14px !important;
             font-weight: 700 !important;
             letter-spacing: 1px;
-            border: 2px solid rgba(255, 105, 180, 0.3) !important; /* Contorno Pink Sutil */
+            border: 2px solid rgba(255, 105, 180, 0.3) !important; 
             box-shadow: 8px 8px 20px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.2) !important;
             transition: all 0.3s ease-in-out !important;
             text-transform: uppercase;
@@ -101,11 +111,11 @@ def aplicar_estilo_sentinela():
 
         .stButton > button:hover, .stDownloadButton > button:hover {
             transform: scale(1.03) !important;
-            box-shadow: 0 20px 40px rgba(255, 105, 180, 0.4) !important; /* Brilho Rosa real */
+            box-shadow: 0 20px 40px rgba(255, 105, 180, 0.4) !important; 
             border-color: #FF69B4 !important;
         }
 
-        /* --- CONTAINER DE STATUS (MODERNO) --- */
+        /* --- CONTAINER DE STATUS --- */
         .status-container {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(15px);
@@ -116,7 +126,7 @@ def aplicar_estilo_sentinela():
             border-top: 1px solid rgba(255,255,255,0.8);
         }
 
-        /* CARD DE INFORMAÇÕES (MÉTRICAS) */
+        /* CARD DE INFORMAÇÕES */
         [data-testid="stMetric"] {
             background: white !important;
             padding: 20px !important;
