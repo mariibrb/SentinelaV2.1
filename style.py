@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* --- 1. ESTRUTURA GERAL --- */
+        /* --- 1. ESTRUTURA --- */
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             background-color: #F3E9DC !important; 
@@ -37,7 +37,7 @@ def aplicar_estilo_sentinela():
             color: #8B5A2B !important;
         }
 
-        /* Ativas */
+        /* Ativas Setorizadas */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; transform: translateY(-30px) !important; }
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; transform: translateY(-30px) !important; }
 
@@ -50,7 +50,7 @@ def aplicar_estilo_sentinela():
             border: 6px solid transparent !important;
         }
 
-        /* Neon Bloom no Caixotão */
+        /* Neon do Caixotão acompanhando o setor */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border-color: #00D1FF !important;
             box-shadow: 0 0 30px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.4) !important;
@@ -60,44 +60,39 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 0 30px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4) !important;
         }
 
-        /* --- 4. ✉️ EFEITO ENVELOPE (ÁREA DE UPLOAD) --- */
+        /* --- 4. ✉️ ENVELOPES SETORIZADOS (AZUL OU ROSA) --- */
+        
+        /* Estilo Base do Envelope */
         [data-testid="stFileUploader"] {
-            background-color: #FCF9F5 !important; /* Cor de papel craft clarinho */
-            padding: 40px !important;
-            border-radius: 10px 10px 40px 40px !important; /* Curva de envelope no fundo */
-            border: 1px solid #E8DCCB !important;
-            border-top: 15px solid #FDFDFD !important; /* A aba do envelope */
-            box-shadow: 
-                0 15px 35px rgba(0,0,0,0.08), 
-                inset 0 -10px 20px rgba(232, 220, 203, 0.3) !important;
-            margin: 20px 0 !important;
-            position: relative;
+            padding: 45px !important;
+            border-radius: 10px 10px 45px 45px !important;
+            border: 2px solid transparent !important;
+            border-top: 18px solid #FDFDFD !important;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1) !important;
+            margin: 25px 0 !important;
         }
 
-        /* Detalhe do lacre do envelope */
-        [data-testid="stFileUploader"]::before {
-            content: "📂";
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 25px;
-            background: white;
-            border-radius: 50%;
-            padding: 5px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        /* 🔵 ENVELOPE XML (AZUL) */
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] {
+            background-color: #EBF9FF !important; /* Azul Pastel */
+            border-color: #A7E9FF !important;
         }
 
-        /* --- 5. 📄 ÁREA DE AUDITORIA (ILHA BRANCA) --- */
+        /* 💗 ENVELOPE CONFORMIDADE (ROSA) */
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] {
+            background-color: #FFF0F5 !important; /* Rosa Pastel */
+            border-color: #FFD1DC !important;
+        }
+
+        /* --- 5. 📄 ÁREA DE AUDITORIA --- */
         div.stExpander, div.element-container:has(h1, h2, h3), .stDataFrame {
             background-color: white !important;
             padding: 30px !important;
             border-radius: 20px !important;
-            border: 1px solid #f0f0f0 !important;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.03) !important;
+            border: 1px solid #f2f2f2 !important;
         }
 
-        /* Sub-abas */
+        /* Sub-abas Internas */
         .stTabs .stTabs [data-baseweb="tab-list"] { padding: 0 0 30px 0 !important; }
         .stTabs .stTabs [data-baseweb="tab"] { height: 60px !important; border-radius: 15px 45px 0 0 !important; }
 
