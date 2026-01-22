@@ -3,7 +3,7 @@ import re
 
 def processar_icms(df_xs, writer, cod_cliente, df_xe=None, df_base_emp=None, modo_auditoria="ELITE"):
     """
-    AUDITORIA FORENSE SENTINELA - COM COLUNA DE AÇÃO CORRETIVA
+    AUDITORIA FORENSE SENTINELA - PADRÃO MARIANA (AÇÃO + FUNDAMENTAÇÃO)
     """
     if df_xs.empty:
         return
@@ -26,73 +26,71 @@ def processar_icms(df_xs, writer, cod_cliente, df_xe=None, df_base_emp=None, mod
         uf_orig = str(r.get('UF_EMIT', '')).upper()
         uf_dest = str(r.get('UF_DEST', '')).upper()
         
-        # Lógica de Alíquota Esperada (Interestadual vs Interna)
+        # Lógica de Alíquota Esperada
         if uf_orig != uf_dest:
             sul_sudeste = ['SP', 'RJ', 'MG', 'PR', 'RS', 'SC']
             alq_esp = 7.0 if (uf_orig in sul_sudeste and uf_dest not in sul_sudeste + ['ES']) else 12.0
-            motivo = f"Interestadual {uf_orig}->{uf_dest}"
+            motivo_origem = f"Regra Interestadual {uf_orig}->{uf_dest}"
         else:
             alq_esp = 18.0
-            motivo = "Alíquota Interna Padrão"
+            motivo_origem = "Alíquota Interna Padrão"
 
         # Validação de ST
         cst_esp = "00"
         if cfop in ['5405', '6405', '6404'] or ncm_clean in ncms_com_st:
-            cst_esp = "60"; alq_esp = 0.0; motivo = "ST identificado"
+            cst_esp = "60"; alq_esp = 0.0; motivo_origem = "Substituição Tributária identificada"
 
-        # CÁLCULOS FORENSES
+        # CÁLCULOS
         vlr_devido = round(bc_xml * (alq_esp / 100), 2)
         complemento = max(0.0, round(vlr_devido - vlr_icms_xml, 2))
         
-        diag_alq = "✅ OK" if abs(alq_xml - alq_esp) < 0.01 else f"❌ ERRO"
-        diag_cst = "✅ OK" if cst_xml == cst_esp else f"❌ DIV."
+        diag_alq = "✅ OK" if abs(alq_xml - alq_esp) < 0.01 else "❌ Erro"
+        diag_cst = "✅ OK" if cst_xml == cst_esp else "❌ Divergente"
         
-        status_risco = "🚨 ALTO RISCO" if complemento > 0 else "✔️ CONFORME"
-
-        # --- LÓGICA DA AÇÃO CORRETIVA ---
-        acao = []
-        if "❌" in diag_alq:
-            acao.append(f"Revisar Alíquota para {alq_esp}%")
-        if "❌" in diag_cst:
-            acao.append(f"Alterar CST para {cst_esp}")
-        if complemento > 0:
-            acao.append(f"Recolher ICMS Complementar de R$ {complemento}")
+        # --- AÇÃO CORRETIVA E FUNDAMENTAÇÃO (PADRÃO 2.0) ---
+        acao = "Nenhuma"
+        fundamentacao = f"ICMS em conformidade para a operação. Alíquota {alq_esp}% e CST {cst_esp}."
         
-        acao_corretiva = " | ".join(acao) if acao else "Nenhuma ação necessária"
+        if complemento > 0.01:
+            acao = "NF Complementar / Guia de Ajuste"
+            fundamentacao = f"Recolhimento insuficiente. Valor devido: R$ {vlr_devido} | Valor em XML: R$ {vlr_icms_xml}. Diferença a recolher: R$ {complemento}."
+        elif "❌" in diag_cst:
+            acao = "Registrar CC-e"
+            fundamentacao = f"CST informado no XML ({cst_xml}) difere do esperado pela legislação ({cst_esp}) para o NCM {ncm_clean}."
+        elif "❌" in diag_alq:
+            acao = "Registrar CC-e / Revisar Cadastro"
+            fundamentacao = f"Alíquota XML ({alq_xml}%) difere da alíquota legal ({alq_esp}%). Motivo: {motivo_origem}."
 
-        return pd.Series([diag_alq, diag_cst, status_risco, complemento, alq_esp, cst_esp, motivo, acao_corretiva])
+        return pd.Series([diag_alq, diag_cst, complemento, alq_esp, cst_esp, acao, fundamentacao])
 
-    # Aplicando as colunas
+    # Aplicando as colunas conforme o seu padrão
     colunas_novas = [
-        'DIAGNOSTICO_ALQUOTA', 'DIAGNOSTICO_CST', 'VEREDITO_FISCAL', 
-        'ICMS_COMPLEMENTAR_R$', 'ALQ_ESPERADA_%', 'CST_ESPERADA', 'REGRA_APLICADA', 'AÇÃO_CORRETIVA'
+        'DIAG_ALQUOTA_ICMS', 'DIAG_CST_ICMS', 'ICMS_COMPLEMENTAR_R$', 
+        'ALQ_ESPERADA', 'CST_ESPERADO', 'AÇÃO_CORRETIVA_ICMS', 'FUNDAMENTAÇÃO_ICMS'
     ]
     audit_df[colunas_novas] = audit_df.apply(realizar_diagnostico, axis=1)
 
     # Gravação na aba
     audit_df.to_excel(writer, sheet_name='AUDIT_ICMS', index=False)
     
-    # Formatação Visual
+    # --- FORMATAÇÃO VISUAL ---
     workbook = writer.book
     worksheet = writer.sheets['AUDIT_ICMS']
-    f_erro = workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006', 'bold': True})
+    f_erro = workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006'})
     f_ok = workbook.add_format({'bg_color': '#C6EFCE', 'font_color': '#006100'})
-    f_acao = workbook.add_format({'bg_color': '#D9EAD3', 'font_color': '#274E13', 'italic': True})
-    
-    # Aplicar formatação nas colunas de diagnóstico e veredito
+    f_num = workbook.add_format({'num_format': '#,##0.00'})
+
+    # Ajusta larguras para caber a fundamentação
+    worksheet.set_column('A:O', 15)
+    worksheet.set_column('P:P', 30) # Ação Corretiva
+    worksheet.set_column('Q:Q', 60) # Fundamentação
+
+    # Aplicar cores nos diagnósticos
     for i, col in enumerate(audit_df.columns):
-        if "DIAGNOSTICO" in col or "VEREDITO" in col:
+        if "DIAG_" in col:
             worksheet.conditional_format(1, i, len(audit_df), i, {
                 'type': 'text', 'criteria': 'containing', 'value': '❌', 'format': f_erro
             })
             worksheet.conditional_format(1, i, len(audit_df), i, {
-                'type': 'text', 'criteria': 'containing', 'value': '🚨', 'format': f_erro
-            })
-            worksheet.conditional_format(1, i, len(audit_df), i, {
                 'type': 'text', 'criteria': 'containing', 'value': '✅', 'format': f_ok
             })
-        # Destaque para a coluna de Ação Corretiva
-        if col == "AÇÃO_CORRETIVA":
-             worksheet.set_column(i, i, 40, f_acao)
-
-    worksheet.freeze_panes(1, 4)
