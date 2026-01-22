@@ -3,7 +3,7 @@ import re
 
 def processar_icms(df_xs, writer, cod_cliente, df_xe=None, df_base_emp=None, modo_auditoria="ELITE"):
     """
-    AUDITORIA FORENSE SENTINELA - RESTAURAÇÃO COMPLETA
+    AUDITORIA FORENSE SENTINELA - COM COLUNA DE AÇÃO CORRETIVA
     """
     if df_xs.empty:
         return
@@ -44,17 +44,28 @@ def processar_icms(df_xs, writer, cod_cliente, df_xe=None, df_base_emp=None, mod
         vlr_devido = round(bc_xml * (alq_esp / 100), 2)
         complemento = max(0.0, round(vlr_devido - vlr_icms_xml, 2))
         
-        diag_alq = "✅ OK" if abs(alq_xml - alq_esp) < 0.01 else f"❌ ERRO ({alq_xml}% vs {alq_esp}%)"
-        diag_cst = "✅ OK" if cst_xml == cst_esp else f"❌ DIV. ({cst_xml} vs {cst_esp})"
+        diag_alq = "✅ OK" if abs(alq_xml - alq_esp) < 0.01 else f"❌ ERRO"
+        diag_cst = "✅ OK" if cst_xml == cst_esp else f"❌ DIV."
         
         status_risco = "🚨 ALTO RISCO" if complemento > 0 else "✔️ CONFORME"
 
-        return pd.Series([diag_alq, diag_cst, status_risco, complemento, alq_esp, cst_esp, motivo])
+        # --- LÓGICA DA AÇÃO CORRETIVA ---
+        acao = []
+        if "❌" in diag_alq:
+            acao.append(f"Revisar Alíquota para {alq_esp}%")
+        if "❌" in diag_cst:
+            acao.append(f"Alterar CST para {cst_esp}")
+        if complemento > 0:
+            acao.append(f"Recolher ICMS Complementar de R$ {complemento}")
+        
+        acao_corretiva = " | ".join(acao) if acao else "Nenhuma ação necessária"
 
-    # Aplicando as colunas que você sentia falta
+        return pd.Series([diag_alq, diag_cst, status_risco, complemento, alq_esp, cst_esp, motivo, acao_corretiva])
+
+    # Aplicando as colunas
     colunas_novas = [
         'DIAGNOSTICO_ALQUOTA', 'DIAGNOSTICO_CST', 'VEREDITO_FISCAL', 
-        'ICMS_COMPLEMENTAR_R$', 'ALQ_ESPERADA_%', 'CST_ESPERADA', 'REGRA_APLICADA'
+        'ICMS_COMPLEMENTAR_R$', 'ALQ_ESPERADA_%', 'CST_ESPERADA', 'REGRA_APLICADA', 'AÇÃO_CORRETIVA'
     ]
     audit_df[colunas_novas] = audit_df.apply(realizar_diagnostico, axis=1)
 
@@ -64,14 +75,24 @@ def processar_icms(df_xs, writer, cod_cliente, df_xe=None, df_base_emp=None, mod
     # Formatação Visual
     workbook = writer.book
     worksheet = writer.sheets['AUDIT_ICMS']
-    f_erro = workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006'})
+    f_erro = workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006', 'bold': True})
     f_ok = workbook.add_format({'bg_color': '#C6EFCE', 'font_color': '#006100'})
+    f_acao = workbook.add_format({'bg_color': '#D9EAD3', 'font_color': '#274E13', 'italic': True})
     
+    # Aplicar formatação nas colunas de diagnóstico e veredito
     for i, col in enumerate(audit_df.columns):
         if "DIAGNOSTICO" in col or "VEREDITO" in col:
             worksheet.conditional_format(1, i, len(audit_df), i, {
                 'type': 'text', 'criteria': 'containing', 'value': '❌', 'format': f_erro
             })
             worksheet.conditional_format(1, i, len(audit_df), i, {
+                'type': 'text', 'criteria': 'containing', 'value': '🚨', 'format': f_erro
+            })
+            worksheet.conditional_format(1, i, len(audit_df), i, {
                 'type': 'text', 'criteria': 'containing', 'value': '✅', 'format': f_ok
             })
+        # Destaque para a coluna de Ação Corretiva
+        if col == "AÇÃO_CORRETIVA":
+             worksheet.set_column(i, i, 40, f_acao)
+
+    worksheet.freeze_panes(1, 4)
