@@ -30,7 +30,7 @@ def aplicar_estilo_sentinela():
             text-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
         }
 
-        /* --- 3. ABAS MESTRE (OS SETORES) --- */
+        /* --- 3. ABAS MESTRE (SETORIZAÇÃO) --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         .stTabs [data-baseweb="tab-list"] { gap: 20px !important; padding: 40px 0 !important; }
 
@@ -47,7 +47,7 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* 🔵 SETOR XML: AZUL */
+        /* 🔵 SETOR ANALISE XML: AZUL */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             border-color: #00D1FF !important;
@@ -67,38 +67,45 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- 4. 📦 O CAIXOTÃO BRANCO GRANDE (A GAVETA GERAL) --- */
-        
+        /* --- 4. 📦 O PAINEL DE FUNDO (GAVETA GERAL) --- */
         [data-testid="stTabPanel"] {
-            background: white !important; /* Branco sólido como você pediu */
+            background: #FFFFFF !important;
             padding: 50px !important;
             border-radius: 0 60px 60px 60px !important;
             margin-top: -20px !important;
-            box-shadow: 0 20px 80px rgba(0,0,0,0.1) !important;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.05) !important;
             border: 4px solid transparent !important;
-            min-height: 400px !important; /* Garante que a caixa seja GRANDE */
         }
 
-        /* Borda Neon Azul no Setor XML */
+        /* Borda Neon Azul no XML */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 4px solid #00D1FF !important;
             border-top: 8px solid #00BFFF !important;
-            box-shadow: 0 15px 60px rgba(0, 209, 255, 0.3) !important;
         }
 
         /* Borda Neon Rosa na Conformidade */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 4px solid #FFB6C1 !important;
             border-top: 8px solid #FF69B4 !important;
-            box-shadow: 0 15px 60px rgba(255, 105, 180, 0.3) !important;
         }
 
-        /* Reset do uploader para usar o fundo do caixotão */
+        /* --- 📂 A CAIXA BRANCA INTERNA (AREA DE UPLOAD) --- */
+        /* Esta regra cria a caixa que engloba toda a área de colunas de upload do seu print */
+        div[data-testid="stHorizontalBlock"] {
+            background: #FDFDFD !important;
+            padding: 25px !important;
+            border-radius: 35px !important;
+            border: 1px solid #E8DCCB !important;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.02), 0 5px 15px rgba(0,0,0,0.03) !important;
+            margin: 20px 0 !important;
+        }
+
+        /* Reset dos campos de upload individuais para não duplicar bordas */
         [data-testid="stFileUploader"] {
-            background: transparent !important;
-            border: 2px dashed #D8C7B1 !important;
-            padding: 20px !important;
-            border-radius: 20px !important;
+            background: #F8F9FA !important;
+            border: 1px dashed #D8C7B1 !important;
+            border-radius: 15px !important;
+            padding: 10px !important;
         }
 
         /* --- 5. SUB-ABAS SETORIZADAS --- */
