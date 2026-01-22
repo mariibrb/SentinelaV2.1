@@ -20,76 +20,92 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #FCF8F4 0%, #E8DCCB 100%) !important; 
         }
 
-        /* --- 2. TÍTULO --- */
-        .titulo-principal { 
-            font-family: 'Montserrat', sans-serif !important;
-            color: #5D3A1A; 
-            font-size: 3.5rem; 
-            font-weight: 800; 
-            text-transform: uppercase;
+        /* --- 2. ABAS MÃE (PASTAS EXTERNAS) --- */
+        .stTabs [data-baseweb="tab-border"] { display: none !important; }
+        
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 20px !important;
+            padding: 40px 0 !important;
+            align-items: flex-end;
         }
 
-        /* --- 3. ABAS MESTRE (SETORIZADAS) --- */
-        .stTabs [data-baseweb="tab-border"] { display: none !important; }
-        .stTabs [data-baseweb="tab-list"] { gap: 20px !important; padding: 40px 0 !important; }
-
+        /* Estilo das Mães */
         .stTabs [data-baseweb="tab"] {
-            height: 90px !important;
+            height: 80px !important;
             background: linear-gradient(180deg, #FDFDFD 0%, #D8C7B1 100%) !important;
-            border-radius: 40px 110px 0 0 !important; 
-            margin-right: -35px !important;
-            padding: 0px 75px !important;
+            border-radius: 30px 80px 0 0 !important; 
+            margin-right: -25px !important;
+            padding: 0px 60px !important;
             border: 2px solid #A67B5B !important;
-            font-size: 1.7rem !important;
+            font-size: 1.5rem !important;
             font-weight: 800 !important;
             color: #8B5A2B !important;
         }
 
-        /* Cores das Abas Ativas */
+        /* Ativas das Mães (Azul e Rosa) */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; color: white !important; }
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
 
-        /* --- 4. 📦 O CAIXOTÃO BRANCO COM A BORDA NEON (O QUE VOCÊ PEDIU) --- */
-        div[data-testid="stHorizontalBlock"] {
-            background: #FFFFFF !important;
-            padding: 60px !important; 
-            border-radius: 50px !important;
-            margin: 40px 0 !important;
-            min-height: 450px !important;
-            transition: all 0.4s ease !important;
-            /* A bordinha neon que voce amou: */
-            border: 5px solid transparent !important;
+        /* --- 3. 📦 O CAIXOTÃO BRANCO (ENGLOBA TUDO: SUB-ABAS + CONTEÚDO) --- */
+        [data-testid="stTabPanel"] {
+            background: white !important;
+            padding: 40px !important;
+            border-radius: 40px !important;
+            margin-top: -5px !important;
+            min-height: 600px !important;
         }
 
-        /* 🔵 Borda Neon Azul no XML */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) div[data-testid="stHorizontalBlock"] {
-            border: 5px solid #00D1FF !important;
-            box-shadow: 0 0 30px #00D1FF, 0 0 60px rgba(0, 209, 255, 0.2) !important;
+        /* BORDINHA SOMBREADA NEON DO CAIXOTÃO (SETORIZADA) */
+        
+        /* Setor XML: Borda Azul Sombreada */
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
+            border: 6px solid #00D1FF !important;
+            box-shadow: 0 0 30px rgba(0, 209, 255, 0.4), 0 10px 60px rgba(0, 0, 0, 0.1) !important;
         }
 
-        /* 💗 Borda Neon Rosa na Conformidade */
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) div[data-testid="stHorizontalBlock"] {
-            border: 5px solid #FF69B4 !important;
-            box-shadow: 0 0 30px #FF69B4, 0 0 60px rgba(255, 105, 180, 0.2) !important;
+        /* Setor Conformidade: Borda Rosa Sombreada (Igual à Foto) */
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
+            border: 6px solid #FF69B4 !important;
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.4), 0 10px 60px rgba(0, 0, 0, 0.1) !important;
         }
 
-        /* --- 5. SUB-ABAS SETORIZADAS --- */
+        /* --- 4. SUB-ABAS DENTRO DO CAIXOTÃO --- */
+        /* Reduzimos o tamanho e encaixamos dentro da moldura neon */
+        .stTabs .stTabs [data-baseweb="tab-list"] {
+            padding: 10px 0 30px 0 !important;
+            background: transparent !important;
+        }
+
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
-            background: #FDFDFD !important;
-            border-radius: 15px 45px 0 0 !important;
+            background: #F8F9FA !important;
+            border-radius: 15px 40px 0 0 !important;
             font-size: 1.1rem !important;
-            font-weight: 800 !important;
+            padding: 0 40px !important;
+            margin-right: -10px !important;
         }
 
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
+        /* Sub-aba Ativa Azul */
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] {
+            background: #00BFFF !important;
+            color: white !important;
+            transform: translateY(-5px) !important;
+        }
 
-        /* Estilo do Uploader */
+        /* Sub-aba Ativa Rosa */
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] {
+            background: #FF69B4 !important;
+            color: white !important;
+            transform: translateY(-5px) !important;
+        }
+
+        /* --- 5. AREA DE UPLOAD DENTRO DO CAIXOTÃO --- */
         [data-testid="stFileUploader"] {
-            background: #F8F9FA !important;
-            border: 1px dashed #D8C7B1 !important;
+            background: #FFFFFF !important;
+            border: 2px dashed #D8C7B1 !important;
             border-radius: 20px !important;
+            padding: 20px !important;
+            margin-bottom: 20px !important;
         }
 
         </style>
