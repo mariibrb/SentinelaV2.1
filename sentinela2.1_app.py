@@ -191,6 +191,8 @@ if 'executado' not in st.session_state:
     st.session_state['executado'] = False
 if 'show_adm' not in st.session_state:
     st.session_state['show_adm'] = False
+if 'change_pass_mode' not in st.session_state:
+    st.session_state['change_pass_mode'] = False
 
 def limpar_central():
     st.session_state.clear()
@@ -206,30 +208,61 @@ if not st.session_state['user_data']:
         
         with aba_l:
             with st.container(border=True):
-                login_in = st.text_input("Usuário ou E-mail")
-                pass_l = st.text_input("Senha", type="password")
-                if st.button("ENTRAR NO SISTEMA", use_container_width=True):
-                    conn = sqlite3.connect('sentinela_usuarios.db')
-                    c = conn.cursor()
-                    # LOGIN HÍBRIDO: Aceita seu usuário 'mariana' ou o e-mail dos novos
-                    c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
-                                 FROM usuarios 
-                                 WHERE (usuario=? OR email=?) AND senha=?""", 
-                              (login_in, login_in, hash_senha(pass_l)))
-                    user = c.fetchone()
-                    conn.close()
-                    
-                    if user:
-                        if user[3] == 'ATIVO':
-                            st.session_state['user_data'] = {
-                                "nome": user[0], "usuario": user[1], "email": user[2], "nivel": user[4],
-                                "perms": {"xml": user[5], "icms": user[6], "difal": user[7], "pis": user[8], "ret": user[9]}
-                            }
-                            st.rerun()
+                # NOVA LÓGICA: SE ESTIVER EM MODO DE TROCA DE SENHA
+                if st.session_state['change_pass_mode']:
+                    st.warning("🛡️ SEGURANÇA: Você está usando uma senha padrão. Defina uma nova senha para continuar.")
+                    nova_s = st.text_input("Nova Senha", type="password", key="new_p")
+                    conf_s = st.text_input("Confirme a Nova Senha", type="password", key="conf_p")
+                    if st.button("SALVAR E ACESSAR", use_container_width=True):
+                        if nova_s == conf_s and len(nova_s) >= 4:
+                            if nova_s != "123456":
+                                conn = sqlite3.connect('sentinela_usuarios.db')
+                                conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha(nova_s), st.session_state['temp_email']))
+                                conn.commit(); conn.close()
+                                st.success("Senha alterada! Faça login novamente com a nova senha.")
+                                st.session_state['change_pass_mode'] = False
+                                st.rerun()
+                            else: st.error("A nova senha não pode ser '123456'.")
+                        else: st.error("Senhas não conferem ou são muito curtas.")
+                    if st.button("Voltar ao Login"):
+                        st.session_state['change_pass_mode'] = False; st.rerun()
+                
+                else:
+                    login_in = st.text_input("Usuário ou E-mail")
+                    pass_l = st.text_input("Senha", type="password")
+                    if st.button("ENTRAR NO SISTEMA", use_container_width=True):
+                        conn = sqlite3.connect('sentinela_usuarios.db')
+                        c = conn.cursor()
+                        # AJUSTE NO LOGIN: Busca por usuário OU e-mail para permitir 'mariana'
+                        c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
+                                     FROM usuarios 
+                                     WHERE (usuario=? OR email=?) AND senha=?""", 
+                                  (login_in, login_in, hash_senha(pass_l)))
+                        user = c.fetchone()
+                        conn.close()
+                        
+                        if user:
+                            if user[3] == 'ATIVO':
+                                # TRAVA DE SEGURANÇA: SE FOR SENHA RESETADA, FORÇA TROCA
+                                if pass_l == "123456":
+                                    st.session_state['change_pass_mode'] = True
+                                    st.session_state['temp_email'] = user[2]
+                                    st.rerun()
+                                else:
+                                    st.session_state['user_data'] = {
+                                        "nome": user[0], 
+                                        "usuario": user[1],
+                                        "email": user[2], 
+                                        "nivel": user[4],
+                                        "perms": {
+                                            "xml": user[5], "icms": user[6], "difal": user[7], "pis": user[8], "ret": user[9]
+                                        }
+                                    }
+                                    st.rerun()
+                            else:
+                                st.warning("Seu acesso está em fase de análise administrativa.")
                         else:
-                            st.warning("Seu acesso está em fase de análise administrativa.")
-                    else:
-                        st.error("Dados de acesso incorretos.")
+                            st.error("Dados de acesso incorretos.")
         
         with aba_c:
             with st.container(border=True):
@@ -248,7 +281,7 @@ if not st.session_state['user_data']:
                                          (n_nome, n_email, n_email, hash_senha(n_pass)))
                             conn.commit()
                             conn.close()
-                            enviar_email("marii.brbj@gmail.com", "NOVA SOLICITAÇÃO", f"O e-mail {n_email} solicitou acesso.")
+                            enviar_email("marii.brbj@gmail.com", "NOVA SOLICITAÇÃO", f"O e-mail {n_email} solicitou acesso ao sistema.")
                             st.success("Solicitação enviada! Aguarde retorno.")
                         except Exception:
                             st.error("Este e-mail já está cadastrado.")
@@ -305,7 +338,6 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                         enviar_email(row['email'], "SENHA RESETADA", f"Sua nova senha é: {nova_senha}\nPor favor, altere no login.")
                         st.info("Senha resetada.")
 
-                    p_x = c3.checkbox("Audit XML", value=bool(row['perm_xml']), key=f"x_p_{idx}")
                     p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
                     p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
                     p_p = c3.checkbox("Audit PIS/COFINS", value=bool(row['perm_pis']), key=f"p_{idx}")
@@ -323,14 +355,14 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                             conn.commit(); st.rerun()
                             
                         if c4.button("💾 SALVAR ALTERAÇÕES", key=f"save_{idx}", use_container_width=True, type="primary"):
-                            conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                         (edit_nome, edit_mail, edit_user, int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                            conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                         (edit_nome, edit_mail, edit_user, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit(); st.success("Salvo!")
                     else:
                         c4.write("🛡️ Conta Mestre")
                         if c4.button("💾 ATUALIZAR PERFIL", key=f"sv_me_{idx}", use_container_width=True, type="primary"):
-                            conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                         (edit_nome, edit_mail, row['usuario'], int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                            conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                         (edit_nome, edit_mail, row['usuario'], int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit()
                             st.session_state['user_data'].update({"nome": edit_nome, "usuario": edit_user, "email": edit_mail})
                             st.success("Atualizado!"); st.rerun()
@@ -377,30 +409,31 @@ with st.sidebar:
             cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
             st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}</div>", unsafe_allow_html=True)
             
+            # --- VERIFICAÇÃO DOS AVISOS NO SIDEBAR ---
             path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
             if os.path.exists(path_base):
                 st.success("💎 Modo Elite: Base Localizada")
             else:
                 st.warning("🔍 Modo Cegas: Base não localizada")
                 
-            if ret_sel:
-                path_ret_base = f"RET/{cod_c}-RET_MG.xlsx"
-                if os.path.exists(path_ret_base):
-                    st.success("💎 Modo Elite: Base RET Localizada")
-                else:
-                    st.warning("🔍 Modo Cegas: Base RET não localizada")
+            path_ret_base = f"RET/{cod_c}-RET_MG.xlsx"
+            if os.path.exists(path_ret_base):
+                st.success("💎 Modo Elite: Base RET Localizada")
+            else:
+                st.warning("🔍 Modo Cegas: Base RET não localizada")
                 
             with st.popover("📥 Modelo Bases", use_container_width=True):
                 if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
                     st.download_button("Baixar Modelo", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
     else:
-        st.info("⚙️ Modo Administrativo Ativo.")
+        st.info("⚙️ Modo Administrativo Ativo.\nClique em 'FECHAR PAINEL ADM' no centro da tela para voltar à auditoria.")
 
 # --- ÁREA CENTRAL (RESPEITANDO PERMISSÕES DINÂMICAS) ---
 if emp_sel and not modo_adm:
     perms = st.session_state['user_data']['perms']
     abas_v = []
     
+    # Montagem dinâmica das abas conforme permissões ADM
     if perms.get('xml'): abas_v.append("📂 ANÁLISE XML")
     if any([perms.get('icms'), perms.get('difal'), perms.get('ret'), perms.get('pis')]):
         abas_v.append("🏢 CONFORMIDADE DOMÍNIO")
