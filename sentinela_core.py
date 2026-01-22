@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (NÃO MEXER AQUI) ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
 try:
     from audit_resumo import gerar_aba_resumo             
     from Auditorias.audit_icms import processar_icms       
@@ -16,7 +16,7 @@ try:
     from Apuracoes.apuracao_difal import gerar_resumo_uf    
     from Gerenciais.audit_gerencial import gerar_abas_gerenciais
 except ImportError as e:
-    st.error(f"⚠️ Erro de Importação Crítico: {e}")
+    st.error(f"⚠️ Erro de Dependência no Core: {e}")
 
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
@@ -36,7 +36,6 @@ def buscar_tag_recursiva(tag_alvo, no):
         if tag_nome == tag_alvo: return elemento.text if elemento.text else ""
     return ""
 
-# --- MOTOR DE EXTRAÇÃO (LEITURA DE TODAS AS TAGS) ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -53,23 +52,32 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
         chave = inf.attrib.get('Id', '')[3:]
 
         for det in root.findall('.//det'):
-            prod = det.find('prod'); imp = det.find('imposto')
-            icms_no = det.find('.//ICMS'); ipi_no = det.find('.//IPI')
-            pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
+            prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
+            # Tags que faltavam para IPI, PIS e COFINS
+            ipi_no = det.find('.//IPI')
+            pis_no = det.find('.//PIS')
+            cof_no = det.find('.//COFINS')
+
+            v_prod = safe_float(buscar_tag_recursiva('vProd', prod))
+            ncm = buscar_tag_recursiva('NCM', prod)
             
             origem = buscar_tag_recursiva('orig', icms_no)
             cst_parcial = buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no)
             cst_full = origem + cst_parcial if cst_parcial else origem
 
             linha = {
-                "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
+                "TIPO_SISTEMA": tipo_operacao, 
+                "CHAVE_ACESSO": str(chave).strip(),
                 "NUM_NF": buscar_tag_recursiva('nNF', ide), 
                 "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
-                "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
+                "CNPJ_EMIT": cnpj_emit, 
+                "UF_EMIT": buscar_tag_recursiva('UF', emit),
                 "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), 
-                "IE_DEST": buscar_tag_recursiva('IE', dest), "UF_DEST": buscar_tag_recursiva('UF', dest), 
-                "CFOP": buscar_tag_recursiva('CFOP', prod), "NCM": buscar_tag_recursiva('NCM', prod), 
-                "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)), 
+                "IE_DEST": buscar_tag_recursiva('IE', dest),
+                "UF_DEST": buscar_tag_recursiva('UF', dest), 
+                "CFOP": buscar_tag_recursiva('CFOP', prod),
+                "NCM": ncm, 
+                "VPROD": v_prod, 
                 "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)), 
                 "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)), 
                 "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)),
@@ -80,13 +88,12 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 
-                # Tags essenciais para as abas especialistas
+                # Colunas de apoio para Auditorias (IPI/PIS/COFINS)
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
                 "VLR-PIS": safe_float(buscar_tag_recursiva('vPIS', pis_no)),
-                "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no)),
-                "Status": "AGUARDANDO" 
+                "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no))
             }
             dados_lista.append(linha)
     except: pass
@@ -104,22 +111,20 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
 
-    # --- LÓGICA DE CRUZAMENTO COM GARIMPO (AUTENTICIDADE) ---
-    if 'relatorio' in st.session_state and st.session_state['relatorio'] is not None:
-        try:
-            df_rel = pd.DataFrame(st.session_state['relatorio'])
-            df_rel.columns = [str(c).strip().upper() for c in df_rel.columns]
-            
-            # Procura coluna Chave ou Chave de Acesso
-            col_chave = next((c for c in df_rel.columns if 'CHAVE' in c), None)
-            col_status = next((c for c in df_rel.columns if 'STATUS' in c or 'SITUAÇÃO' in c), None)
-
-            if col_chave and col_status:
-                df_rel = df_rel.rename(columns={col_chave: 'CHAVE_ACESSO', col_status: 'SITUACAO_REAL'})
-                df = pd.merge(df, df_rel[['CHAVE_ACESSO', 'SITUACAO_REAL']], on='CHAVE_ACESSO', how='left')
-                df['Status'] = df['SITUACAO_REAL'].fillna("SEM REFERÊNCIA (FAZER GARIMPO)")
-                df.drop(columns=['SITUACAO_REAL'], inplace=True)
-        except: pass
+    # --- LÓGICA DE CRUZAMENTO COM PLANILHA DE AUTENTICIDADE ---
+    if 'relatorio' in st.session_state and st.session_state['relatorio']:
+        df_rel = pd.DataFrame(st.session_state['relatorio'])
+        # Normaliza nomes de colunas do Garimpo
+        df_rel.columns = [str(c).strip().title() for c in df_rel.columns]
+        df_rel = df_rel.rename(columns={'Chave': 'CHAVE_ACESSO', 'Status': 'Situação Nota'})
+        
+        if 'CHAVE_ACESSO' in df_rel.columns:
+            df = pd.merge(df, df_rel[['CHAVE_ACESSO', 'Situação Nota']], on='CHAVE_ACESSO', how='left')
+            df['Situação Nota'] = df['Situação Nota'].fillna("SEM REFERÊNCIA (FAZER GARIMPO)")
+        else:
+            df['Situação Nota'] = "⚠️ COLUNA 'CHAVE' NÃO ENCONTRADA NO GARIMPO"
+    else:
+        df['Situação Nota'] = "⚠️ PLANILHA DE AUTENTICIDADE NÃO CARREGADA"
 
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
@@ -129,18 +134,28 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # Ordem das 22 Colunas (Status por Último)
-    cols_xml = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST", "Status"]
+    # Ordem das colunas para o Excel (Dump XML)
+    cols_exibicao = [
+        "TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT",
+        "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS",
+        "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST",
+        "VAL-FCP-ST", "Situação Nota"
+    ]
 
     for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_temp.empty:
-            df_final = df_temp[cols_xml].copy()
+            # Filtra apenas as colunas desejadas para as abas de dump
+            df_final = df_temp[cols_exibicao]
             df_final.to_excel(writer, sheet_name=nome, index=False)
 
-    # --- CHAMADA DAS AUDITORIAS (Nomes garantidos pelas importações no topo) ---
     if not df_xs.empty:
+        # Chama Auditorias (O DF leva as colunas ALQ-IPI etc ocultas no dump)
         processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
-        processar_ipi(df_xs, writer, cod_cliente)
-        processar_pc(df_xs, writer, cod_cliente, regime)
-        processar_difal(df_xs, writer)
-        gerar_resumo_uf(df_xs, writer, df_xe)
+        try: processar_ipi(df_xs, writer, cod_cliente)
+        except: pass
+        try: processar_pc(df_xs, writer, cod_cliente, regime)
+        except: pass
+        try: processar_difal(df_xs, writer)
+        except: pass
+        try: gerar_resumo_uf(df_xs, writer, df_xe)
+        except: pass
