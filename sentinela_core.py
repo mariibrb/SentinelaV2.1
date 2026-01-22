@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (TODOS OS DE ONTEM) ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
 try:
     from audit_resumo import gerar_aba_resumo             
     from Auditorias.audit_icms import processar_icms       
@@ -15,7 +15,7 @@ try:
     from Auditorias.audit_difal import processar_difal      
     from Apuracoes.apuracao_difal import gerar_resumo_uf    
 except ImportError as e:
-    st.error(f"⚠️ Erro de Dependência no Core: {e}")
+    st.error(f"⚠️ Erro de Importação Crítico no Core: {e}")
 
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
@@ -52,7 +52,6 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
 
         for det in root.findall('.//det'):
             prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
-            # --- TODAS AS TAGS DE ONTEM ESTÃO AQUI ---
             ipi_no = det.find('.//IPI')
             pis_no = det.find('.//PIS')
             cof_no = det.find('.//COFINS')
@@ -81,12 +80,14 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 
-                # --- AS TAGS DO IPI/PIS/COFINS QUE GARANTEM AS ABAS ---
+                # Tags essenciais para as auditorias especialistas não darem erro
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
                 "VLR-PIS": safe_float(buscar_tag_recursiva('vPIS', pis_no)),
-                "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no))
+                "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no)),
+                "ALQ-PIS": safe_float(buscar_tag_recursiva('pPIS', pis_no)),
+                "ALQ-COFINS": safe_float(buscar_tag_recursiva('pCOFINS', cof_no))
             }
             dados_lista.append(linha)
     except: pass
@@ -104,7 +105,7 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
 
-    # --- LÓGICA DE STATUS: MATCH COLUNA B XML COM COLUNA A GARIMPO -> TRAZ COLUNA F ---
+    # --- LÓGICA DE STATUS: COLUNA B XML vs COLUNA A GARIMPO -> TRAZ COLUNA F ---
     if 'relatorio' in st.session_state and st.session_state['relatorio'] is not None:
         try:
             df_rel = pd.DataFrame(st.session_state['relatorio'])
@@ -133,9 +134,9 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
 
     for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_temp.empty:
-            df_temp[cols_xml].to_excel(writer, sheet_name=nome, index=False)
+            df_final = df_temp[cols_xml].copy()
+            df_final.to_excel(writer, sheet_name=nome, index=False)
 
-    # --- CHAMADA DAS AUDITORIAS (ESTADO ORIGINAL DE ONTEM) ---
     if not df_xs.empty:
         processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
         processar_ipi(df_xs, writer, cod_cliente)
