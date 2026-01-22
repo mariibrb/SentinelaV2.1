@@ -19,7 +19,6 @@ def aplicar_estilo_sentinela():
         }
 
         /* --- 2. 🚫 REMOÇÃO TOTAL DA CAIXA BRANCA DO TÍTULO --- */
-        /* Esta regra mata qualquer fundo branco que tente aparecer atrás do título */
         div[data-testid="stVerticalBlock"] > div:has(.titulo-principal),
         div[data-testid="stVerticalBlock"] > div:first-child,
         .element-container:has(.titulo-principal) {
@@ -127,6 +126,31 @@ def aplicar_estilo_sentinela():
             border-radius: 20px !important;
             box-shadow: 0 5px 25px rgba(0,0,0,0.03) !important;
             border: 1px solid #E9ECEF !important;
+        }
+
+        /* --- 8. 🎯 AJUSTE EXCLUSIVO DO BOTÃO DE DOWNLOAD (MATA O VERMELHO) --- */
+        div.stDownloadButton > button {
+            background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
+            color: #495057 !important;
+            border: 2px solid #ADB5BD !important;
+            border-radius: 15px !important;
+            font-weight: 800 !important;
+            height: 55px !important;
+            width: 100% !important;
+            text-transform: uppercase !important;
+            box-shadow: none !important;
+            transition: 0.3s ease !important;
+        }
+
+        /* Brilho neon no hover do botão de download conforme a aba ativa */
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) div.stDownloadButton > button:hover {
+            box-shadow: 0 0 20px #00BFFF !important;
+            border-color: #00BFFF !important;
+        }
+
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) div.stDownloadButton > button:hover {
+            box-shadow: 0 0 20px #FF69B4 !important;
+            border-color: #FF69B4 !important;
         }
 
         </style>
