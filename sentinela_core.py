@@ -82,12 +82,12 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)), # 19
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)), # 20
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),    # 21
-                "Status": "A PROCESSAR" # 22 (Será substituído no merge)
+                "Status": "A PROCESSAR" # 22
             }
             dados_lista.append(linha)
     except: pass
 
-def extrair_xml(files, cnpj_auditado):
+def extrair_dados_xml_recursivo(files, cnpj_auditado):
     dados = []
     if not files: return pd.DataFrame(), pd.DataFrame()
     for f in files:
@@ -99,36 +99,30 @@ def extrair_xml(files, cnpj_auditado):
                     if n.lower().endswith('.xml'):
                         with z.open(n) as xml: processar_conteudo_xml(xml.read(), dados, cnpj_auditado)
     df = pd.DataFrame(dados)
+    if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DO EXCEL FINAL COM CRUZAMENTO DE AUTENTICIDADE ---
-def gerar_analise_xml(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
+# --- GERAÇÃO DO EXCEL FINAL COM CRUZAMENTO ---
+def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
     try: gerar_aba_resumo(writer)
     except: pass
     
     if not df_xs.empty:
-        # --- LÓGICA DE CRUZAMENTO (O PROCV) ---
         mapa_status = {}
-        # Carrega as planilhas de autenticidade (Entradas e Saídas)
         for arquivo_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
             try:
                 arquivo_auth.seek(0)
-                # Lê a planilha de autenticidade (Chave na Col 0, Situação na Col 5)
                 if arquivo_auth.name.endswith('.xlsx'):
                     df_auth = pd.read_excel(arquivo_auth, header=None)
                 else:
                     df_auth = pd.read_csv(arquivo_auth, header=None, sep=None, engine='python')
                 
-                # Limpa a chave (remove 'NFe' se houver) e mapeia o Status (Coluna 5)
                 df_auth[0] = df_auth[0].astype(str).str.replace('NFe', '').str.strip()
                 mapa_status.update(df_auth.set_index(0)[5].to_dict())
-            except Exception as e:
-                st.warning(f"Não foi possível processar o arquivo de autenticidade {arquivo_auth.name}: {e}")
+            except: continue
 
-        # Aplica o cruzamento: busca a CHAVE_ACESSO do XML no mapa da autenticidade
-        df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(mapa_status).fillna('⚠️ Chave não encontrada no Garimpo')
+        df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(mapa_status).fillna('⚠️ N/Encontrada')
         
-        # Agora as auditorias recebem o DF com o Status REAL preenchido
         processar_icms(df_xs, writer, cod_cliente, df_xe)
         processar_ipi(df_xs, writer, cod_cliente)
         processar_pc(df_xs, writer, cod_cliente, regime)
