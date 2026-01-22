@@ -1,12 +1,8 @@
 import streamlit as st
 
 def aplicar_estilo_sentinela():
-    # Botão de Reset Visual no canto direito (Sinal de socorro visual)
+    # Removido o botão-home-mestre (casinha) conforme solicitado
     st.markdown("""
-        <div id="botao-home-mestre" onclick="window.location.reload()">
-            <span style="font-size: 24px;">🏠</span>
-        </div>
-
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
@@ -28,25 +24,6 @@ def aplicar_estilo_sentinela():
         .st-emotion-cache-6qob1r {
             display: none !important;
             visibility: hidden !important;
-        }
-
-        /* BOTÃO HOME (RESET) À DIREITA */
-        #botao-home-mestre {
-            position: fixed;
-            right: 30px;
-            top: 30px;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(145deg, #FF69B4, #FF1493);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 1000000;
-            box-shadow: 0 10px 25px rgba(255, 20, 147, 0.4);
-            border: 2px solid white;
-            transition: all 0.3s ease;
         }
 
         /* RESET DO LIXO VISUAL DO STREAMLIT */
