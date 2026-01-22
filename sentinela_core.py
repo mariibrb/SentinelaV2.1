@@ -93,11 +93,10 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DAS 06 ABAS (PROTEÇÃO CONTRA ERRO CIRCULAR) ---
+# --- GERAÇÃO DAS 06 ABAS (ORDEM: RESUMO PRIMEIRO) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo=None):
     if df_xs.empty and df_xe.empty: return
     
-    # REMOVEMOS OS IMPORTS DO TOPO E COLOCAMOS AQUI
     try:
         import audit_resumo
         from Auditorias import audit_icms, audit_ipi, audit_pis_cofins, audit_difal
@@ -106,27 +105,29 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         st.error(f"⚠️ Erro ao carregar módulos especialistas: {e}")
         return
 
-    # Abas de Conferência
+    # --- ABA 1: RESUMO (Agora no início) ---
+    try: 
+        audit_resumo.gerar_aba_resumo(writer)
+    except Exception as e: 
+        st.warning(f"Erro ao gerar Aba Resumo: {e}")
+
+    # Abas de Conferência (Dumps XML)
     for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_temp.empty:
             df_temp.to_excel(writer, sheet_name=nome, index=False)
 
     if not df_xs.empty:
-        # 1. ICMS
+        # Auditorias Especialistas
         audit_icms.processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
-        # 2. IPI
+        
         try: audit_ipi.processar_ipi(df_xs, writer, cod_cliente)
         except Exception as e: st.warning(f"IPI: {e}")
-        # 3. PIS/COFINS
+        
         try: audit_pis_cofins.processar_pc(df_xs, writer, cod_cliente, regime)
         except Exception as e: st.warning(f"PIS/COFINS: {e}")
-        # 4. DIFAL Auditoria
+        
         try: audit_difal.processar_difal(df_xs, writer)
         except: pass
-        # 5. Apuração DIFAL
+        
         try: apuracao_difal.gerar_resumo_uf(df_xs, writer, df_xe)
         except: pass
-
-    # 6. Resumo
-    try: audit_resumo.gerar_aba_resumo(writer)
-    except: pass
