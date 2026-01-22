@@ -250,7 +250,7 @@ if not st.session_state['user_data']:
                                          (n_nome, n_user, n_email, hash_senha(n_pass)))
                             conn.commit()
                             conn.close()
-                            st.success("Solicitação enviada! Você será notificado após a análise.")
+                            st.success("Solicitação enviada! Você será notificado após a análise do sistema.")
                         except Exception:
                             st.error("Este e-mail ou usuário já está cadastrado.")
                     else:
@@ -285,7 +285,7 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                 with st.container(border=True):
                     c1, c2, c3, c4 = st.columns([2.5, 1.5, 3, 2])
                     
-                    # Edição de Cadastro - AGORA COM USUARIO
+                    # Edição de Cadastro
                     edit_nome = c1.text_input("Nome Completo", value=row['nome'], key=f"n_{idx}")
                     edit_user = c1.text_input("Usuário Login", value=row['usuario'], key=f"u_{idx}")
                     edit_mail = c2.text_input("E-mail", value=row['email'], key=f"m_{idx}")
@@ -350,13 +350,13 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR (DINÂMICA: SOME SE ESTIVER NO ADM) ---
+# --- SIDEBAR DINÂMICA (COM RESTAURAÇÃO DOS AVISOS) ---
 emp_sel = ""
 with st.sidebar:
     if os.path.exists(".streamlit/Sentinela.png"):
         st.image(".streamlit/Sentinela.png", use_container_width=True)
     st.markdown("---")
-    st.write(f"👤 Olá, **{st.session_state['user_data']['nome']}**")
+    st.write(f"👋 Olá, **{st.session_state['user_data']['nome']}**")
     if st.button("🚪 SAIR DO SISTEMA", use_container_width=True):
         st.session_state.clear()
         st.rerun()
@@ -375,12 +375,22 @@ with st.sidebar:
             cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
             st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}</div>", unsafe_allow_html=True)
             
+            # --- RESTAURAÇÃO DOS DOIS AVISOS NO SIDEBAR ---
             path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
-            if os.path.exists(path_base):
-                st.success("💎 Modo Elite: Base Localizada")
-            else:
-                st.warning("🔍 Modo Cegas: Base não localizada")
+            path_ret_status = f"Bases_Tributarias/{cod_c}-RET.xlsx"
+            
+            # Aviso 1: Bases de Impostos
+            if os.path.exists(path_base): 
+                st.success("💎 Bases de Impostos Localizada")
+            else: 
+                st.warning("🔍 Bases de Impostos não localizada")
                 
+            # Aviso 2: Base RET (O QUE ESTAVA FALTANDO)
+            if os.path.exists(path_ret_status):
+                st.success("💎 Base RET Localizada")
+            else:
+                st.warning("🔍 Base RET não localizada")
+            
             with st.popover("📥 Modelo Bases", use_container_width=True):
                 if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
                     st.download_button("Baixar Modelo", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
@@ -392,7 +402,7 @@ if emp_sel and not modo_adm:
     perms = st.session_state['user_data']['perms']
     abas_v = []
     
-    # Montagem das abas principais conforme permissões ADM
+    # Montagem dinâmica das abas conforme permissões ADM
     if perms.get('xml'): abas_v.append("📂 ANÁLISE XML")
     if any([perms.get('icms'), perms.get('difal'), perms.get('ret'), perms.get('pis')]):
         abas_v.append("🏢 CONFORMIDADE DOMÍNIO")
@@ -487,14 +497,6 @@ if emp_sel and not modo_adm:
 
                                 elif nome_sub == "🏨 RET":
                                     st.markdown("#### Auditoria RET")
-                                    
-                                    # --- RESTAURAÇÃO DO AVISO DE BASE RET (MODO CEGAS/ELITE) ---
-                                    path_ret = f"Bases_Tributarias/{cod_c}-RET.xlsx"
-                                    if os.path.exists(path_ret):
-                                        st.success("💎 Base RET Localizada: Modo Elite Ativo")
-                                    else:
-                                        st.warning("🔍 Base RET não localizada: Modo Cegas Ativo")
-
                                     if ret_sel:
                                         c1, c2, c3 = st.columns(3)
                                         with c1: st.file_uploader("📑 Saídas RET", type=['xlsx'], key=f"ret_s_{v}")
