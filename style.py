@@ -59,9 +59,9 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* --- ABAS MÃE ATIVAS: NEON EXTREMO --- */
+        /* --- 💡 FIXAÇÃO DA MÃE: FORÇANDO ROSA PINK NA CONFORMIDADE --- */
 
-        /* ABA 1 (XML): AZUL NEON */
+        /* 🔵 ABA 1 (XML): AZUL NEON QUANDO ATIVA */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
@@ -71,7 +71,7 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* ABA 2 (CONFORMIDADE): ROSA PINK NEON */
+        /* 💗 ABA 2 (CONFORMIDADE): ROSA PINK NEON QUANDO ATIVA */
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             color: white !important;
@@ -81,17 +81,17 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- INTERIOR DA CAIXA (O CAIXOTE QUE VOCÊ AMOU) --- */
+        /* --- INTERIOR DA CAIXA (SUB-ABAS) --- */
         .stTabs .stTabs {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
             border-radius: 0 60px 60px 60px !important;
-            border: 4px solid #FF69B4 !important;
+            border: 4px solid #FF69B4 !important; /* CONEXÃO COM A MÃE ROSA */
             margin-top: -20px !important;
             box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
         }
 
-        /* --- 💗 SUB-ABAS (FORÇANDO ROSA EM ICMS/IPI) --- */
+        /* --- 💗 SUB-ABAS (CORRIGIDO PARA ROSA) --- */
         
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
@@ -103,7 +103,7 @@ def aplicar_estilo_sentinela():
             margin-right: 5px !important;
         }
 
-        /* ICMS/IPI e outras sub-abas quando selecionadas ficam Rosa Neon */
+        /* ICMS/IPI e outras sub-abas agora brilham em Rosa Neon */
         .stTabs .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFD1DC 0%, #FF69B4 100%) !important;
             color: white !important;
