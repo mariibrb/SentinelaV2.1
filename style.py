@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* --- 1. ESTRUTURA E FUNDO MOCHA --- */
+        /* --- 1. ESTRUTURA --- */
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             background-color: #F3E9DC !important; 
@@ -18,7 +18,7 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #FCF8F4 0%, #E8DCCB 100%) !important; 
         }
 
-        /* --- 2. ABAS MESTRE DIAMANTE (AS ETIQUETAS) --- */
+        /* --- 2. ABAS MESTRE DIAMANTE --- */
         .stTabs { overflow: visible !important; }
         .stTabs [data-baseweb="tab-list"] {
             gap: 15px !important; 
@@ -41,7 +41,7 @@ def aplicar_estilo_sentinela():
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; transform: translateY(-30px) !important; color: white !important; }
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; transform: translateY(-30px) !important; color: white !important; }
 
-        /* --- 3. 📦 O CAIXOTÃO (PASTA MÃE COM NEON BOATE) --- */
+        /* --- 3. 📦 O CAIXOTÃO (PASTA MÃE) --- */
         [data-testid="stTabPanel"] {
             background: #FFFFFF !important;
             padding: 50px !important;
@@ -51,7 +51,7 @@ def aplicar_estilo_sentinela():
             min-height: 800px !important;
         }
 
-        /* Neon Setorizado do Caixotão */
+        /* Neon Setorizado */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border-color: #00D1FF !important;
             box-shadow: 0 0 30px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.4) !important;
@@ -61,46 +61,63 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 0 30px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4) !important;
         }
 
-        /* --- 4. 📁 SUB-ABAS SETORIZADAS (DENTRO DO CAIXOTÃO) --- */
-        .stTabs .stTabs [data-baseweb="tab-list"] { padding: 0 0 30px 0 !important; }
+        /* --- 4. 📁 SUB-ABAS SETORIZADAS (CORREÇÃO DE ELEVAÇÃO) --- */
+        .stTabs .stTabs [data-baseweb="tab-list"] { 
+            padding: 0 0 30px 0 !important; 
+            overflow: visible !important; /* Essencial para não cortar a subida */
+        }
         
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #F8F9FA !important;
             border-radius: 15px 45px 0 0 !important;
-            font-size: 1.1rem !important;
+            transition: all 0.3s ease !important;
             margin-right: -10px !important;
         }
 
-        /* 🔵 SUB-ABAS DO SETOR XML (AZUIS) */
+        /* TODAS as sub-abas elevam ao selecionar */
+        .stTabs .stTabs [aria-selected="true"] {
+            transform: translateY(-12px) !important;
+            z-index: 10 !important;
+        }
+
+        /* Cores Sub-abas XML */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [data-baseweb="tab"] { color: #0088cc !important; border-bottom: 3px solid #00BFFF !important; }
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] {
-            background: #00BFFF !important;
-            color: white !important;
-            box-shadow: 0 0 15px #00D1FF !important;
+            background: #00BFFF !important; color: white !important; box-shadow: 0 0 15px #00D1FF !important;
         }
 
-        /* 💗 SUB-ABAS DO SETOR CONFORMIDADE (ROSAS) */
+        /* Cores Sub-abas Conformidade */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [data-baseweb="tab"] { color: #cc5588 !important; border-bottom: 3px solid #FF69B4 !important; }
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] {
-            background: #FF69B4 !important;
-            color: white !important;
-            box-shadow: 0 0 15px #FF69B4 !important;
+            background: #FF69B4 !important; color: white !important; box-shadow: 0 0 15px #FF69B4 !important;
         }
 
-        /* --- 5. ✉️ ENVELOPES DE UPLOAD SETORIZADOS --- */
+        /* --- 5. ✉️ ENVELOPES COM ÍCONE FOFO ☁️ --- */
         [data-testid="stFileUploader"] {
-            padding: 45px !important;
+            padding: 50px 45px 45px 45px !important;
             border-radius: 10px 10px 45px 45px !important;
             border-top: 18px solid #FDFDFD !important;
             box-shadow: 0 15px 40px rgba(0,0,0,0.1) !important;
             margin: 25px 0 !important;
+            position: relative !important;
+        }
+
+        /* O Ícone de Upload Fofo */
+        [data-testid="stFileUploader"]::before {
+            content: "☁️"; 
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 35px;
+            z-index: 99;
         }
 
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
 
-        /* --- 6. 📄 ÁREA DE AUDITORIA (ILHA BRANCA) --- */
+        /* --- 6. 📄 ÁREA DE AUDITORIA --- */
         div.stExpander, div.element-container:has(h1, h2, h3), .stDataFrame {
             background-color: white !important;
             padding: 30px !important;
