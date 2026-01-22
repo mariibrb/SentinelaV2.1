@@ -103,3 +103,39 @@ def aplicar_estilo_sentinela():
 
         </style>
     """, unsafe_allow_html=True)
+    /* --- 9. ⛏️ EXTERMINANDO O VERMELHO DO GARIMPEIRO (METRICS) --- */
+        /* Isso remove qualquer cor vermelha automática das métricas de canceladas/inutilizadas */
+        [data-testid="stMetricValue"] {
+            color: #495057 !important; /* Cor padrão cinza grafite */
+            font-family: 'Montserrat', sans-serif !important;
+            font-weight: 800 !important;
+        }
+
+        /* Remove o vermelho dos rótulos e setas de variação */
+        [data-testid="stMetricDelta"] > div {
+            color: #ADB5BD !important; 
+        }
+
+        /* Garante que o container da métrica não tenha bordas vermelhas */
+        div[data-testid="metric-container"] {
+            background-color: #F8F9FA !important;
+            border-radius: 15px !important;
+            padding: 15px !important;
+            border: 1px solid #DEE2E6 !important;
+            box-shadow: none !important;
+        }
+
+        /* Se você estiver usando o botão de 'Excluir Tudo' que fica vermelho */
+        div.stButton > button[key*="clr_"] {
+            color: #495057 !important;
+            border-color: #ADB5BD !important;
+            background: #FFFFFF !important;
+        }
+        
+        /* Forçando a cor dos labels das métricas */
+        [data-testid="stMetricLabel"] {
+            color: #6C757D !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+        }
