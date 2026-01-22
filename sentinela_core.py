@@ -39,8 +39,8 @@ def buscar_tag_recursiva(tag_alvo, no):
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
-        xml_str = re.sub(r'\sxmlns(:\w+)?="[^"]+"', '', xml_str) 
-        root = ET.fromstring(xml_str)
+        xml_str_limpa = re.sub(r'\sxmlns(:\w+)?="[^"]+"', '', xml_str) 
+        root = ET.fromstring(xml_str_limpa)
         inf = root.find('.//infNFe')
         if inf is None: return 
         
@@ -60,7 +60,6 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
             cst_parcial = buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no)
             cst_full = origem + cst_parcial if cst_parcial else origem
 
-            # Dicionário com TODAS as tags para as auditorias funcionarem
             linha = {
                 "TIPO_SISTEMA": tipo_operacao,
                 "CHAVE_ACESSO": str(chave).strip(),
@@ -93,7 +92,6 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "ALQ-COFINS": safe_float(buscar_tag_recursiva('pCOFINS', cof_no)),
                 "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no)),
                 
-                # O Status será atualizado após o processamento, mas já garantimos o campo aqui
                 "Status": "AGUARDANDO" 
             }
             dados_lista.append(linha)
@@ -112,7 +110,6 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
 
-    # Lógica de cruzamento com Garimpo para definir o Status
     if 'relatorio' in st.session_state and st.session_state['relatorio']:
         df_rel = pd.DataFrame(st.session_state['relatorio']).rename(columns={'Chave': 'CHAVE_ACESSO', 'Status': 'Status_Real'})
         df = pd.merge(df, df_rel[['CHAVE_ACESSO', 'Status_Real']], on='CHAVE_ACESSO', how='left')
@@ -129,7 +126,7 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # Lista de exibição: Status é o último de tudo
+    # Lista de colunas para o Excel (O Status é o último de tudo)
     colunas_finais = [
         "TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT",
         "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS",
@@ -139,14 +136,21 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
 
     for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_temp.empty:
-            # Reordenar para garantir o Status no fim
+            # Seleciona apenas as 22 colunas desejadas para visualização
             df_export = df_temp[colunas_finais].copy()
             df_export.to_excel(writer, sheet_name=nome, index=False)
 
     if not df_xs.empty:
-        processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo_auditoria)
-        processar_ipi(df_xs, writer, cod_cliente)
-        processar_pc(df_xs, writer, cod_cliente, regime)
-        processar_difal(df_xs, writer)
-        gerar_resumo_uf(df_xs, writer, df_xe)
-        gerar_abas_gerenciais(writer, ae, as_f, ge, gs)
+        # Passa o DF completo (com as colunas ALQ-IPI, etc) para os especialistas
+        try: processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo_auditoria)
+        except: pass
+        try: processar_ipi(df_xs, writer, cod_cliente)
+        except: pass
+        try: processar_pc(df_xs, writer, cod_cliente, regime)
+        except: pass
+        try: processar_difal(df_xs, writer)
+        except: pass
+        try: gerar_resumo_uf(df_xs, writer, df_xe)
+        except: pass
+        try: gerar_abas_gerenciais(writer, ae, as_f, ge, gs)
+        except: pass
