@@ -6,7 +6,6 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- FUNÇÕES DE APOIO ---
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -89,7 +88,6 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo=None):
-    # IMPORT LOCAL PARA EVITAR ERRO CIRCULAR
     try:
         from audit_resumo import gerar_aba_resumo             
         from Auditorias.audit_icms import processar_icms       
@@ -101,47 +99,46 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         st.error(f"⚠️ Erro de Importação: {e}")
         return
 
-    # --- 1. PROCESSA TODAS AS AUDITORIAS PRIMEIRO (SEM CONFLITO COM STATUS) ---
+    # --- 1. PROCESSAMENTO FISCAL (Puro do XML) ---
     if not df_xs.empty:
         processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
         try: processar_ipi(df_xs, writer, cod_cliente)
-        except Exception as e: st.warning(f"IPI: {e}")
+        except: pass
         try: processar_pc(df_xs, writer, cod_cliente, regime)
-        except Exception as e: st.warning(f"PIS/COFINS: {e}")
+        except: pass
         processar_difal(df_xs, writer)
         gerar_resumo_uf(df_xs, writer, df_xe)
 
-    # --- 2. LÓGICA DE STATUS (MATCH COLUNA A EXCEL vs CHAVE CORE) ---
-    def aplicar_status(df_core, arquivos_excel):
-        if not arquivos_excel: 
+    # --- 2. MATCH DO STATUS (Coluna A vs F dos seus Excel) ---
+    def aplicar_status_procv(df_core, lista_excel):
+        if not lista_excel:
             df_core['Status'] = "⚠️ AUTENTICIDADE NÃO CARREGADA"
             return df_core
-        dfs_ref = []
-        for f in arquivos_excel:
+        referencias = []
+        for excel in lista_excel:
             try:
-                f.seek(0)
-                d_ref = pd.read_excel(f)
-                # Coluna A (0) = Chave | Coluna F (5) = Status
+                excel.seek(0)
+                d_ref = pd.read_excel(excel)
                 tmp = d_ref.iloc[:, [0, 5]].copy()
                 tmp.columns = ['CHAVE_ACESSO', 'Status_Excel']
                 tmp['CHAVE_ACESSO'] = tmp['CHAVE_ACESSO'].astype(str).str.replace('NFe', '').str.strip()
-                dfs_ref.append(tmp)
+                referencias.append(tmp)
             except: continue
-        if dfs_ref:
-            referencia final = pd.concat(dfs_ref).drop_duplicates('CHAVE_ACESSO')
-            df_core = pd.merge(df_core, referencia final, on='CHAVE_ACESSO', how='left')
+        if referencias:
+            base_ref = pd.concat(referencias).drop_duplicates('CHAVE_ACESSO')
+            df_core = pd.merge(df_core, base_ref, on='CHAVE_ACESSO', how='left')
             df_core['Status'] = df_core['Status_Excel'].fillna("SEM REFERÊNCIA")
         return df_core
 
-    df_xe = aplicar_status(df_xe, ae)
-    df_xs = aplicar_status(df_xs, as_f)
+    df_xe = aplicar_status_procv(df_xe, ae)
+    df_xs = aplicar_status_procv(df_xs, as_f)
 
-    # --- 3. GERA AS ABAS XML POR ÚLTIMO ---
+    # --- 3. ABAS XML ---
     try: gerar_aba_resumo(writer)
     except: pass
     
-    cols_exibicao = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST", "Status"]
+    cols_v = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST", "Status"]
 
     for df_t, nome_aba in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_t.empty:
-            df_t[cols_exibicao].to_excel(writer, sheet_name=nome_aba, index=False)
+            df_t[cols_v].to_excel(writer, sheet_name=nome_aba, index=False)
