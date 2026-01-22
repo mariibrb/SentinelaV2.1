@@ -25,7 +25,7 @@ def buscar_tag_recursiva(tag_alvo, no):
         if tag_nome == tag_alvo: return elemento.text if elemento.text else ""
     return ""
 
-# --- EXTRAÇÃO DE TAGS (TODAS AS QUE VOCÊ PRECISA) ---
+# --- EXTRAÇÃO DAS TAGS ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -89,37 +89,38 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DO EXCEL (IMPORTAÇÃO PROTEGIDA) ---
+# --- GERAÇÃO DAS ABAS (RESOLVENDO O CONFLITO) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo=None):
-    # IMPORT LOCAL: Resolvendo o conflito de importação
+    # Importação protegida para evitar erro circular
     try:
         from audit_resumo import gerar_aba_resumo             
         from Auditorias import audit_icms, audit_ipi, audit_pis_cofins, audit_difal
         from Apuracoes import apuracao_difal
     except ImportError as e:
-        st.error(f"⚠️ Erro ao carregar módulos especialistas: {e}")
+        st.error(f"⚠️ Erro ao carregar módulos: {e}")
         return
 
+    # 1. PROCESSAMENTO FISCAL (Eles criam as próprias abas)
     if not df_xs.empty:
-        # Aba 1: ICMS
+        # Deixa os especialistas trabalharem primeiro
         audit_icms.processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
-        # Aba 2: IPI
+        
         try: audit_ipi.processar_ipi(df_xs, writer, cod_cliente)
-        except: pass
-        # Aba 3: PIS/COFINS
+        except Exception as e: st.warning(f"IPI: {e}")
+        
         try: audit_pis_cofins.processar_pc(df_xs, writer, cod_cliente, regime)
-        except: pass
-        # Aba 4: DIFAL
+        except Exception as e: st.warning(f"PIS/COFINS: {e}")
+        
         audit_difal.processar_difal(df_xs, writer)
-        # Aba 5: Apuração DIFAL UF
         apuracao_difal.gerar_resumo_uf(df_xs, writer, df_xe)
 
-    # Aba 6: Resumo
+    # 2. ABA RESUMO (Especialista)
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # Abas XML
-    cols_dump = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL"]
+    # 3. ABAS DE CONFERÊNCIA XML (Core só gera estas duas no final)
+    # Removidas colunas extras que poderiam causar conflito de nomes
+    cols_dump = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL"]
     for df_t, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_t.empty:
             df_t[cols_dump].to_excel(writer, sheet_name=nome, index=False)
