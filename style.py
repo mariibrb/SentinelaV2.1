@@ -17,6 +17,7 @@ def aplicar_estilo_sentinela():
             z-index: 999999 !important;
         }
 
+        /* REMOVE BOTÕES DE FECHAR SIDEBAR */
         [data-testid="sidebar-close-button"], 
         button[aria-label="Close sidebar"],
         .st-emotion-cache-6qob1r {
@@ -24,7 +25,7 @@ def aplicar_estilo_sentinela():
             visibility: hidden !important;
         }
 
-        /* RESET DO LIXO VISUAL DO STREAMLIT */
+        /* RESET DO LIXO VISUAL */
         header, .st-emotion-cache-zq59db, 
         #keyboard_double, .st-emotion-cache-10oheav, 
         span[data-testid="stHeaderActionElements"] {
@@ -39,26 +40,17 @@ def aplicar_estilo_sentinela():
         .block-container { padding-top: 2.5rem !important; }
         html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
 
-        /* --- TÍTULO DESIGNER MONTSERRAT --- */
+        /* --- TÍTULO DESIGNER --- */
         .titulo-principal { 
             font-family: 'Montserrat', sans-serif !important;
             color: #5D3A1A; 
             font-size: 3.2rem; 
             font-weight: 800; 
-            margin-bottom: 0px;
-            letter-spacing: -1px;
             text-transform: uppercase;
             line-height: 1;
         }
-        .titulo-principal span { font-weight: 200 !important; color: #A67B5B; }
 
-        .barra-marsala { 
-            width: 60px; height: 3px; background: #FFB6C1; 
-            border-radius: 50px; margin-top: 10px; margin-bottom: 50px;
-            box-shadow: 0 0 20px rgba(255, 182, 193, 0.9);
-        }
-
-        /* --- ESTILIZAÇÃO DIVISÓRIAS DE FICHÁRIO METALIZADO --- */
+        /* --- DIVISÓRIAS DE FICHÁRIO METALIZADO --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         
         .stTabs [data-baseweb="tab-list"] {
@@ -66,7 +58,7 @@ def aplicar_estilo_sentinela():
             background-color: transparent !important;
         }
 
-        /* Configuração Geral das Abas (Separadores) */
+        /* Estilo Base para todas as Abas (Pai e Filho) */
         .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: linear-gradient(180deg, #F0F0F0 0%, #D1D1D1 100%) !important;
@@ -80,10 +72,10 @@ def aplicar_estilo_sentinela():
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 5px 0 10px rgba(0,0,0,0.05) !important;
         }
 
-        /* --- CORES POR ASSUNTO (METALIZADO + BRILHO) --- */
+        /* --- LÓGICA DE CORES POR CONTEXTO (BASEADO NO TEXTO) --- */
 
-        /* ABA 1: ANÁLISE XML (Azul Bebê Metalizado) */
-        .stTabs [data-baseweb="tab"]:nth-child(1)[aria-selected="true"] {
+        /* FAMÍLIA XML: AZUL BEBÊ METALIZADO */
+        .stTabs [data-baseweb="tab"]:has(div:contains("XML"))[aria-selected="true"] {
             background: linear-gradient(145deg, #B0E0E6 0%, #87CEEB 100%) !important;
             color: #4682B4 !important;
             z-index: 10 !important;
@@ -92,8 +84,12 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 10px 30px rgba(173, 216, 230, 0.6), inset 0 2px 4px rgba(255,255,255,0.8) !important;
         }
 
-        /* ABA 2: CONFORMIDADE (Rosa Bebê Metalizado) */
-        .stTabs [data-baseweb="tab"]:nth-child(2)[aria-selected="true"] {
+        /* FAMÍLIA FISCAL: ROSA BEBÊ METALIZADO (Aplica em todas as sub-abas fiscais) */
+        .stTabs [data-baseweb="tab"]:has(div:contains("ICMS"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("PIS"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("RET"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("DIFAL"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE"))[aria-selected="true"] {
             background: linear-gradient(145deg, #FFD1DC 0%, #FFB6C1 100%) !important;
             color: #DB7093 !important;
             z-index: 10 !important;
@@ -102,31 +98,15 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 10px 30px rgba(255, 182, 193, 0.6), inset 0 2px 4px rgba(255,255,255,0.8) !important;
         }
 
-        /* --- SUB-ABAS (Sempre em Rosa Bebê conforme pedido) --- */
+        /* --- AJUSTE SUB-ABAS (MENORES, MAS COM O MESMO EFEITO) --- */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 45px !important;
+            padding: 0px 25px !important;
             font-size: 13px !important;
-            background: #FFFFFF !important;
-            border-radius: 10px !important;
-            margin-right: 5px !important;
-            border: 1px solid #FFD1DC !important;
-        }
-        
-        .stTabs .stTabs [aria-selected="true"] {
-            background: #FFD1DC !important;
-            color: #DB7093 !important;
-            box-shadow: 0 5px 15px rgba(255, 182, 193, 0.4) !important;
+            border-radius: 10px 25px 0 0 !important;
         }
 
-        /* --- BOTÕES BOUTIQUE --- */
-        div.stButton > button:has(div:contains("ABRIR GESTÃO ADMINISTRATIVA")) {
-            background: linear-gradient(145deg, #FFB6C1, #FF69B4) !important;
-            color: #5D3A1A !important; 
-            border-radius: 40px !important;
-            font-weight: 800 !important;
-            box-shadow: 0 10px 25px rgba(255, 182, 193, 0.5) !important;
-        }
-
+        /* --- BOTÕES DO SISTEMA --- */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
             background: linear-gradient(145deg, #C2936E, #8B5A2B) !important;
@@ -138,13 +118,9 @@ def aplicar_estilo_sentinela():
             text-transform: uppercase;
         }
 
-        /* CONTAINER DE STATUS */
-        .status-container {
-            background: white;
-            padding: 20px;
-            border-radius: 30px;
-            border-left: 8px solid #FFB6C1;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+        .stButton > button:hover {
+            transform: scale(1.02) !important;
+            box-shadow: 0 10px 25px rgba(255, 182, 193, 0.4) !important;
         }
         </style>
     """, unsafe_allow_html=True)
