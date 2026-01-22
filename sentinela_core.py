@@ -47,10 +47,8 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
 
         for det in root.findall('.//det'):
             prod = det.find('prod'); imp = det.find('imposto')
-            icms_no = det.find('.//ICMS'); ipi_no = det.find('.//IPI')
-            pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
+            icms_no = det.find('.//ICMS')
             
-            # Tags de DIFAL/FCP para a coluna 19 e 20
             v_icms_uf_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
             v_fcp_uf_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
 
@@ -76,7 +74,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-DIFAL": v_icms_uf_dest + v_fcp_uf_dest,    # 19
                 "VAL-FCP-DEST": v_fcp_uf_dest,                  # 20
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),    # 21
-                "Status": "AGUARDANDO"                          # 22 (Preenchido no merge)
+                "Status": "AGUARDANDO"                          # 22
             }
             dados_lista.append(linha)
     except: pass
@@ -96,9 +94,9 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DO EXCEL FINAL (COM IMPORTAÇÃO PROTEGIDA) ---
+# --- GERAÇÃO DO EXCEL FINAL (AUDITORIA MESMO SEM IMPOSTO NO XML) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
-    # Importação diferida para evitar erro de Ciclo/Dependência
+    # Importação interna para blindar contra erros de ciclo
     try:
         from audit_resumo import gerar_aba_resumo
         from Auditorias.audit_icms import processar_icms
@@ -115,7 +113,7 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     except: pass
     
     if not df_xs.empty:
-        # CRUZAMENTO COM PLANILHA DE AUTENTICIDADE (GARIMPO)
+        # CRUZAMENTO COM GARIMPO
         st_map = {}
         for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
             try:
@@ -125,10 +123,9 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
                 st_map.update(df_a.set_index(0)[5].to_dict())
             except: continue
 
-        # Injeta o Status Real na Coluna 22
         df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada no Garimpo')
         
-        # Executa as Auditorias (que vão colar as análises DEPOIS do Status)
+        # Chamada das Auditorias - O motor de IPI vai analisar a OMISSÃO se o XML estiver zerado
         processar_icms(df_xs, writer, cod_cliente, df_xe)
         processar_ipi(df_xs, writer, cod_cliente)
         processar_pc(df_xs, writer, cod_cliente, regime)
