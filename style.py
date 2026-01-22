@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* --- 1. ESTRUTURA E FUNDO --- */
+        /* --- 1. FUNDO E SIDEBAR --- */
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             max-width: 350px !important;
@@ -19,17 +19,12 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #FCF8F4 0%, #E8DCCB 100%) !important; 
         }
 
-        /* --- 2. 💎 ABAS MESTRE (ESTILO DIAMANTE) --- */
-        /* Importante: Removendo o corte das abas que sobem */
-        .stTabs {
-            overflow: visible !important;
-        }
-        
+        /* --- 2. ABAS MESTRE (EFEITO DIAMANTE) --- */
+        .stTabs { overflow: visible !important; }
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
-        
         .stTabs [data-baseweb="tab-list"] {
             gap: 15px !important; 
-            padding: 60px 0 0 20px !important; /* Mais espaço no topo para não cortar */
+            padding: 60px 0 0 20px !important; 
             align-items: flex-end;
             overflow: visible !important;
         }
@@ -45,54 +40,51 @@ def aplicar_estilo_sentinela():
             font-weight: 800 !important;
             color: #8B5A2B !important;
             box-shadow: inset 0 2px 5px rgba(255,255,255,0.8) !important;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
         }
 
-        /* 🔵 ATIVA XML (BLUE SHINE) */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
-            background: linear-gradient(145deg, #E0F7FF 0%, #00BFFF 100%) !important;
-            border-color: #00D1FF !important;
-            box-shadow: 0 -10px 40px rgba(0, 209, 255, 0.5), inset 0 5px 20px rgba(255,255,255,1) !important;
-            color: white !important;
-            transform: translateY(-30px) scale(1.05) !important; /* Sobe sem ser cortada */
-            z-index: 100 !important;
+        /* Ativas Mães */
+        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { 
+            background: #00BFFF !important; color: white !important; transform: translateY(-30px) !important;
+        }
+        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { 
+            background: #FF69B4 !important; color: white !important; transform: translateY(-30px) !important;
         }
 
-        /* 💗 ATIVA CONFORMIDADE (PINK SHINE) */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
-            background: linear-gradient(145deg, #FFD1E8 0%, #FF69B4 100%) !important;
-            border-color: #FF1493 !important;
-            box-shadow: 0 -10px 40px rgba(255, 105, 180, 0.6), inset 0 5px 20px rgba(255,255,255,1) !important;
-            color: white !important;
-            transform: translateY(-30px) scale(1.05) !important; /* Sobe sem ser cortada */
-            z-index: 100 !important;
-        }
-
-        /* --- 3. 📦 O CAIXOTÃO (PASTA COM NEON DE BOATE) --- */
+        /* --- 3. 📦 O CAIXOTÃO PRINCIPAL (PASTA) --- */
         [data-testid="stTabPanel"] {
-            background: white !important;
+            background: #FFFFFF !important;
             padding: 50px !important;
             border-radius: 0 60px 60px 60px !important;
             margin-top: -5px !important;
             min-height: 700px !important;
-            overflow: visible !important; /* Garante que nada interno seja cortado */
+            overflow: visible !important;
+            border: 6px solid transparent !important;
         }
 
-        /* NEON BOATE SOMBREADO */
+        /* Neon Boate Sombreado */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border: 6px solid #00D1FF !important;
-            box-shadow: 0 0 25px #00D1FF, 0 0 60px rgba(0, 209, 255, 0.4), inset 0 0 15px rgba(255,255,255,1) !important;
+            border-color: #00D1FF !important;
+            box-shadow: 0 0 30px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.4) !important;
         }
-
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border: 6px solid #FF69B4 !important;
-            box-shadow: 0 0 25px #FF69B4, 0 0 60px rgba(255, 105, 180, 0.4), inset 0 0 15px rgba(255,255,255,1) !important;
+            border-color: #FF69B4 !important;
+            box-shadow: 0 0 30px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4) !important;
         }
 
-        /* --- 4. SUB-ABAS INTERNAS --- */
+        /* --- 4. 📄 ÁREA DE AUDITORIA (ILHA BRANCA EM DESTAQUE) --- */
+        /* Esta regra cria o fundo branco que voce pediu para a parte de auditoria */
+        div.stExpander, div.element-container:has(h1, h2, h3), .stDataFrame {
+            background-color: white !important;
+            padding: 30px !important;
+            border-radius: 30px !important;
+            border: 1px solid #E8DCCB !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
+            margin-top: 20px !important;
+        }
+
+        /* --- 5. SUB-ABAS INTERNAS --- */
         .stTabs .stTabs [data-baseweb="tab-list"] {
             padding: 10px 0 30px 0 !important;
-            margin-top: 10px !important;
             overflow: visible !important;
         }
 
@@ -100,24 +92,11 @@ def aplicar_estilo_sentinela():
             height: 60px !important;
             background: #F8F9FA !important;
             border-radius: 15px 45px 0 0 !important;
-            margin-right: -10px !important;
-            box-shadow: inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* Sub-abas Ativas Diamond */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] {
-            background: #00BFFF !important;
-            box-shadow: 0 0 20px #00D1FF, inset 0 2px 10px rgba(255,255,255,0.8) !important;
-            color: white !important;
-            transform: translateY(-10px) !important;
-        }
-
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] {
-            background: #FF69B4 !important;
-            box-shadow: 0 0 20px #FF69B4, inset 0 2px 10px rgba(255,255,255,0.8) !important;
-            color: white !important;
-            transform: translateY(-10px) !important;
-        }
+        /* Sub-abas Ativas */
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
 
         </style>
     """, unsafe_allow_html=True)
