@@ -54,13 +54,12 @@ def init_db():
     if not c.fetchone():
         c.execute("""INSERT INTO usuarios 
                      (nome, usuario, email, senha, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret) 
-                     VALUES (?, ?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1)""", 
+                     VALUES (?, ?, ?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1)""", 
                   ('Mariana Mendes', 'mariana', email_admin, nova_senha_hash))
     else:
-        # Garante que Mariana tenha sempre acesso total e nome correto
+        # Garante integridade do login mestre MAS permite que o nome seja alterado no painel ADM
         c.execute("""UPDATE usuarios 
-                     SET nome='mariana', usuario='mariana', nivel='ADMIN', 
-                         perm_icms=1, perm_difal=1, perm_pis=1, perm_ret=1 
+                     SET nivel='ADMIN', perm_icms=1, perm_difal=1, perm_pis=1, perm_ret=1 
                      WHERE email=?""", 
                   (email_admin,))
     
@@ -203,6 +202,7 @@ if not st.session_state['user_data']:
                 if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                     conn = sqlite3.connect('sentinela_usuarios.db')
                     c = conn.cursor()
+                    # Busca por Usuário Login ou E-mail
                     c.execute("""SELECT nome, usuario, email, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret 
                                  FROM usuarios 
                                  WHERE (usuario=? OR email=?) AND senha=?""", 
@@ -294,9 +294,9 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                         conn.commit()
                         st.info("Senha resetada para: 123456")
 
-                    p_i = c3.checkbox("Audit ICMS", value=bool(row['perm_icms']), key=f"i_{idx}")
-                    p_d = c3.checkbox("Audit DIFAL", value=bool(row['perm_difal']), key=f"d_{idx}")
-                    p_p = c3.checkbox("Audit PIS", value=bool(row['perm_pis']), key=f"p_{idx}")
+                    p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
+                    p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
+                    p_p = c3.checkbox("Audit PIS/COFINS", value=bool(row['perm_pis']), key=f"p_{idx}")
                     p_r = c3.checkbox("Audit RET", value=bool(row['perm_ret']), key=f"r_{idx}")
 
                     if not is_me:
@@ -314,13 +314,13 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                             conn.execute("DELETE FROM usuarios WHERE email=?", (row['email'],))
                             conn.commit(); st.rerun()
                             
-                        if c4.button("💾 SALVAR", key=f"save_{idx}", use_container_width=True, type="primary"):
+                        if c4.button("💾 SALVAR ALTERAÇÕES", key=f"save_{idx}", use_container_width=True, type="primary"):
                             conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
                                          (edit_nome, edit_user, edit_mail, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit(); st.success("Salvo!")
                     else:
                         c4.write("🛡️ Conta Mestre")
-                        if c4.button("💾 ATUALIZAR PERFIL", key=f"sv_me_{idx}", use_container_width=True, type="primary"):
+                        if c4.button("💾 ATUALIZAR MEU PERFIL", key=f"sv_me_{idx}", use_container_width=True, type="primary"):
                             conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
                                          (edit_nome, edit_user, edit_mail, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit()
@@ -351,7 +351,7 @@ with st.sidebar:
     if os.path.exists(".streamlit/Sentinela.png"):
         st.image(".streamlit/Sentinela.png", use_container_width=True)
     st.markdown("---")
-    st.write(f"👤 Olá, **{st.session_state['user_data']['nome']}**")
+    st.write(f"👋 Olá, **{st.session_state['user_data']['nome']}**")
     if st.button("🚪 SAIR DO SISTEMA", use_container_width=True):
         st.session_state.clear()
         st.rerun()
@@ -380,9 +380,9 @@ with st.sidebar:
                 if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
                     st.download_button("Baixar Modelo", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
     else:
-        st.info("⚙️ Modo Administrativo Ativo.\nClique em 'FECHAR PAINEL ADM' para voltar.")
+        st.info("⚙️ Modo Administrativo Ativo.\nClique em 'FECHAR PAINEL ADM' para voltar à auditoria.")
 
-# --- ÁREA CENTRAL ---
+# --- ÁREA CENTRAL (RESPEITANDO PERMISSÕES) ---
 if emp_sel and not modo_adm:
     perms = st.session_state['user_data']['perms']
     abas_v = ["📂 ANÁLISE XML"]
