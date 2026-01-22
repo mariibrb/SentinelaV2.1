@@ -59,9 +59,7 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* --- 💡 ABAS MÃE ATIVAS: NEON EXTREMO --- */
-
-        /* 🔵 ABA 1 (XML): AZUL NEON QUANDO ATIVA */
+        /* --- 🔵 ABA 1 (XML): AZUL NEON QUANDO ATIVA --- */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
@@ -71,7 +69,7 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* 💗 ABA 2 (CONFORMIDADE): ROSA PINK NEON QUANDO ATIVA */
+        /* --- 💗 ABA 2 (CONFORMIDADE): ROSA PINK NEON QUANDO ATIVA --- */
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             color: white !important;
@@ -81,7 +79,7 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- INTERIOR DA CAIXA (O CAIXOTE BRILHANTE) --- */
+        /* --- INTERIOR DA CAIXA (O CAIXOTE QUE VOCÊ AMOU) --- */
         .stTabs .stTabs {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
@@ -91,7 +89,7 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
         }
 
-        /* --- 💗 SUB-ABAS (CORREÇÃO OBRIGATÓRIA PARA ROSA) --- */
+        /* --- 💗 SUB-ABAS: FORÇANDO ROSA COM PRIORIDADE MÁXIMA --- */
         
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
@@ -103,13 +101,19 @@ def aplicar_estilo_sentinela():
             margin-right: 5px !important;
         }
 
-        /* Garante que ICMS/IPI e as outras fiquem Rosa Neon ao serem clicadas */
+        /* AQUI ESTÁ A TRAVA: Força o rosa mesmo se o Streamlit tentar pintar de azul */
         .stTabs .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFD1DC 0%, #FF69B4 100%) !important;
+            background-color: #FF69B4 !important; /* Backup de cor sólida */
             color: white !important;
             transform: translateY(-12px) !important;
             box-shadow: 0 0 25px #FF69B4, inset 0 2px 5px rgba(255,255,255,0.5) !important;
             border-bottom: 5px solid white !important;
+        }
+
+        /* Mata qualquer azul que sobrar nas sub-abas selecionadas */
+        .stTabs .stTabs button[aria-selected="true"] div {
+            color: white !important;
         }
         </style>
     """, unsafe_allow_html=True)
