@@ -67,10 +67,10 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
             linha = {
                 "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
                 "NUM_NF": buscar_tag_recursiva('nNF', ide), 
-                "Status": status_auditoria,
                 "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
                 "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
                 "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), 
+                "IE_DEST": buscar_tag_recursiva('IE', dest), # <<< IE ACRESCENTADA AQUI
                 "UF_DEST": buscar_tag_recursiva('UF', dest), 
                 "CFOP": buscar_tag_recursiva('CFOP', prod),
                 "NCM": ncm, "VPROD": v_prod, 
@@ -82,7 +82,8 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
                 "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
-                "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no))
+                "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
+                "Status": status_auditoria # <<< STATUS MOVIDO PARA O FINAL
             }
             dados_lista.append(linha)
     except: pass
