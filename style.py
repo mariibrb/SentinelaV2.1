@@ -25,9 +25,9 @@ def aplicar_estilo_sentinela():
 
         /* TÍTULOS */
         .titulo-principal { color: #1E1E1E; font-size: 2.5rem; font-weight: 800; margin-bottom: 5px; }
-        .barra-marsala { width: 80px; height: 6px; background: linear-gradient(90deg, #955251, #632424); border-radius: 10px; margin-bottom: 30px; }
+        .barra-marsala { width: 80px; height: 6px; background: linear-gradient(90deg, #A12B2B, #6B1B1B); border-radius: 10px; margin-bottom: 30px; }
 
-        /* ABAS METALIZADAS COM BRILHO */
+        /* ABAS METALIZADAS COM BRILHO (RESTAURADO) */
         .stTabs [data-baseweb="tab"] {
             height: 70px !important;
             background: #f0f2f6 !important;
@@ -45,36 +45,36 @@ def aplicar_estilo_sentinela():
         }
 
         .stTabs [aria-selected="true"] {
-            background: linear-gradient(180deg, #955251 0%, #7A3535 50%, #632424 100%) !important;
+            background: linear-gradient(180deg, #D44D4D 0%, #A12B2B 50%, #801818 100%) !important;
             color: white !important;
             font-weight: 800 !important;
-            box-shadow: 0 -5px 15px rgba(99, 36, 36, 0.3) !important;
+            box-shadow: 0 -5px 15px rgba(161, 43, 43, 0.4) !important;
         }
 
-        /* BOTÕES LUXO COM BRILHO NO HOVER */
+        /* BOTÕES LUXO COM BRILHO NO HOVER (RESTAURADO) */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
-            background: linear-gradient(180deg, #955251 0%, #7A3535 50%, #632424 100%) !important;
+            background: linear-gradient(180deg, #D44D4D 0%, #A12B2B 50%, #801818 100%) !important;
             color: white !important;
             border-radius: 50px !important;
             font-weight: 800 !important;
-            border: 1px solid #632424 !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 10px rgba(0,0,0,0.1) !important;
+            border: 1px solid #801818 !important;
+            box-shadow: inset 0 2px 3px rgba(255,255,255,0.4), 0 4px 10px rgba(0,0,0,0.2) !important;
             transition: all 0.3s ease !important;
             text-transform: uppercase;
         }
 
         .stButton > button:hover, .stDownloadButton > button:hover {
             transform: translateY(-2px) !important;
-            box-shadow: 0 8px 20px rgba(99, 36, 36, 0.4) !important;
-            filter: brightness(1.2) !important;
+            box-shadow: 0 8px 25px rgba(161, 43, 43, 0.5) !important;
+            filter: brightness(1.3) !important;
         }
 
         .status-container {
             background-color: #ffffff;
             padding: 15px;
             border-radius: 12px;
-            border-left: 6px solid #7A3535;
+            border-left: 6px solid #A12B2B;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         </style>
