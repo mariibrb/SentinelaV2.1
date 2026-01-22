@@ -44,7 +44,7 @@ def aplicar_estilo_sentinela():
             align-items: flex-end;
         }
 
-        /* Estilo Inativo das Mães */
+        /* Aba Inativa (Metal Bronzeado) */
         .stTabs [data-baseweb="tab"] {
             height: 90px !important;
             background: linear-gradient(180deg, #FDFDFD 0%, #D8C7B1 100%) !important;
@@ -59,7 +59,7 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15) !important;
         }
 
-        /* ABA MÃE 1 (XML) ATIVA - AZUL */
+        /* --- 🔵 ABA MÃE 1 (XML) ATIVA --- */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
@@ -69,7 +69,7 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* ABA MÃE 2 (CONFORMIDADE) ATIVA - ROSA */
+        /* --- 💗 ABA MÃE 2 (CONFORMIDADE) ATIVA --- */
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             color: white !important;
@@ -79,7 +79,7 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- O CAIXOTE BRANCO (PAINEL INTERNO) --- */
+        /* --- 📦 O CAIXOTE BRANCO (INTERIOR) --- */
         .stTabs .stTabs {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
@@ -89,7 +89,7 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
         }
 
-        /* --- 💗 UNIFICAÇÃO DAS 4 SUB-ABAS (MESMO LAYOUT DA MÃE) --- */
+        /* --- 💗 UNIFICAÇÃO TOTAL DAS SUB-ABAS (DNA ROSA) --- */
         
         /* 1. Base Inativa das Sub-abas */
         .stTabs .stTabs [data-baseweb="tab"] {
@@ -104,21 +104,21 @@ def aplicar_estilo_sentinela():
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
         }
 
-        /* 2. Sub-aba ATIVA (CLONE EXATO DA CONFORMIDADE) */
-        /* Aqui o seletor 'atropela' qualquer azul e aplica o Rosa Pink Neon */
+        /* 2. SUB-ABA ATIVA: CLONE EXATO DA MÃE (ROSA NEON + SHINE) */
+        /* Esse seletor unifica todas as filhas e mata o azul de vez */
         .stTabs .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
-            background-color: #FF69B4 !important; /* Morte definitiva ao azul */
+            background-color: #FF69B4 !important; /* Trava anti-azul */
             color: white !important;
             transform: translateY(-15px) scale(1.05) !important;
             border: 2px solid #FF1493 !important;
             border-bottom: 5px solid white !important;
-            /* Mesmo Brilho Explosivo da Mãe */
+            /* Mesmo Brilho Explosivo da Mãe Conformidade */
             box-shadow: 0 0 25px #FF1493, 0 0 50px rgba(255, 20, 147, 0.6), inset 0 3px 10px rgba(255,255,255,0.7) !important;
             z-index: 10 !important;
         }
 
-        /* Garante texto branco na sub-aba ativa */
+        /* Força texto branco na sub-aba ativa */
         .stTabs .stTabs [aria-selected="true"] div {
             color: white !important;
         }
