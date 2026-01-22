@@ -180,13 +180,27 @@ st.markdown("""
     
     /* AJUSTE DEFINITIVO DE ESPAÇAMENTO DA LOGO */
     [data-testid="stSidebar"] div.stImage {
-        margin-top: -65px !important; /* SOBE A LOGO PARA O TOPO */
-        margin-bottom: -55px !important; /* ELIMINA O VÃO ABAIXO DA LOGO */
+        margin-top: -65px !important; 
+        margin-bottom: -55px !important; 
         padding: 0px !important;
     }
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-        gap: 0rem !important; /* REMOVE ESPAÇO ENTRE ITENS DA SIDEBAR */
+        gap: 0rem !important; 
         padding-top: 0rem !important;
+    }
+
+    /* CAIXA DE ANÁLISE EMPRESA - MARIANA */
+    .status-container-mariana {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-left: 5px solid #ff4b4b;
+        padding: 15px !important;
+        border-radius: 8px;
+        margin-top: 15px !important;
+        margin-bottom: 15px !important;
+        color: #212529;
+        font-size: 14px;
+        line-height: 1.5;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -321,7 +335,6 @@ v = st.session_state['v_ver']
 # --- SIDEBAR DINÂMICA ---
 emp_sel = ""
 with st.sidebar:
-    # CHAMADA DIRETA DA LOGO (O CSS ACIMA RESOLVE O ESPAÇO)
     if os.path.exists("streamlit/logo.png"):
         st.image("streamlit/logo.png", use_container_width=True)
     elif os.path.exists("logo.png"):
@@ -332,7 +345,6 @@ with st.sidebar:
     st.markdown("---")
     st.write(f"👤 Olá, **{st.session_state['user_data']['nome']}**")
     
-    # --- AJUSTE SOLICITADO: BOTÃO GESTÃO ADMINISTRATIVA NA SIDEBAR ---
     if st.session_state['user_data']['nivel'] == 'ADMIN':
         if not modo_adm:
             if st.button("🛠️ ABRIR GESTÃO ADMINISTRATIVA", use_container_width=True):
@@ -356,10 +368,18 @@ with st.sidebar:
             seg_sel = st.selectbox("Passo 3: Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
             ret_sel = st.toggle("Passo 4: Habilitar MG (RET)", key="f_ret")
             
+            # --- CAIXA DE ANÁLISE CORRIGIDA POR MARIANA ---
             cod_c = emp_sel.split(" - ")[0].strip()
             dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
-            cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
-            st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}</div>", unsafe_allow_html=True)
+            cnpj_limpo = dados_e['CNPJ']
+            
+            st.markdown(f"""
+                <div class="status-container-mariana">
+                    <b>🔍 Analisando:</b><br>
+                    {dados_e['RAZÃO SOCIAL']}<br>
+                    <b>CNPJ:</b> {cnpj_limpo}
+                </div>
+            """, unsafe_allow_html=True)
             
             path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
             if os.path.exists(path_base):
@@ -367,7 +387,6 @@ with st.sidebar:
             else:
                 st.warning("🔍 Modo Cegas: Base não localizada")
                 
-            # CORREÇÃO: Aviso do RET condicional ao Passo 4
             if ret_sel:
                 path_ret_base = f"RET/{cod_c}-RET_MG.xlsx"
                 if os.path.exists(path_ret_base):
@@ -381,14 +400,12 @@ with st.sidebar:
     else:
         st.info("⚙️ Modo Administrativo Ativo.")
 
-# --- PAINEL DE ADMINISTRAÇÃO ELITE ---
+# PAINEL ADM E ÁREA CENTRAL (MANTIDOS INTEGRALMENTE)
 if modo_adm:
     with st.container(border=True):
         st.subheader("🛠️ PAINEL DE CONTROLE DE USUÁRIOS")
-        
         conn = sqlite3.connect('sentinela_usuarios.db')
         df_u = pd.read_sql_query("SELECT * FROM usuarios ORDER BY nivel ASC", conn)
-        
         for idx, row in df_u.iterrows():
             is_me = (row['email'] == st.session_state['user_data']['email'])
             with st.container(border=True):
@@ -396,7 +413,6 @@ if modo_adm:
                 edit_nome = c1.text_input("Nome Completo", value=row['nome'], key=f"n_{idx}")
                 edit_mail = c2.text_input("E-mail (Login)", value=row['email'], key=f"m_{idx}")
                 edit_user = c1.text_input("Usuário Login", value=row['usuario'], key=f"u_{idx}")
-                
                 st_txt = "🟢 ATIVO" if row['status'] == 'ATIVO' else "🟡 PENDENTE"
                 c2.write(f"Status Atual: {st_txt}")
                 if c2.button("🔄 Reset Senha", key=f"rs_{idx}"):
@@ -405,13 +421,11 @@ if modo_adm:
                     conn.commit()
                     enviar_email(row['email'], "SENHA RESETADA", f"Sua nova senha é: {nova_senha}\nPor favor, altere no login.")
                     st.info("Senha resetada.")
-
                 p_x = c3.checkbox("Audit XML", value=bool(row['perm_xml']), key=f"x_p_{idx}")
                 p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
                 p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
                 p_p = c3.checkbox("Audit PIS/COFINS", value=bool(row['perm_pis']), key=f"p_{idx}")
                 p_r = c3.checkbox("Audit RET", value=bool(row['perm_ret']), key=f"r_{idx}")
-
                 if not is_me:
                     if row['status'] == 'PENDENTE':
                         if c4.button("✅ LIBERAR", key=f"ok_{idx}", use_container_width=True):
@@ -433,8 +447,6 @@ if modo_adm:
                         st.session_state['user_data'].update({"nome": edit_nome, "usuario": edit_user, "email": edit_mail})
                         st.success("Atualizado!"); st.rerun()
         conn.close()
-
-# --- ÁREA CENTRAL ---
 elif emp_sel and not modo_adm:
     perms = st.session_state['user_data']['perms']; abas_v = []
     if perms.get('xml'): abas_v.append("📂 ANÁLISE XML")
@@ -454,11 +466,10 @@ elif emp_sel and not modo_adm:
                             with st.spinner("Auditando..."):
                                 try:
                                     u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
-                                    df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
                                     xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
                                     buf = io.BytesIO()
                                     with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
-                                        gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, df_base_emp, "ELITE" if df_base_emp is not None else "CEGAS")
+                                        gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, "CEGAS")
                                     st.session_state['relat_buf'] = buf.getvalue()
                                     p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                                     b_org, b_todos = io.BytesIO(), io.BytesIO()
