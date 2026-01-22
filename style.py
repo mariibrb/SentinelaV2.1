@@ -17,13 +17,6 @@ def aplicar_estilo_sentinela():
             z-index: 999999 !important;
         }
 
-        [data-testid="sidebar-close-button"], 
-        button[aria-label="Close sidebar"],
-        .st-emotion-cache-6qob1r {
-            display: none !important;
-            visibility: hidden !important;
-        }
-
         /* RESET DO LIXO VISUAL */
         header, .st-emotion-cache-zq59db, 
         #keyboard_double, .st-emotion-cache-10oheav, 
@@ -55,82 +48,90 @@ def aplicar_estilo_sentinela():
         .barra-marsala { 
             width: 60px; height: 3px; background: #FF69B4; 
             border-radius: 50px; margin-top: 10px; margin-bottom: 50px;
-            box-shadow: 0 0 20px rgba(255, 105, 180, 0.9); /* BRILHO NA BARRA */
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.9);
         }
 
-        /* --- ESTILIZAÇÃO DAS ABAS COM BRILHO --- */
+        /* --- ESTILIZAÇÃO DIVISÓRIAS DE FICHÁRIO METALIZADO --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 5px !important;
+            background-color: transparent !important;
+        }
+
         .stTabs [data-baseweb="tab"] {
-            height: 55px !important;
-            background: white !important;
-            border-radius: 15px 15px 0 0 !important;
-            margin-right: 12px !important;
-            padding: 0px 40px !important;
-            border: 1px solid #E0E0E0 !important;
+            height: 60px !important;
+            background: linear-gradient(180deg, #E0E0E0 0%, #BDBDBD 100%) !important; /* Metal Inativo */
+            border-radius: 15px 40px 0 0 !important;
+            margin-right: -10px !important;
+            padding: 0px 45px !important;
+            border: 1px solid #9E9E9E !important;
             font-weight: 600 !important;
-            transition: all 0.3s ease-in-out !important;
+            color: #616161 !important;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 5px 0 10px rgba(0,0,0,0.1) !important;
         }
 
-        /* --- IDENTIDADE VISUAL + GLOW (BRILHO) --- */
+        /* --- MÓDULOS COM ACABAMENTO METALIZADO E GLOW --- */
 
-        /* ABA 1: GARIMPEIRO (Rosa com Brilho Neon) */
-        .stTabs [data-baseweb="tab"]:nth-child(1) {
-            border-bottom: 4px solid #FF69B4 !important;
-            color: #FF69B4 !important;
-        }
+        /* ABA 1: GARIMPEIRO (Ouro Rosé Metalizado) */
         .stTabs [data-baseweb="tab"]:nth-child(1)[aria-selected="true"] {
-            background: #FF69B4 !important;
+            background: linear-gradient(145deg, #FFB7C5 0%, #FF69B4 100%) !important;
             color: white !important;
-            box-shadow: 0 0 25px rgba(255, 105, 180, 0.6) !important; /* BRILHO ROSA */
+            z-index: 10 !important;
+            transform: translateY(-8px) scale(1.05) !important;
+            border: 1px solid #FF1493 !important;
+            box-shadow: 0 10px 30px rgba(255, 105, 180, 0.5), inset 0 2px 4px rgba(255,255,255,0.6) !important;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
         }
 
-        /* ABA 2: CONFORMIDADE (Verde com Brilho Neon) */
-        .stTabs [data-baseweb="tab"]:nth-child(2) {
-            border-bottom: 4px solid #00D1FF !important; /* Mudei para um azul ciano brilhante para contrastar melhor */
-            color: #00D1FF !important;
-        }
+        /* ABA 2: CONFORMIDADE (Prata Cromada / Azul Ice) */
         .stTabs [data-baseweb="tab"]:nth-child(2)[aria-selected="true"] {
-            background: #00D1FF !important;
+            background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
-            box-shadow: 0 0 25px rgba(0, 209, 255, 0.6) !important; /* BRILHO CIANO */
+            z-index: 10 !important;
+            transform: translateY(-8px) scale(1.05) !important;
+            border: 1px solid #0099CC !important;
+            box-shadow: 0 10px 30px rgba(0, 191, 255, 0.5), inset 0 2px 4px rgba(255,255,255,0.6) !important;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
         }
 
-        /* --- BOTÃO ADM (BRILHO PULSANTE) --- */
+        /* --- BOTÃO ADM METALIZADO --- */
         div.stButton > button:has(div:contains("ABRIR GESTÃO ADMINISTRATIVA")) {
-            background: linear-gradient(145deg, #FF69B4, #FF1493) !important;
+            background: linear-gradient(145deg, #FF69B4, #D4145A) !important;
             color: white !important; 
             border-radius: 40px !important;
-            border: none !important;
             font-weight: 800 !important;
-            box-shadow: 0 0 20px rgba(255, 20, 147, 0.5) !important;
+            border: 1px solid #FFFFFF55 !important;
+            box-shadow: 0 15px 35px rgba(255, 20, 147, 0.4), inset 0 -4px 10px rgba(0,0,0,0.2) !important;
         }
 
-        /* --- BOTÕES DO SISTEMA (BRILHO CARAMELO) --- */
+        /* --- BOTÕES DO SISTEMA (BRONZE ESCOVADO) --- */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
-            background: linear-gradient(145deg, #C2936E, #8B5A2B) !important;
+            background: linear-gradient(180deg, #D4A373 0%, #A67B5B 100%) !important;
             color: #FFFFFF !important;
             border-radius: 40px !important;
             padding: 12px 25px !important;
             font-weight: 600 !important;
-            box-shadow: 0 5px 15px rgba(139, 90, 43, 0.3) !important;
-            transition: all 0.3s ease-in-out !important;
+            border: 1px solid #8B5A2B !important;
+            box-shadow: 0 8px 20px rgba(139, 90, 43, 0.2), inset 0 2px 2px rgba(255,255,255,0.3) !important;
             text-transform: uppercase;
         }
 
         .stButton > button:hover, .stDownloadButton > button:hover {
             transform: scale(1.02) !important;
-            box-shadow: 0 0 25px rgba(255, 105, 180, 0.4) !important; /* BRILHO NO HOVER */
+            filter: brightness(1.1) !important;
+            box-shadow: 0 12px 25px rgba(255, 105, 180, 0.3) !important;
         }
 
-        /* CONTAINER DE STATUS COM BORDA ILUMINADA */
+        /* CONTAINER DE STATUS METAL */
         .status-container {
-            background: white;
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
             padding: 20px;
             border-radius: 30px;
-            border-left: 6px solid #FF69B4;
-            box-shadow: 0 10px 40px rgba(255, 105, 180, 0.1);
+            border-left: 8px solid #FF69B4;
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.05);
         }
         </style>
     """, unsafe_allow_html=True)
