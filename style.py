@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* --- 1. ESTRUTURA --- */
+        /* --- 1. ESTRUTURA E FUNDO MOCHA --- */
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             background-color: #F3E9DC !important; 
@@ -18,7 +18,7 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #FCF8F4 0%, #E8DCCB 100%) !important; 
         }
 
-        /* --- 2. ABAS MESTRE DIAMANTE --- */
+        /* --- 2. ABAS MESTRE DIAMANTE (AS ETIQUETAS) --- */
         .stTabs { overflow: visible !important; }
         .stTabs [data-baseweb="tab-list"] {
             gap: 15px !important; 
@@ -37,20 +37,21 @@ def aplicar_estilo_sentinela():
             color: #8B5A2B !important;
         }
 
-        /* Ativas Setorizadas */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; transform: translateY(-30px) !important; }
-        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; transform: translateY(-30px) !important; }
+        /* Ativas das Mães */
+        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; transform: translateY(-30px) !important; color: white !important; }
+        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; transform: translateY(-30px) !important; color: white !important; }
 
-        /* --- 3. 📦 O CAIXOTÃO (PASTA MÃE) --- */
+        /* --- 3. 📦 O CAIXOTÃO (PASTA MÃE COM NEON BOATE) --- */
         [data-testid="stTabPanel"] {
             background: #FFFFFF !important;
             padding: 50px !important;
             border-radius: 0 60px 60px 60px !important;
             margin-top: -5px !important;
             border: 6px solid transparent !important;
+            min-height: 800px !important;
         }
 
-        /* Neon do Caixotão acompanhando o setor */
+        /* Neon Setorizado do Caixotão */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border-color: #00D1FF !important;
             box-shadow: 0 0 30px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.4) !important;
@@ -60,41 +61,53 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 0 30px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4) !important;
         }
 
-        /* --- 4. ✉️ ENVELOPES SETORIZADOS (AZUL OU ROSA) --- */
+        /* --- 4. 📁 SUB-ABAS SETORIZADAS (DENTRO DO CAIXOTÃO) --- */
+        .stTabs .stTabs [data-baseweb="tab-list"] { padding: 0 0 30px 0 !important; }
         
-        /* Estilo Base do Envelope */
+        .stTabs .stTabs [data-baseweb="tab"] {
+            height: 60px !important;
+            background: #F8F9FA !important;
+            border-radius: 15px 45px 0 0 !important;
+            font-size: 1.1rem !important;
+            margin-right: -10px !important;
+        }
+
+        /* 🔵 SUB-ABAS DO SETOR XML (AZUIS) */
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [data-baseweb="tab"] { color: #0088cc !important; border-bottom: 3px solid #00BFFF !important; }
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] {
+            background: #00BFFF !important;
+            color: white !important;
+            box-shadow: 0 0 15px #00D1FF !important;
+        }
+
+        /* 💗 SUB-ABAS DO SETOR CONFORMIDADE (ROSAS) */
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [data-baseweb="tab"] { color: #cc5588 !important; border-bottom: 3px solid #FF69B4 !important; }
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] {
+            background: #FF69B4 !important;
+            color: white !important;
+            box-shadow: 0 0 15px #FF69B4 !important;
+        }
+
+        /* --- 5. ✉️ ENVELOPES DE UPLOAD SETORIZADOS --- */
         [data-testid="stFileUploader"] {
             padding: 45px !important;
             border-radius: 10px 10px 45px 45px !important;
-            border: 2px solid transparent !important;
             border-top: 18px solid #FDFDFD !important;
             box-shadow: 0 15px 40px rgba(0,0,0,0.1) !important;
             margin: 25px 0 !important;
         }
 
-        /* 🔵 ENVELOPE XML (AZUL) */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] {
-            background-color: #EBF9FF !important; /* Azul Pastel */
-            border-color: #A7E9FF !important;
-        }
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
 
-        /* 💗 ENVELOPE CONFORMIDADE (ROSA) */
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] {
-            background-color: #FFF0F5 !important; /* Rosa Pastel */
-            border-color: #FFD1DC !important;
-        }
-
-        /* --- 5. 📄 ÁREA DE AUDITORIA --- */
+        /* --- 6. 📄 ÁREA DE AUDITORIA (ILHA BRANCA) --- */
         div.stExpander, div.element-container:has(h1, h2, h3), .stDataFrame {
             background-color: white !important;
             padding: 30px !important;
             border-radius: 20px !important;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.03) !important;
             border: 1px solid #f2f2f2 !important;
         }
-
-        /* Sub-abas Internas */
-        .stTabs .stTabs [data-baseweb="tab-list"] { padding: 0 0 30px 0 !important; }
-        .stTabs .stTabs [data-baseweb="tab"] { height: 60px !important; border-radius: 15px 45px 0 0 !important; }
 
         </style>
     """, unsafe_allow_html=True)
