@@ -1,5 +1,7 @@
 import streamlit as st
-import os, io, pandas as pd, zipfile, re, sqlite3
+import os, io, pandas as pd, zipfile, re, sqlite3, smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from hashlib import sha256
 from style import aplicar_estilo_sentinela
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
@@ -8,24 +10,20 @@ from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 def init_db():
     conn = sqlite3.connect('sentinela_usuarios.db')
     c = conn.cursor()
+    # Criamos a tabela com colunas de permissão granular
     c.execute('''CREATE TABLE IF NOT EXISTS usuarios 
-                 (nome TEXT, email TEXT PRIMARY KEY, senha TEXT, status TEXT, nivel TEXT)''')
+                 (nome TEXT, email TEXT PRIMARY KEY, senha TEXT, status TEXT, nivel TEXT,
+                  perm_icms INTEGER, perm_difal INTEGER, perm_pis INTEGER)''')
     
-    # CONFIGURANDO MARIANA COMO ADMIN MESTRE (marii.brbj@gmail.com)
     email_admin = 'marii.brbj@gmail.com'
     c.execute("SELECT * FROM usuarios WHERE email=?", (email_admin,))
-    
-    # Gerando o hash da sua nova senha forte
     nova_senha_hash = sha256("Senhaforte@123".encode()).hexdigest()
     
     if not c.fetchone():
-        # Se não existe, cria com o usuário 'mariana'
-        c.execute("INSERT INTO usuarios VALUES (?, ?, ?, 'ATIVO', 'ADMIN')", 
+        c.execute("INSERT INTO usuarios VALUES (?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1)", 
                   ('mariana', email_admin, nova_senha_hash))
     else:
-        # Se já existe, garante que o nome seja 'mariana' e a senha seja a solicitada
-        c.execute("UPDATE usuarios SET senha=?, nome='mariana' WHERE email=?", (nova_senha_hash, email_admin))
-        
+        c.execute("UPDATE usuarios SET senha=?, nome='mariana', nivel='ADMIN' WHERE email=?", (nova_senha_hash, email_admin))
     conn.commit()
     conn.close()
 
@@ -85,6 +83,9 @@ st.set_page_config(page_title="Sentinela 2.1 | Auditoria Fiscal", page_icon="�
 aplicar_estilo_sentinela()
 init_db()
 
+# Limpeza de cabeçalhos visuais indesejados
+st.markdown("<style>.stAppHeader {display: none;} header {visibility: hidden;}</style>", unsafe_allow_html=True)
+
 if 'user_data' not in st.session_state: st.session_state['user_data'] = None
 if 'v_ver' not in st.session_state: st.session_state['v_ver'] = 0
 if 'executado' not in st.session_state: st.session_state['executado'] = False
@@ -107,21 +108,20 @@ if not st.session_state['user_data']:
                 if st.button("ENTRAR", use_container_width=True):
                     conn = sqlite3.connect('sentinela_usuarios.db')
                     c = conn.cursor()
-                    # Permite login pelo nome 'mariana' ou pelo e-mail
-                    c.execute("SELECT nome, email, status, nivel FROM usuarios WHERE (nome=? OR email=?) AND senha=?", 
+                    c.execute("SELECT nome, email, status, nivel, perm_icms, perm_difal, perm_pis FROM usuarios WHERE (nome=? OR email=?) AND senha=?", 
                               (u_input, u_input, hash_senha(pass_l)))
                     user = c.fetchone()
                     conn.close()
                     if user:
                         if user[2] == 'ATIVO':
-                            st.session_state['user_data'] = {"nome": user[0], "email": user[1], "nivel": user[3]}
+                            st.session_state['user_data'] = {"nome": user[0], "email": user[1], "nivel": user[3], "perms": {"icms": user[4], "difal": user[5], "pis": user[6]}}
                             st.rerun()
-                        else: st.warning("Aguarde a Mariana liberar seu acesso.")
+                        else: st.warning("Seu acesso está em análise administrativa.")
                     else: st.error("Usuário ou senha inválidos.")
         
         with aba_c:
             with st.container(border=True):
-                st.write("Solicite seu acesso à Mariana:")
+                st.write("### Solicite seu acesso:")
                 n_nome = st.text_input("Nome Completo")
                 n_email = st.text_input("E-mail")
                 n_pass = st.text_input("Defina uma Senha", type="password")
@@ -130,34 +130,58 @@ if not st.session_state['user_data']:
                         try:
                             conn = sqlite3.connect('sentinela_usuarios.db')
                             c = conn.cursor()
-                            c.execute("INSERT INTO usuarios VALUES (?, ?, ?, 'PENDENTE', 'USER')", 
+                            c.execute("INSERT INTO usuarios VALUES (?, ?, ?, 'PENDENTE', 'USER', 0, 0, 0)", 
                                       (n_nome, n_email, hash_senha(n_pass)))
                             conn.commit(); conn.close()
-                            st.success("Solicitação enviada! A Mariana receberá um e-mail para aprovação.")
+                            st.success("Solicitação enviada! Você será notificado após a análise do sistema.")
                         except: st.error("Este e-mail já está cadastrado ou pendente.")
                     else: st.warning("Preencha todos os campos.")
     st.stop()
 
-# --- ÁREA EXCLUSIVA DE ADMINISTRAÇÃO (MARIANA) ---
+# --- PAINEL DE ADMINISTRAÇÃO ELITE (MARIANA VISÍVEL) ---
 if st.session_state['user_data']['nivel'] == 'ADMIN':
-    with st.expander("🛠️ GESTÃO DE USUÁRIOS (ADMIN)"):
+    with st.expander("🛠️ GESTÃO DE USUÁRIOS E PERMISSÕES (SISTEMA)", expanded=False):
         conn = sqlite3.connect('sentinela_usuarios.db')
-        df_users = pd.read_sql_query("SELECT nome, email, status FROM usuarios WHERE nivel='USER'", conn)
+        df_u = pd.read_sql_query("SELECT * FROM usuarios ORDER BY nivel ASC", conn)
+        
+        for idx, row in df_u.iterrows():
+            is_me = (row['email'] == st.session_state['user_data']['email'])
+            with st.container(border=True):
+                c1, c2, c3, c4 = st.columns([2, 2, 3, 2])
+                c1.write(f"👤 **{row['nome']}** {' (VOCÊ)' if is_me else ''}\n📧 {row['email']}")
+                
+                # Controle de Status e Reset
+                st_txt = "🟢 ATIVO" if row['status'] == 'ATIVO' else "🟡 PENDENTE"
+                c2.write(f"Status: {st_txt}")
+                if c2.button("🔄 Reset Senha", key=f"rs_{idx}"):
+                    conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha("123456"), row['email']))
+                    conn.commit(); st.info("Senha resetada para: 123456")
+
+                # Permissões Individuais
+                p_i = c3.checkbox("ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
+                p_d = c3.checkbox("DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
+                p_p = c3.checkbox("PIS/COF", value=bool(row['perm_pis']), key=f"p_{idx}")
+
+                # Ações e LIXEIRA
+                if not is_me:
+                    if row['status'] == 'PENDENTE':
+                        if c4.button("✅ LIBERAR", key=f"ok_{idx}", use_container_width=True):
+                            conn.execute("UPDATE usuarios SET status='ATIVO', perm_icms=?, perm_difal=?, perm_pis=? WHERE email=?", (int(p_i), int(p_d), int(p_p), row['email']))
+                            conn.commit(); st.rerun()
+                    else:
+                        if c4.button("⛔ BLOQUEAR", key=f"bk_{idx}", use_container_width=True):
+                            conn.execute("UPDATE usuarios SET status='PENDENTE' WHERE email=?", (row['email'],))
+                            conn.commit(); st.rerun()
+                    
+                    if c4.button("🗑️ EXCLUIR", key=f"del_{idx}", use_container_width=True):
+                        conn.execute("DELETE FROM usuarios WHERE email=?", (row['email'],))
+                        conn.commit(); st.rerun()
+                else:
+                    c4.write("🛡️ Conta Mestre Protegida")
+                    if c4.button("💾 Salvar Perms", key=f"save_{idx}", use_container_width=True):
+                        conn.execute("UPDATE usuarios SET perm_icms=?, perm_difal=?, perm_pis=? WHERE email=?", (int(p_i), int(p_d), int(p_p), row['email']))
+                        conn.commit(); st.success("Atualizado!")
         conn.close()
-        for idx, row in df_users.iterrows():
-            col1, col2, col3 = st.columns([2, 2, 1])
-            col1.write(f"👤 {row['nome']}")
-            col2.write(f"📧 {row['email']}")
-            if row['status'] == 'PENDENTE':
-                if col3.button("✅ APROVAR", key=f"ap_{idx}"):
-                    conn = sqlite3.connect('sentinela_usuarios.db')
-                    conn.execute("UPDATE usuarios SET status='ATIVO' WHERE email=?", (row['email'],))
-                    conn.commit(); conn.close(); st.rerun()
-            else:
-                if col3.button("❌ BLOQUEAR", key=f"bl_{idx}"):
-                    conn = sqlite3.connect('sentinela_usuarios.db')
-                    conn.execute("UPDATE usuarios SET status='PENDENTE' WHERE email=?", (row['email'],))
-                    conn.commit(); conn.close(); st.rerun()
 
 # --- CARREGAMENTO DE DADOS (PÓS-LOGIN) ---
 @st.cache_data(ttl=600)
@@ -182,7 +206,7 @@ with st.sidebar:
     st.markdown("---")
     st.write(f"Olá, **{st.session_state['user_data']['nome']}**")
     if st.button("🚪 SAIR DO SISTEMA"):
-        st.session_state['user_data'] = None
+        st.session_state.clear()
         st.rerun()
     st.markdown("---")
     
@@ -202,23 +226,23 @@ with st.sidebar:
         path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
         if os.path.exists(path_base): st.success("💎 Modo Elite: Base Localizada")
         else: st.warning("🔍 Modo Cegas: Base não localizada")
-            
-        if ret_sel:
-            path_ret = f"RET/{cod_c}-RET_MG.xlsx"
-            if os.path.exists(path_ret): st.success("✅ Base RET (MG) Localizada")
-            else: st.warning("⚠️ Base RET (MG) não localizada")
         
         with st.popover("📥 Modelo Bases"):
-            # Senha de segurança para download do modelo vinculada ao admin mestre
             if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
                 st.download_button("Download", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
 
 # --- CABEÇALHO ---
 st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
-# --- ÁREA CENTRAL ---
+# --- ÁREA CENTRAL (COM PERMISSÕES) ---
 if emp_sel:
-    tab_xml, tab_dominio = st.tabs(["📂 ANÁLISE XML", "📉 CONFORMIDADE DOMÍNIO"])
+    perms = st.session_state['user_data']['perms']
+    abas_v = ["📂 ANÁLISE XML"]
+    if perms['icms']: abas_v.append("📊 ICMS/IPI")
+    if perms['difal']: abas_v.append("⚖️ DIFAL/ST")
+    if perms['pis']: abas_v.append("💰 PIS/COFINS")
+    
+    tab_xml, *outras_tabs = st.tabs(abas_v)
 
     with tab_xml:
         st.markdown("### 📥 Central de Importação")
@@ -288,6 +312,22 @@ if emp_sel:
         with st.popover("💾 BAIXAR RELATÓRIO FINAL", use_container_width=True):
             if st.text_input("Senha de Download", type="password", key="p_rel") == "Senhaforte@123":
                 st.download_button("Confirmar Download", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
+                st.download_button("📂 ZIP ORGANIZADO", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+                st.download_button("📦 TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
 
         st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
-        # ... (Restante do código do Garimpeiro mantido íntegro)
+        sc = st.session_state.get('st_counts')
+        c1, c2, c3 = st.columns(3)
+        c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
+        c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0))
+        c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
+
+        col_res, col_fal = st.columns(2)
+        with col_res:
+            st.write("**Resumo por Série:**")
+            st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
+        with col_fal:
+            st.write("**Notas Faltantes:**")
+            st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
+else:
+    st.info("👈 Selecione a empresa na barra lateral para começar.")
