@@ -27,10 +27,10 @@ def aplicar_estilo_sentinela():
             font-size: 3.5rem; 
             font-weight: 800; 
             text-transform: uppercase;
-            text-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
+            text-shadow: 0 0 10px rgba(93, 58, 26, 0.1);
         }
 
-        /* --- 3. ABAS MESTRE (SETORIZAÇÃO) --- */
+        /* --- 3. ABAS MESTRE (METALIZADAS E LIMPAS) --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         .stTabs [data-baseweb="tab-list"] { gap: 20px !important; padding: 40px 0 !important; }
 
@@ -44,90 +44,65 @@ def aplicar_estilo_sentinela():
             font-size: 1.7rem !important;
             font-weight: 800 !important;
             color: #8B5A2B !important;
-            box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
+            box-shadow: 10px 0 20px rgba(0,0,0,0.1), inset 0 2px 5px rgba(255,255,255,0.8) !important;
+            transition: all 0.3s ease !important;
         }
 
-        /* 🔵 SETOR XML: AZUL */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
-            background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
-            border-color: #00D1FF !important;
-            box-shadow: 0 0 50px rgba(0, 209, 255, 0.6), inset 0 5px 15px rgba(255,255,255,0.8) !important;
-            color: white !important;
-            transform: translateY(-25px) scale(1.08) !important;
+        /* ABA ATIVA (SEM NEON EXTERNO, APENAS ELEVAÇÃO) */
+        .stTabs [aria-selected="true"] {
+            transform: translateY(-20px) scale(1.05) !important;
+            z-index: 100 !important;
+            border-bottom: 5px solid white !important;
         }
 
-        /* 💗 SETOR CONFORMIDADE: ROSA */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
-            background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
-            border-color: #FF1493 !important;
-            box-shadow: 0 0 50px rgba(255, 105, 180, 0.7), inset 0 5px 15px rgba(255,255,255,0.8) !important;
-            color: white !important;
-            transform: translateY(-25px) scale(1.08) !important;
-        }
-
-        /* --- 4. 📦 O PAINEL DE FUNDO (GAVETA GERAL) --- */
-        [data-testid="stTabPanel"] {
-            background: #FFFFFF !important;
-            padding: 40px !important;
-            border-radius: 0 60px 60px 60px !important;
-            margin-top: -20px !important;
-            box-shadow: 0 20px 80px rgba(0,0,0,0.05) !important;
-            border: 4px solid transparent !important;
-        }
-
-        /* --- 📂 A CAIXA GIGANTE DE UPLOAD (MOLDURA NEON) --- */
+        /* --- 4. 📦 O CAIXOTÃO BRANCO GIGANTE (A ÁREA DE FOCO) --- */
+        
         div[data-testid="stHorizontalBlock"] {
             background: #FFFFFF !important;
-            padding: 45px !important; /* Aumentei o espaço interno */
-            border-radius: 45px !important;
-            margin: 30px 0 !important;
-            transition: all 0.4s ease !important;
+            padding: 60px !important; /* CAIXOTE GRANDÃO */
+            border-radius: 50px !important;
+            margin: 40px 0 !important;
+            min-height: 500px !important; /* FORÇA O CAIXOTE A SER GIGANTE */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* 🔵 Moldura Neon Azul (Setor XML) */
+        /* 🔵 BORDA NEON AZUL (SETOR XML) NO CAIXOTE */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) div[data-testid="stHorizontalBlock"] {
-            border: 3px solid #00D1FF !important;
-            box-shadow: 0 0 25px rgba(0, 209, 255, 0.2), inset 0 0 15px rgba(0, 209, 255, 0.05) !important;
+            border: 5px solid #00D1FF !important;
+            box-shadow: 0 0 30px #00D1FF, 0 0 60px rgba(0, 209, 255, 0.2) !important;
         }
 
-        /* 💗 Moldura Neon Rosa (Setor Conformidade) */
+        /* 💗 BORDA NEON ROSA (SETOR CONFORMIDADE) NO CAIXOTE */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) div[data-testid="stHorizontalBlock"] {
-            border: 3px solid #FFB6C1 !important;
-            box-shadow: 0 0 25px rgba(255, 182, 193, 0.3), inset 0 0 15px rgba(255, 182, 193, 0.05) !important;
+            border: 5px solid #FF69B4 !important;
+            box-shadow: 0 0 30px #FF69B4, 0 0 60px rgba(255, 105, 180, 0.2) !important;
         }
 
-        /* Limpeza dos campos individuais */
-        [data-testid="stFileUploader"] {
-            background: #F8F9FA !important;
-            border: 1px dashed #D8C7B1 !important;
-            border-radius: 20px !important;
+        /* --- 5. PAINEL DE FUNDO (GAVETA GERAL) --- */
+        [data-testid="stTabPanel"] {
+            background: transparent !important; /* Fundo transparente para o caixote brilhar sozinho */
+            padding: 20px !important;
         }
 
-        /* --- 5. SUB-ABAS SETORIZADAS --- */
+        /* --- 6. SUB-ABAS (SETORIZADAS) --- */
         .stTabs .stTabs [data-baseweb="tab"] {
-            height: 65px !important;
-            background: #FDFDFD !important;
-            border-radius: 20px 55px 0 0 !important;
-            font-size: 1.2rem !important;
+            height: 60px !important;
+            border-radius: 15px 45px 0 0 !important;
+            font-size: 1.1rem !important;
             font-weight: 800 !important;
-            margin-right: -10px !important;
         }
 
-        /* Ativas (Azul e Rosa) */
+        /* Ativas das sub-abas sem o neon das mães */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] {
-            background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
+            background: #00BFFF !important;
             color: white !important;
-            box-shadow: 0 0 20px #00D1FF !important;
-            transform: translateY(-12px) !important;
         }
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] {
-            background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
+            background: #FF69B4 !important;
             color: white !important;
-            box-shadow: 0 0 20px #FF69B4 !important;
-            transform: translateY(-12px) !important;
         }
-
-        .stTabs .stTabs [aria-selected="true"] div { color: white !important; }
 
         </style>
     """, unsafe_allow_html=True)
