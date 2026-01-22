@@ -1,4 +1,4 @@
-import streamlit st
+import streamlit as st
 
 def aplicar_estilo_sentinela():
     st.markdown("""
@@ -63,7 +63,7 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* --- ABA MÃE ATIVA: NEON EXTREMO --- */
+        /* --- ABAS MÃE ATIVAS (NEON EXTREMO) --- */
 
         /* 🔵 ABA 1 (XML): AZUL NEON */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
@@ -85,9 +85,8 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- 📦 O CAIXOTE BRANCO COM BORDA NEON (PADRONIZADO) --- */
+        /* --- 📦 CAIXOTES BRILHANTES (PAINEL INTERNO) --- */
 
-        /* Aplica a base branca para todas as abas */
         [data-testid="stTabPanel"] {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
@@ -97,14 +96,14 @@ def aplicar_estilo_sentinela():
             border: 4px solid transparent !important;
         }
 
-        /* CAIXOTE DA ANÁLISE XML (Contorno Azul) */
+        /* CAIXOTE XML (Contorno Azul Neon) */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 4px solid #00D1FF !important;
             border-top: 8px solid #00BFFF !important;
             box-shadow: 0 15px 50px rgba(0, 209, 255, 0.3) !important;
         }
 
-        /* CAIXOTE DA CONFORMIDADE (Contorno Rosa) */
+        /* CAIXOTE FISCAL (Contorno Rosa Neon) */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 4px solid #FFB6C1 !important;
             border-top: 8px solid #FF69B4 !important;
@@ -126,7 +125,7 @@ def aplicar_estilo_sentinela():
             background: linear-gradient(145deg, #FFD1DC 0%, #FF69B4 100%) !important;
             color: white !important;
             transform: translateY(-12px) !important;
-            box-shadow: 0 0 25px #FF69B4 !important;
+            box-shadow: 0 0 25px #FF69B4, inset 0 2px 5px rgba(255,255,255,0.5) !important;
             border-bottom: 5px solid white !important;
         }
         </style>
