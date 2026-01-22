@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* --- 1. SIDEBAR E FUNDO --- */
+        /* --- 1. SIDEBAR E FUNDO MOCHA --- */
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             max-width: 350px !important;
@@ -20,7 +20,7 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #FCF8F4 0%, #E8DCCB 100%) !important; 
         }
 
-        /* --- 2. TÍTULO SHINE --- */
+        /* --- 2. TÍTULO SHINE GLITTER --- */
         .titulo-principal { 
             font-family: 'Montserrat', sans-serif !important;
             color: #5D3A1A; 
@@ -30,7 +30,7 @@ def aplicar_estilo_sentinela():
             text-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
         }
 
-        /* --- 3. ABAS MÃE (SETORIZAÇÃO) --- */
+        /* --- 3. ABAS MESTRE (SETORIZAÇÃO) --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         .stTabs [data-baseweb="tab-list"] { gap: 20px !important; padding: 40px 0 !important; }
 
@@ -47,11 +47,11 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* 🔵 SETOR ANALISE XML: AZUL NEON SHINE */
+        /* 🔵 SETOR XML: AZUL NEON SHINE */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             border-color: #00D1FF !important;
-            box-shadow: 0 0 20px #00D1FF, 0 0 50px rgba(0, 209, 255, 0.6), inset 0 5px 15px rgba(255,255,255,0.8) !important;
+            box-shadow: 0 0 50px rgba(0, 209, 255, 0.6), inset 0 5px 15px rgba(255,255,255,0.8) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
             z-index: 100 !important;
@@ -61,14 +61,13 @@ def aplicar_estilo_sentinela():
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             border-color: #FF1493 !important;
-            box-shadow: 0 0 20px #FF1493, 0 0 50px rgba(255, 105, 180, 0.7), inset 0 5px 15px rgba(255,255,255,0.8) !important;
+            box-shadow: 0 0 50px rgba(255, 105, 180, 0.7), inset 0 5px 15px rgba(255,255,255,0.8) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
             z-index: 100 !important;
         }
 
-        /* --- 4. 📦 OS CAIXOTES BRANCOS (GAVETAS COM BRILHO) --- */
-        
+        /* --- 4. 📦 O CAIXOTE PRINCIPAL (GAVETA GERAL) --- */
         [data-testid="stTabPanel"] {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
@@ -78,22 +77,41 @@ def aplicar_estilo_sentinela():
             border: 4px solid transparent !important;
         }
 
-        /* Caixote do Setor XML (Borda Azul Glow) */
+        /* Borda Azul no XML */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 4px solid #00D1FF !important;
             border-top: 8px solid #00BFFF !important;
             box-shadow: 0 15px 60px rgba(0, 209, 255, 0.3) !important;
         }
 
-        /* Caixote do Setor Conformidade (Borda Rosa Glow) */
+        /* Borda Rosa na Conformidade */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 4px solid #FFB6C1 !important;
             border-top: 8px solid #FF69B4 !important;
             box-shadow: 0 15px 60px rgba(255, 105, 180, 0.3) !important;
         }
 
-        /* --- 5. SUB-ABAS (SETORIZADAS) --- */
-        
+        /* --- 5. 📂 CAIXOTES DE UPLOAD (A CAIXA BRANCA QUE VOCÊ PEDIU) --- */
+        [data-testid="stFileUploader"] {
+            background: white !important;
+            padding: 25px !important;
+            border-radius: 30px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05), inset 0 2px 10px rgba(0,0,0,0.02) !important;
+            border: 3px solid transparent !important;
+            transition: all 0.3s ease !important;
+        }
+
+        /* Contorno Azul no Upload do XML */
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] {
+            border-color: #A7E9FF !important;
+        }
+
+        /* Contorno Rosa no Upload da Conformidade */
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] {
+            border-color: #FFD1DC !important;
+        }
+
+        /* --- 6. SUB-ABAS (SETORIZADAS) --- */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 65px !important;
             background: #FDFDFD !important;
@@ -103,7 +121,7 @@ def aplicar_estilo_sentinela():
             margin-right: -10px !important;
         }
 
-        /* Sub-abas do XML (Azul) */
+        /* Ativa Azul */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
@@ -112,7 +130,7 @@ def aplicar_estilo_sentinela():
             transform: translateY(-12px) !important;
         }
 
-        /* Sub-abas da Conformidade (Rosa) */
+        /* Ativa Rosa */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             color: white !important;
