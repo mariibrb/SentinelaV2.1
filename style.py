@@ -17,54 +17,60 @@ def aplicar_estilo_sentinela():
             margin: 0px !important;
         }
         
-        /* FUNDO ROSADINHO DELICADO */
+        /* FUNDO OFF-WHITE (SAI O ROSA INFANTIL, ENTRA O NEUTRO) */
         .stApp {
-            background-color: #FFF0F5 !important; /* Lavender Blush - um rosa bem clarinho e elegante */
+            background-color: #F8F5F2 !important; 
         }
 
         /* AJUSTE DO CONTEÚDO */
         .block-container { padding-top: 2rem !important; }
         html, body, [class*="st-"] { font-family: 'Inter', sans-serif; }
 
-        /* TÍTULOS */
-        .titulo-principal { color: #4B2E2E; font-size: 2.5rem; font-weight: 800; margin-bottom: 5px; }
-        .barra-marsala { width: 80px; height: 6px; background: linear-gradient(90deg, #FF69B4, #4B2E2E); border-radius: 10px; margin-bottom: 30px; }
+        /* TÍTULOS EM MARROM CAFÉ */
+        .titulo-principal { color: #3D2B1F; font-size: 2.5rem; font-weight: 800; margin-bottom: 5px; }
+        .barra-marsala { 
+            width: 80px; 
+            height: 6px; 
+            background: linear-gradient(90deg, #D4A373, #3D2B1F); 
+            border-radius: 10px; 
+            margin-bottom: 30px; 
+        }
 
-        /* ABAS METALIZADAS - MARROM COM TEXTO ROSA */
+        /* ABAS METALIZADAS - MARROM SÓBRIO */
         .stTabs [data-baseweb="tab"] {
             height: 70px !important;
-            background: #EAD7D7 !important;
+            background: #E5E1DA !important;
             border-radius: 15px 15px 0px 0px !important;
             padding: 10px 40px !important;
             font-size: 20px !important; 
             font-weight: 600 !important;
-            color: #4B2E2E !important;
+            color: #3D2B1F !important;
             transition: all 0.3s ease !important;
         }
 
         .stTabs [aria-selected="true"] {
-            background: linear-gradient(180deg, #6B4423 0%, #4B2E2E 50%, #2D1B1B 100%) !important;
-            color: #FFB6C1 !important; /* Rosa claro no texto da aba ativa */
+            background: linear-gradient(180deg, #5D4037 0%, #3D2B1F 50%, #261A13 100%) !important;
+            color: #F1D4D4 !important; /* Rosa seco apenas no texto ativo */
             font-weight: 800 !important;
-            box-shadow: 0 -5px 15px rgba(75, 46, 46, 0.3) !important;
+            box-shadow: 0 -5px 15px rgba(61, 43, 31, 0.3) !important;
         }
 
-        /* BOTÕES MARROM CHOCOLATE COM BORDA PINK E BRILHO (RESTAURADO) */
+        /* BOTÕES MARROM CHOCOLATE COM BORDA ROSA SECO (RESTAURADO E DISCRETO) */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
-            background: linear-gradient(180deg, #8B5A2B 0%, #4B2E2E 50%, #351C1C 100%) !important;
+            background: linear-gradient(180deg, #5D4037 0%, #3D2B1F 50%, #261A13 100%) !important;
             color: #FFFFFF !important;
             border-radius: 50px !important;
             font-weight: 800 !important;
-            border: 2px solid #FF1493 !important; /* BORDA DEEP PINK */
-            box-shadow: inset 0 2px 3px rgba(255,255,255,0.3), 0 4px 10px rgba(0,0,0,0.2) !important;
+            border: 2px solid #BC8F8F !important; /* ROSY BROWN (Rosa antigo/seco) */
+            box-shadow: inset 0 2px 3px rgba(255,255,255,0.2), 0 4px 10px rgba(0,0,0,0.2) !important;
             transition: all 0.3s ease !important;
             text-transform: uppercase;
         }
 
         .stButton > button:hover, .stDownloadButton > button:hover {
             transform: translateY(-2px) !important;
-            box-shadow: 0 8px 25px rgba(255, 20, 147, 0.4) !important; /* Glow Pink no Hover */
+            box-shadow: 0 8px 25px rgba(188, 143, 143, 0.3) !important; /* Glow discreto */
             filter: brightness(1.2) !important;
         }
 
@@ -73,7 +79,7 @@ def aplicar_estilo_sentinela():
             background-color: #ffffff;
             padding: 15px;
             border-radius: 12px;
-            border-left: 6px solid #FF69B4; /* Detalhe Pink */
+            border-left: 6px solid #BC8F8F; /* Detalhe em Rosa Seco */
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         </style>
