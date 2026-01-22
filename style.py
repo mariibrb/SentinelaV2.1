@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* RESET TOTAL E SEGURANÇA DA SIDEBAR */
+        /* RESET TOTAL E SEGURANÇA DA PORTA DA SIDEBAR */
         header, .st-emotion-cache-zq59db, 
         #keyboard_double, .st-emotion-cache-10oheav, 
         span[data-testid="stHeaderActionElements"],
@@ -14,23 +14,24 @@ def aplicar_estilo_sentinela():
             visibility: hidden !important;
         }
 
-        /* --- FORÇAR A SETINHA DA SIDEBAR (BOTÃO DE PÂNICO PINK) --- */
-        /* Garante que o controle de expansão esteja sempre visível quando colapsado */
+        /* --- BOTÃO DE PÂNICO: FORÇAR A SETINHA DA SIDEBAR A APARECER --- */
         [data-testid="stSidebarCollapsedControl"] {
             display: flex !important;
             visibility: visible !important;
-            left: 10px !important;
-            top: 10px !important;
+            left: 15px !important;
+            top: 15px !important;
             z-index: 1000001 !important;
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            border-radius: 50% !important;
+            box-shadow: 0 4px 15px rgba(255, 105, 180, 0.4) !important;
+            width: 45px !important;
+            height: 45px !important;
+            border: 2px solid #FF69B4 !important;
         }
 
         [data-testid="stSidebarCollapsedControl"] button {
-            color: #FF69B4 !important; /* Setinha Pink Mariana */
-            background-color: rgba(255, 255, 255, 0.8) !important;
-            border-radius: 50% !important;
-            box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3) !important;
-            width: 40px !important;
-            height: 40px !important;
+            color: #FF69B4 !important; /* Setinha em Pink Mariana */
+            transform: scale(1.3);
         }
 
         /* FUNDO AREIA QUENTE BOUTIQUE */
@@ -80,7 +81,7 @@ def aplicar_estilo_sentinela():
             border: 1px solid rgba(255, 255, 255, 0.5) !important;
         }
 
-        /* O BRILHO ROSA NO HOVER RESTAURADO */
+        /* O BRILHO ROSA NO HOVER */
         .stTabs [data-baseweb="tab"]:hover {
             transform: translateY(-3px) !important;
             background: white !important;
