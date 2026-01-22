@@ -48,23 +48,8 @@ def init_db():
         if col_nome not in colunas_atuais:
             c.execute(f"ALTER TABLE usuarios ADD COLUMN {col_nome} {col_tipo}")
     
-    # CONFIGURANDO MARIANA COMO ADMIN MESTRE
-    email_admin = 'marii.brbj@gmail.com'
-    nova_senha_hash = sha256("Senhaforte@123".encode()).hexdigest()
-    
-    c.execute("SELECT * FROM usuarios WHERE email=?", (email_admin,))
-    if not c.fetchone():
-        # CORREÇÃO AQUI: Adicionado 'senha' na lista de colunas para bater com os valores enviados
-        c.execute("""INSERT INTO usuarios 
-                     (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
-                     VALUES (?, ?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1, 1)""", 
-                  ('Mariana Mendes', 'mariana', email_admin, nova_senha_hash))
-    else:
-        # Garante integridade do login mestre MAS permite que o nome seja alterado no painel ADM
-        c.execute("""UPDATE usuarios 
-                     SET nivel='ADMIN', perm_xml=1, perm_icms=1, perm_difal=1, perm_pis=1, perm_ret=1 
-                     WHERE email=?""", 
-                  (email_admin,))
+    # AJUSTE SOLICITADO: Removido qualquer INSERT automático de Mariana Mendes.
+    # O banco agora só mantém quem já foi cadastrado manualmente.
     
     conn.commit()
     conn.close()
