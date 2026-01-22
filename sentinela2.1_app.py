@@ -51,12 +51,12 @@ def init_db():
                      VALUES (?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1)""", 
                   ('mariana', email_admin, nova_senha_hash))
     else:
-        # Garante que as permissões da Mariana estejam sempre no máximo
+        # Garante que as permissões da Mariana estejam sempre no máximo e o nível seja ADMIN
         c.execute("""UPDATE usuarios 
-                     SET senha=?, nome='mariana', nivel='ADMIN', 
+                     SET nome='mariana', nivel='ADMIN', 
                          perm_icms=1, perm_difal=1, perm_pis=1, perm_ret=1 
                      WHERE email=?""", 
-                  (nova_senha_hash, email_admin))
+                  (email_admin,))
     
     conn.commit()
     conn.close()
@@ -126,7 +126,6 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
         cnpj_emit_match = re.search(r'<cnpj>(\d+)</cnpj>', tag_l)
         cnpj_emit = cnpj_emit_match.group(1) if cnpj_emit_match else ""
         
-        # Identifica se é documento emitido pelo cliente ou recebido
         is_p = (cnpj_emit == client_cnpj_clean) or (resumo["Chave"] and client_cnpj_clean in resumo["Chave"][6:20])
         
         if is_p:
@@ -148,7 +147,6 @@ st.set_page_config(
 aplicar_estilo_sentinela()
 init_db()
 
-# Remove elementos visuais de debug do Streamlit
 st.markdown("""
     <style>
     .stAppHeader {display: none;}
@@ -183,7 +181,6 @@ if not st.session_state['user_data']:
                 if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                     conn = sqlite3.connect('sentinela_usuarios.db')
                     c = conn.cursor()
-                    # Busca robusta por e-mail ou nome de usuário
                     c.execute("""SELECT nome, email, status, nivel, perm_icms, perm_difal, perm_pis, perm_ret 
                                  FROM usuarios 
                                  WHERE (nome=? OR email=?) AND senha=?""", 
@@ -233,7 +230,7 @@ if not st.session_state['user_data']:
                         st.warning("Por favor, preencha todos os campos obrigatórios.")
     st.stop()
 
-# --- PAINEL DE ADMINISTRAÇÃO ELITE (MARIANA) ---
+# --- PAINEL DE ADMINISTRAÇÃO ELITE (MARIANA - COM EDIÇÃO) ---
 if st.session_state['user_data']['nivel'] == 'ADMIN':
     with st.expander("🛠️ GESTÃO DE USUÁRIOS E PERMISSÕES (SISTEMA)", expanded=False):
         conn = sqlite3.connect('sentinela_usuarios.db')
@@ -243,31 +240,33 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
             is_me = (row['email'] == st.session_state['user_data']['email'])
             with st.container(border=True):
                 c1, c2, c3, c4 = st.columns([2, 2, 3, 2])
-                c1.write(f"👤 **{row['nome']}** {' (VOCÊ)' if is_me else ''}")
-                c1.write(f"📧 {row['email']}")
+                
+                # --- Campos de Edição de Cadastro ---
+                novo_nome = c1.text_input("Nome", value=row['nome'], key=f"nome_{idx}")
+                novo_email_input = c1.text_input("E-mail", value=row['email'], key=f"mail_{idx}")
                 
                 # Controle de Status e Reset de Senha
                 st_txt = "🟢 ATIVO" if row['status'] == 'ATIVO' else "🟡 PENDENTE"
-                c2.write(f"Status: {st_txt}")
+                c2.write(f"Status Atual: {st_txt}")
                 if c2.button("🔄 Reset Senha", key=f"rs_{idx}"):
                     conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha("123456"), row['email']))
                     conn.commit()
-                    st.info(f"Senha de {row['nome']} resetada para: 123456")
+                    st.info(f"Senha resetada para: 123456")
 
-                # Permissões Grânulares por Aba
+                # Permissões Grânulares
                 p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
                 p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
                 p_p = c3.checkbox("Audit PIS/COFINS", value=bool(row['perm_pis']), key=f"p_{idx}")
                 p_r = c3.checkbox("Audit RET", value=bool(row['perm_ret']), key=f"r_{idx}")
 
-                # Botões de Ação e Exclusão
+                # Botões de Ação
                 if not is_me:
                     if row['status'] == 'PENDENTE':
                         if c4.button("✅ LIBERAR", key=f"ok_{idx}", use_container_width=True):
                             conn.execute("""UPDATE usuarios 
-                                            SET status='ATIVO', perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? 
+                                            SET nome=?, email=?, status='ATIVO', perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? 
                                             WHERE email=?""", 
-                                         (int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                                         (novo_nome, novo_email_input, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit()
                             st.rerun()
                     else:
@@ -280,15 +279,26 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                         conn.execute("DELETE FROM usuarios WHERE email=?", (row['email'],))
                         conn.commit()
                         st.rerun()
+                    
+                    # Botão Salvar para usuários comuns
+                    if c4.button("💾 SALVAR ALTERAÇÕES", key=f"save_{idx}", use_container_width=True, type="primary"):
+                        conn.execute("""UPDATE usuarios 
+                                        SET nome=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? 
+                                        WHERE email=?""", 
+                                     (novo_nome, novo_email_input, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                        conn.commit()
+                        st.success("Cadastro atualizado!")
                 else:
                     c4.write("🛡️ Conta Mestre Protegida")
-                    if c4.button("💾 Salvar Minhas Perms", key=f"save_{idx}", use_container_width=True):
+                    if c4.button("💾 ATUALIZAR MEU PERFIL", key=f"save_me_{idx}", use_container_width=True, type="primary"):
                         conn.execute("""UPDATE usuarios 
-                                        SET perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? 
+                                        SET nome=?, email=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? 
                                         WHERE email=?""", 
-                                     (int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                                     (novo_nome, novo_email_input, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                         conn.commit()
-                        st.success("Suas permissões foram atualizadas!")
+                        st.session_state['user_data']['nome'] = novo_nome
+                        st.session_state['user_data']['email'] = novo_email_input
+                        st.success("Seu perfil foi atualizado!")
         conn.close()
 
 # --- CARREGAMENTO DE CLIENTES ---
@@ -308,7 +318,7 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR (SISTEMA INTEGRAL) ---
+# --- SIDEBAR ---
 with st.sidebar:
     if os.path.exists(".streamlit/Sentinela.png"):
         st.image(".streamlit/Sentinela.png", use_container_width=True)
@@ -344,7 +354,7 @@ with st.sidebar:
 # --- CABEÇALHO ---
 st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
-# --- ÁREA CENTRAL (RESPEITANDO PERMISSÕES) ---
+# --- ÁREA CENTRAL ---
 if emp_sel:
     perms = st.session_state['user_data']['perms']
     abas_v = ["📂 ANÁLISE XML"]
@@ -377,7 +387,6 @@ if emp_sel:
                         
                         st.session_state['relat_buf'] = buf.getvalue()
 
-                        # LÓGICA COMPLETA DO GARIMPEIRO
                         p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                         b_org, b_todos = io.BytesIO(), io.BytesIO()
                         with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
@@ -467,10 +476,9 @@ if emp_sel:
     if st.session_state.get('executado'):
         st.markdown("---")
         with st.popover("📥 ACESSAR DOWNLOADS SEGUROS", use_container_width=True):
-            if st.text_input("Senha de Segurança", type="password", key="p_down") == "Senhaforte@123":
+            if st.text_input("Senha", type="password", key="p_down") == "Senhaforte@123":
                 st.download_button("💾 RELATÓRIO FINAL EXCEL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
                 st.download_button("📂 ZIP ORGANIZADO", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
-                st.download_button("📦 TODOS XML", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
         
         st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
         sc = st.session_state.get('st_counts')
