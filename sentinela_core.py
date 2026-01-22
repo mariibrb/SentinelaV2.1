@@ -61,6 +61,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
             cst_parcial = buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no)
             cst_full = origem + cst_parcial if cst_parcial else origem
 
+            # TODAS AS TAGS ORIGINAIS MANTIDAS (SEM REDUÇÃO)
             linha = {
                 "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
                 "NUM_NF": buscar_tag_recursiva('nNF', ide), 
@@ -81,7 +82,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 
-                # Tags de Auditoria mantidas
+                # Tags de Auditoria (IPI, PIS, COFINS)
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
@@ -104,11 +105,11 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
 
-    # --- LÓGICA DE STATUS: COLUNA B (XML) vs COLUNA A (GARIMPO) -> TRAZ COLUNA F ---
+    # --- LÓGICA DE STATUS: COLUNA B (CORE) vs COLUNA A (GARIMPO) -> RETORNA COLUNA F ---
     if 'relatorio' in st.session_state and st.session_state['relatorio'] is not None:
         try:
             df_rel = pd.DataFrame(st.session_state['relatorio'])
-            # Pega Coluna A (index 0) e Coluna F (index 5)
+            # Match index 0 (A) com index 5 (F)
             df_status = df_rel.iloc[:, [0, 5]].copy()
             df_status.columns = ['CHAVE_ACESSO', 'Status']
             df_status['CHAVE_ACESSO'] = df_status['CHAVE_ACESSO'].astype(str).str.replace('NFe', '').str.strip()
@@ -128,13 +129,8 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # Colunas de exibição nas abas XML (Status por último)
-    cols_xml = [
-        "TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT",
-        "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS",
-        "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST",
-        "VAL-FCP-ST", "Status"
-    ]
+    # Ordem das 22 Colunas (Status por Último)
+    cols_xml = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST", "Status"]
 
     for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_temp.empty:
