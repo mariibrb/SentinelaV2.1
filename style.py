@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* --- 1. ESTRUTURA E FUNDO CINZA --- */
+        /* --- 1. ESTRUTURA E FUNDO --- */
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             background-color: #E9ECEF !important; 
@@ -18,17 +18,26 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #F8F9FA 0%, #CED4DA 100%) !important; 
         }
 
-        /* --- 2. TÍTULO (SEM FUNDO BRANCO - BRILHO DIAMANTE) --- */
-        /* Removido o background-color para o texto flutuar no degradê cinza */
+        /* --- 2. 🚫 REMOÇÃO TOTAL DA CAIXA BRANCA DO TÍTULO --- */
+        /* Esta regra mata qualquer fundo branco que tente aparecer atrás do título */
+        div[data-testid="stVerticalBlock"] > div:has(.titulo-principal),
+        div[data-testid="stVerticalBlock"] > div:first-child,
+        .element-container:has(.titulo-principal) {
+            background-color: transparent !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+
         .titulo-principal { 
             font-family: 'Montserrat', sans-serif !important;
             color: #495057 !important; 
             font-size: 3.5rem; 
             font-weight: 800; 
             text-transform: uppercase;
+            background: transparent !important;
             padding: 20px 0 !important;
-            background: transparent !important; /* Garante que o fundo branco sumiu */
-            text-shadow: 2px 2px 10px rgba(255, 105, 180, 0.3), 0 0 20px rgba(255, 255, 255, 0.8) !important;
+            text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.8) !important;
         }
 
         /* --- 3. ABAS MESTRE DIAMANTE (PRATA) --- */
@@ -76,20 +85,19 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 0 30px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4) !important;
         }
 
-        /* --- 5. 📁 SUB-ABAS SETORIZADAS --- */
+        /* --- 5. SUB-ABAS SETORIZADAS --- */
         .stTabs .stTabs [data-baseweb="tab-list"] { padding: 0 0 30px 0 !important; }
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #F1F3F5 !important;
             border-radius: 15px 45px 0 0 !important;
-            margin-right: -10px !important;
         }
 
         .stTabs .stTabs [aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; }
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #FF69B4 !important; }
 
-        /* --- 6. ✉️ ENVELOPES COM ÍCONE 📄 --- */
+        /* --- 6. ✉️ ENVELOPE COM ÍCONE 📄 --- */
         [data-testid="stFileUploader"] {
             padding: 50px 45px 45px 45px !important;
             border-radius: 10px 10px 45px 45px !important;
