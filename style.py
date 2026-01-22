@@ -48,7 +48,7 @@ def aplicar_estilo_sentinela():
             align-items: flex-end;
         }
 
-        /* Aba Inativa: Metal Bronzeado Mocha */
+        /* Estilo Inativo: Metal Bronzeado Mocha */
         .stTabs [data-baseweb="tab"] {
             height: 90px !important;
             background: linear-gradient(180deg, #FDFDFD 0%, #D8C7B1 100%) !important;
@@ -65,7 +65,7 @@ def aplicar_estilo_sentinela():
 
         /* --- ABAS MÃE ATIVAS (NEON EXTREMO) --- */
 
-        /* 🔵 ABA 1 (XML): AZUL NEON */
+        /* 🔵 ABA 1 (XML): AZUL CROMADO + GLOW */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
@@ -75,7 +75,7 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* 💗 ABA 2 (CONFORMIDADE): ROSA NEON */
+        /* 💗 ABA 2 (CONFORMIDADE): ROSA PINK GLOSS + GLOW */
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             color: white !important;
@@ -85,32 +85,31 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- 📦 CAIXOTES BRILHANTES (PAINEL INTERNO) --- */
-
-        [data-testid="stTabPanel"] {
-            background: rgba(255, 255, 255, 0.85) !important;
-            padding: 40px !important;
-            border-radius: 0 60px 60px 60px !important;
-            margin-top: -20px !important;
-            box-shadow: inset 0 20px 40px rgba(0,0,0,0.05) !important;
-            border: 4px solid transparent !important;
-        }
+        /* --- 📦 O CAIXOTE BRANCO COM BORDA NEON (INTEGRAL) --- */
 
         /* CAIXOTE XML (Contorno Azul Neon) */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
+            background: rgba(255, 255, 255, 0.85) !important;
+            padding: 40px !important;
+            border-radius: 0 60px 60px 60px !important;
             border: 4px solid #00D1FF !important;
             border-top: 8px solid #00BFFF !important;
-            box-shadow: 0 15px 50px rgba(0, 209, 255, 0.3) !important;
+            margin-top: -20px !important;
+            box-shadow: 0 10px 60px rgba(0, 209, 255, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
         }
 
         /* CAIXOTE FISCAL (Contorno Rosa Neon) */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
+            background: rgba(255, 255, 255, 0.85) !important;
+            padding: 40px !important;
+            border-radius: 0 60px 60px 60px !important;
             border: 4px solid #FFB6C1 !important;
             border-top: 8px solid #FF69B4 !important;
-            box-shadow: 0 15px 50px rgba(255, 105, 180, 0.3) !important;
+            margin-top: -20px !important;
+            box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
         }
 
-        /* --- SUB-ABAS (SÓ NO FISCAL) --- */
+        /* --- SUB-ABAS (FICHAS DENTRO DA PASTA ROSA) --- */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #FDFDFD !important;
