@@ -43,7 +43,7 @@ def aplicar_estilo_sentinela():
         .stTabs { overflow: visible !important; }
         .stTabs [data-baseweb="tab-list"] {
             gap: 15px !important; 
-            padding: 60px 0 0 20px !important;  /* CORRIGIDO: Voltou para 60px */
+            padding: 60px 0 0 20px !important; 
             overflow: visible !important;
             background: transparent !important;
         }
@@ -138,26 +138,34 @@ def aplicar_estilo_sentinela():
             height: 50px !important;
             width: 100% !important;
             transition: 0.3s !important;
+            text-transform: uppercase !important;
         }
 
         /* Brilho Azul na Aba XML */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) div.stButton > button:hover {
             box-shadow: 0 0 20px #00BFFF !important;
             border-color: #00BFFF !important;
+            background: white !important;
         }
 
         /* Brilho Rosa na Aba Conformidade */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) div.stButton > button:hover {
             box-shadow: 0 0 20px #FF69B4 !important;
             border-color: #FF69B4 !important;
+            background: white !important;
         }
         
-        /* Mata o vermelho dos botões primários e "delete" do Streamlit */
+        /* Mata o vermelho dos botões primários e de download */
         div.stButton > button[kind="primary"], 
-        div.stButton > button[data-testid="baseButton-secondary"] {
+        div.stDownloadButton > button {
             background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
             color: #495057 !important;
             border: 2px solid #ADB5BD !important;
+        }
+
+        div.stDownloadButton > button:hover {
+            background: white !important;
+            color: #495057 !important;
         }
 
         </style>
