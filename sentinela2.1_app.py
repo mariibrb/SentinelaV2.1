@@ -54,8 +54,9 @@ def init_db():
     
     c.execute("SELECT * FROM usuarios WHERE email=?", (email_admin,))
     if not c.fetchone():
+        # CORREÇÃO AQUI: Adicionado 'senha' na lista de colunas para bater com os valores enviados
         c.execute("""INSERT INTO usuarios 
-                     (nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
+                     (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
                      VALUES (?, ?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1, 1)""", 
                   ('Mariana Mendes', 'mariana', email_admin, nova_senha_hash))
     else:
@@ -380,7 +381,7 @@ with st.sidebar:
             else:
                 st.warning("🔍 Modo Cegas: Base não localizada")
                 
-            # 2. Base RET (AJUSTADO CONFORME VOCÊ PEDIU)
+            # 2. Base RET
             path_ret_base = f"RET/{cod_c}-RET_MG.xlsx"
             if os.path.exists(path_ret_base):
                 st.success("💎 Modo Elite: Base RET Localizada")
