@@ -69,7 +69,17 @@ def init_db():
         if col_nome not in colunas_atuais:
             c.execute(f"ALTER TABLE usuarios ADD COLUMN {col_nome} {col_tipo}")
     
-    # Removido qualquer INSERT automático para não resetar o banco manual
+    # GARANTIA DO ACESSO MESTRE (Reinjetando Mariana conforme solicitado)
+    email_admin = 'marii.brbj@gmail.com'
+    senha_mestre = sha256("Senhaforte@123".encode()).hexdigest()
+    
+    c.execute("SELECT * FROM usuarios WHERE usuario='mariana' OR email=?", (email_admin,))
+    if not c.fetchone():
+        c.execute("""INSERT INTO usuarios 
+                     (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
+                     VALUES (?, ?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1, 1)""", 
+                  ('Mariana Mendes', 'mariana', email_admin, senha_mestre))
+    
     conn.commit()
     conn.close()
 
@@ -201,7 +211,7 @@ if not st.session_state['user_data']:
                 if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                     conn = sqlite3.connect('sentinela_usuarios.db')
                     c = conn.cursor()
-                    # AJUSTE NO LOGIN: Busca por usuário OU e-mail
+                    # AJUSTE NO LOGIN: Busca por usuário OU e-mail para permitir 'mariana'
                     c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
                                  FROM usuarios 
                                  WHERE (usuario=? OR email=?) AND senha=?""", 
