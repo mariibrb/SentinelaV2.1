@@ -12,7 +12,6 @@ def aplicar_estilo_sentinela():
             background-color: #F3E9DC !important; 
             border-right: 5px solid #FF69B4 !important;
             z-index: 999999 !important;
-            box-shadow: 15px 0 40px rgba(255, 105, 180, 0.2) !important;
         }
 
         /* RESET DO LIXO VISUAL */
@@ -60,73 +59,58 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* --- 💡 FIXAÇÃO DAS MÃES ATIVAS (NEON EXTREMO) --- */
+        /* --- 💡 FIXAÇÃO DA MÃE: FORÇANDO ROSA PINK NA CONFORMIDADE --- */
 
-        /* 🔵 ABA 1 (XML): AZUL CROMO NEON */
+        /* 🔵 ABA 1 (XML): AZUL NEON QUANDO ATIVA */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
             border-color: #00D1FF !important;
-            border-bottom: 5px solid white !important;
-            box-shadow: 0 0 50px rgba(0, 209, 255, 0.6), inset 0 5px 15px rgba(255,255,255,0.9) !important;
+            box-shadow: 0 0 20px #00D1FF, 0 0 50px #00D1FF, 0 0 100px rgba(0, 209, 255, 0.4), inset 0 5px 15px rgba(255,255,255,0.9) !important;
             z-index: 100 !important;
         }
 
-        /* 💗 ABA 2 (CONFORMIDADE): ROSA PINK GLOSS NEON */
+        /* 💗 ABA 2 (CONFORMIDADE): ROSA PINK NEON QUANDO ATIVA */
+        /* Usei o seletor direto da ordem para não ter erro com o nome do texto */
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
             border-color: #FF1493 !important;
-            border-bottom: 5px solid white !important;
-            box-shadow: 0 0 50px rgba(255, 105, 180, 0.6), inset 0 5px 15px rgba(255,255,255,0.9) !important;
+            box-shadow: 0 0 20px #FF1493, 0 0 50px #FF1493, 0 0 100px rgba(255, 20, 147, 0.4), inset 0 5px 15px rgba(255,255,255,0.9) !important;
             z-index: 100 !important;
         }
 
-        /* --- 📦 CAIXOTES BRILHANTES (PAINEL INTERNO) --- */
-
-        [data-testid="stTabPanel"] {
+        /* --- INTERIOR DA CAIXA (SUB-ABAS) --- */
+        .stTabs .stTabs {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
             border-radius: 0 60px 60px 60px !important;
+            border: 4px solid #FF69B4 !important; /* CONEXÃO COM A MÃE ROSA */
             margin-top: -20px !important;
-            box-shadow: inset 0 20px 40px rgba(0,0,0,0.05) !important;
-            border: 4px solid transparent !important;
+            box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
         }
 
-        /* CAIXOTE XML (Contorno Azul) */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border: 4px solid #00D1FF !important;
-            border-top: 8px solid #00BFFF !important;
-            box-shadow: 0 15px 50px rgba(0, 209, 255, 0.3) !important;
-        }
-
-        /* CAIXOTE FISCAL (Contorno Rosa) */
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border: 4px solid #FFB6C1 !important;
-            border-top: 8px solid #FF69B4 !important;
-            box-shadow: 0 15px 50px rgba(255, 105, 180, 0.3) !important;
-        }
-
-        /* --- SUB-ABAS (SÓ APARECEM NO FISCAL) --- */
+        /* Sub-abas menores */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #FDFDFD !important;
             border-radius: 20px 55px 0 0 !important;
+            font-size: 1.2rem !important;
+            color: #DB7093 !important;
             border: 1px solid #FFD1DC !important;
             margin-right: 5px !important;
             transform: none !important;
-            font-size: 1.2rem !important;
-            font-weight: 600 !important;
-            color: #DB7093 !important;
         }
 
+        /* Sub-aba Ativa (Glow Neon igual à mãe) */
         .stTabs .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFD1DC 0%, #FF69B4 100%) !important;
             color: white !important;
             transform: translateY(-12px) !important;
-            box-shadow: 0 10px 25px #FF69B4 !important;
+            box-shadow: 0 0 25px #FF69B4, inset 0 2px 5px rgba(255,255,255,0.5) !important;
+            border-bottom: 5px solid white !important;
         }
         </style>
     """, unsafe_allow_html=True)
