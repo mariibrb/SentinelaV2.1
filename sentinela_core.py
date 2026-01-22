@@ -25,7 +25,6 @@ def buscar_tag_recursiva(tag_alvo, no):
         if tag_nome == tag_alvo: return elemento.text if elemento.text else ""
     return ""
 
-# --- EXTRAÇÃO DOS DADOS DO XML ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -63,8 +62,6 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
-                
-                # Tags de Auditoria Estáticas (PIS/COFINS/IPI)
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
@@ -91,9 +88,8 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DO ARQUIVO FINAL ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo=None):
-    # LAZY IMPORTS - CORRIGIDO
+    # IMPORT LOCAL PARA EVITAR ERRO CIRCULAR
     try:
         from audit_resumo import gerar_aba_resumo             
         from Auditorias.audit_icms import processar_icms       
@@ -102,58 +98,50 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         from Auditorias.audit_difal import processar_difal      
         from Apuracoes.apuracao_difal import gerar_resumo_uf
     except ImportError as e:
-        st.error(f"⚠️ Erro ao carregar módulos: {e}")
+        st.error(f"⚠️ Erro de Importação: {e}")
         return
 
-    # Função para ler os arquivos de Autenticidade (Excel) e comparar Coluna A com B
-    def preparar_referencia(arquivos_upload):
-        if not arquivos_upload: return None
-        dfs = []
-        for f in arquivos_upload:
-            try:
-                f.seek(0)
-                d = pd.read_excel(f)
-                # Coluna A (index 0) é a Chave | Coluna F (index 5) é o Status
-                ref = d.iloc[:, [0, 5]].copy()
-                ref.columns = ['CHAVE_ACESSO', 'Status_Excel']
-                ref['CHAVE_ACESSO'] = ref['CHAVE_ACESSO'].astype(str).str.replace('NFe', '').str.strip()
-                dfs.append(ref)
-            except: continue
-        return pd.concat(dfs).drop_duplicates('CHAVE_ACESSO') if dfs else None
-
-    # Merge Entradas
-    ref_ent = preparar_referencia(ae)
-    if ref_ent is not None:
-        df_xe = pd.merge(df_xe, ref_ent, on='CHAVE_ACESSO', how='left')
-        df_xe['Status'] = df_xe['Status_Excel'].fillna("SEM REFERÊNCIA")
-    else:
-        df_xe['Status'] = "⚠️ ANEXO ENTRADAS NÃO CARREGADO"
-
-    # Merge Saídas
-    ref_sai = preparar_referencia(as_f)
-    if ref_sai is not None:
-        df_xs = pd.merge(df_xs, ref_sai, on='CHAVE_ACESSO', how='left')
-        df_xs['Status'] = df_xs['Status_Excel'].fillna("SEM REFERÊNCIA")
-    else:
-        df_xs['Status'] = "⚠️ ANEXO SAÍDAS NÃO CARREGADO"
-
-    try: gerar_aba_resumo(writer)
-    except: pass
-    
-    cols_xml = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST", "Status"]
-
-    for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
-        if not df_temp.empty:
-            df_dump = df_temp[[c for c in df_temp.columns if c in cols_xml]].copy()
-            df_dump[cols_xml].to_excel(writer, sheet_name=nome, index=False)
-
+    # --- 1. PROCESSA TODAS AS AUDITORIAS PRIMEIRO (SEM CONFLITO COM STATUS) ---
     if not df_xs.empty:
         processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
         try: processar_ipi(df_xs, writer, cod_cliente)
-        except: pass
-        try: processar_pc(df_xs, writer, cod_cliente, regime) # AGORA DEFINIDO CORRETAMENTE
-        except: pass
-        try: processar_difal(df_xs, writer)
-        except: pass
-        try: gerar_resumo_uf(df_xs, writer, df_xe)
-        except: pass
+        except Exception as e: st.warning(f"IPI: {e}")
+        try: processar_pc(df_xs, writer, cod_cliente, regime)
+        except Exception as e: st.warning(f"PIS/COFINS: {e}")
+        processar_difal(df_xs, writer)
+        gerar_resumo_uf(df_xs, writer, df_xe)
+
+    # --- 2. LÓGICA DE STATUS (MATCH COLUNA A EXCEL vs CHAVE CORE) ---
+    def aplicar_status(df_core, arquivos_excel):
+        if not arquivos_excel: 
+            df_core['Status'] = "⚠️ AUTENTICIDADE NÃO CARREGADA"
+            return df_core
+        dfs_ref = []
+        for f in arquivos_excel:
+            try:
+                f.seek(0)
+                d_ref = pd.read_excel(f)
+                # Coluna A (0) = Chave | Coluna F (5) = Status
+                tmp = d_ref.iloc[:, [0, 5]].copy()
+                tmp.columns = ['CHAVE_ACESSO', 'Status_Excel']
+                tmp['CHAVE_ACESSO'] = tmp['CHAVE_ACESSO'].astype(str).str.replace('NFe', '').str.strip()
+                dfs_ref.append(tmp)
+            except: continue
+        if dfs_ref:
+            referencia final = pd.concat(dfs_ref).drop_duplicates('CHAVE_ACESSO')
+            df_core = pd.merge(df_core, referencia final, on='CHAVE_ACESSO', how='left')
+            df_core['Status'] = df_core['Status_Excel'].fillna("SEM REFERÊNCIA")
+        return df_core
+
+    df_xe = aplicar_status(df_xe, ae)
+    df_xs = aplicar_status(df_xs, as_f)
+
+    # --- 3. GERA AS ABAS XML POR ÚLTIMO ---
+    try: gerar_aba_resumo(writer)
+    except: pass
+    
+    cols_exibicao = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST", "Status"]
+
+    for df_t, nome_aba in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
+        if not df_t.empty:
+            df_t[cols_exibicao].to_excel(writer, sheet_name=nome_aba, index=False)
