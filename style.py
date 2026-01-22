@@ -24,7 +24,7 @@ def aplicar_estilo_sentinela():
         
         html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
 
-        /* --- TÍTULO PRINCIPAL --- */
+        /* --- TÍTULO DESIGNER --- */
         .titulo-principal { 
             font-family: 'Montserrat', sans-serif !important;
             color: #5D3A1A; 
@@ -59,65 +59,66 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15) !important;
         }
 
-        /* ABA MÃE 1 (XML) ATIVA */
+        /* ABA MÃE 1 (XML) ATIVA - AZUL */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
             border-color: #00D1FF !important;
-            box-shadow: 0 0 50px rgba(0, 209, 255, 0.5) !important;
+            box-shadow: 0 0 50px rgba(0, 209, 255, 0.5), inset 0 5px 15px rgba(255,255,255,0.8) !important;
+            z-index: 100 !important;
         }
 
-        /* ABA MÃE 2 (CONFORMIDADE) ATIVA */
+        /* ABA MÃE 2 (CONFORMIDADE) ATIVA - ROSA */
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
             border-color: #FF1493 !important;
-            box-shadow: 0 0 50px rgba(255, 105, 180, 0.5) !important;
+            box-shadow: 0 0 50px rgba(255, 105, 180, 0.6), inset 0 5px 15px rgba(255,255,255,0.8) !important;
+            z-index: 100 !important;
         }
 
         /* --- O CAIXOTE BRANCO (PAINEL INTERNO) --- */
         .stTabs .stTabs {
-            background: rgba(255, 255, 255, 0.9) !important;
+            background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
             border-radius: 0 60px 60px 60px !important;
             border: 4px solid #FFB6C1 !important;
             margin-top: -20px !important;
-            box-shadow: 0 10px 60px rgba(255, 105, 180, 0.2) !important;
+            box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
         }
 
-        /* --- 💗 UNIFICAÇÃO DAS SUB-ABAS (ICMS, DIFAL, RET, PIS) --- */
+        /* --- 💗 UNIFICAÇÃO DAS 4 SUB-ABAS (MESMO LAYOUT DA MÃE) --- */
         
-        /* 1. RESET: Força todas as sub-abas inativas a serem iguais */
+        /* 1. Base Inativa das Sub-abas */
         .stTabs .stTabs [data-baseweb="tab"] {
-            height: 70px !important;
+            height: 75px !important;
             background: linear-gradient(180deg, #FDFDFD 0%, #E8DCCB 100%) !important;
             border-radius: 25px 65px 0 0 !important;
-            font-size: 1.2rem !important;
+            font-size: 1.3rem !important;
             font-weight: 800 !important;
             color: #8B5A2B !important;
             border: 1px solid #D8C7B1 !important;
             margin-right: -10px !important;
-            transform: none !important;
-            box-shadow: 5px 0 10px rgba(0,0,0,0.05) !important;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
         }
 
-        /* 2. OBRIGATORIEDADE: Força QUALQUER sub-aba ativa a ser ROSA PINK NEON */
-        /* Esse seletor 'atropela' qualquer tentativa do Streamlit de usar azul */
-        .stTabs .stTabs [aria-selected="true"], 
-        .stTabs .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        /* 2. Sub-aba ATIVA (CLONE EXATO DA CONFORMIDADE) */
+        /* Aqui o seletor 'atropela' qualquer azul e aplica o Rosa Pink Neon */
+        .stTabs .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
-            background-color: #FF69B4 !important;
+            background-color: #FF69B4 !important; /* Morte definitiva ao azul */
             color: white !important;
-            transform: translateY(-15px) !important;
-            border: 2px solid #FF1493 !important; /* Contorno Pink */
-            border-bottom: 5px solid white !important; /* Contorno Branco na Base */
-            box-shadow: 0 0 30px #FF69B4, inset 0 3px 10px rgba(255,255,255,0.6) !important;
+            transform: translateY(-15px) scale(1.05) !important;
+            border: 2px solid #FF1493 !important;
+            border-bottom: 5px solid white !important;
+            /* Mesmo Brilho Explosivo da Mãe */
+            box-shadow: 0 0 25px #FF1493, 0 0 50px rgba(255, 20, 147, 0.6), inset 0 3px 10px rgba(255,255,255,0.7) !important;
             z-index: 10 !important;
         }
 
-        /* 3. LIMPEZA: Garante que o texto dentro delas seja branco */
+        /* Garante texto branco na sub-aba ativa */
         .stTabs .stTabs [aria-selected="true"] div {
             color: white !important;
         }
