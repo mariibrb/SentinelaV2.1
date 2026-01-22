@@ -307,13 +307,15 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR DINÂMICA (AQUI INCLUÍMOS A LOGO) ---
+# --- SIDEBAR DINÂMICA (AQUI O BOTÃO FOI MOVIDO) ---
 emp_sel = ""
 with st.sidebar:
-    # --- LOGO DO SOLDADINHO SENTINELA NO TOPO ---
-    if os.path.exists("logo.png"):
+    # --- AJUSTE DA LOGO NA PASTA STREAMLIT ---
+    if os.path.exists("streamlit/logo.png"):
+        st.image("streamlit/logo.png", use_container_width=True)
+    elif os.path.exists("logo.png"):
         st.image("logo.png", use_container_width=True)
-    elif os.path.exists("streamlit/logo.png"):
+    elif os.path.exists(".streamlit/logo.png"):
         st.image(".streamlit/logo.png", use_container_width=True)
 
     st.markdown("---")
