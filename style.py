@@ -36,7 +36,7 @@ def aplicar_estilo_sentinela():
             text-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
         }
 
-        /* --- SISTEMA DE PASTAS 3D (ABAS MÃE) --- */
+        /* --- SISTEMA DE PASTAS (ABAS MÃE) --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         
         .stTabs [data-baseweb="tab-list"] {
@@ -46,11 +46,11 @@ def aplicar_estilo_sentinela():
             align-items: flex-end;
         }
 
-        /* Aba Inativa: Metal Escovado */
+        /* Estilo Inativo: Metal Bronzeado */
         .stTabs [data-baseweb="tab"] {
             height: 90px !important;
             background: linear-gradient(180deg, #FDFDFD 0%, #D8C7B1 100%) !important;
-            border-radius: 40px 110px 0 0 !important; /* Curva de pasta de jogo */
+            border-radius: 40px 110px 0 0 !important; 
             margin-right: -35px !important;
             padding: 0px 75px !important;
             border: 2px solid #A67B5B !important;
@@ -59,34 +59,33 @@ def aplicar_estilo_sentinela():
             color: #8B5A2B !important;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
 
-        /* --- 💡 EFEITO NEON GAMER (ABAS ATIVAS) --- */
+        /* --- 💡 FIXAÇÃO DA MÃE (FOCO ETERNO) --- */
 
-        /* 🔵 PASTINHA XML ATIVA (AZUL NEON CYBER) */
-        .stTabs [data-baseweb="tab"]:has(div:contains("XML"))[aria-selected="true"] {
+        /* 🔵 PASTA XML MÃE (Sempre que selecionada ou com foco interno) */
+        .stTabs [data-baseweb="tab"]:has(div:contains("XML"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("XML")):focus-within {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
             border-color: #00D1FF !important;
-            /* Efeito de brilho que 'vaza' para fora */
             box-shadow: 0 0 20px #00D1FF, 0 0 50px #00D1FF, 0 0 100px rgba(0, 209, 255, 0.4), inset 0 5px 15px rgba(255,255,255,0.9) !important;
             z-index: 100 !important;
         }
 
-        /* 💗 PASTINHA FISCAL ATIVA (ROSA NEON GLOSS) */
-        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE"))[aria-selected="true"] {
+        /* 💗 PASTA FISCAL MÃE (Sempre que selecionada ou com foco interno) */
+        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE")):focus-within {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
             border-color: #FF1493 !important;
-            /* Efeito de brilho que 'vaza' para fora */
             box-shadow: 0 0 20px #FF1493, 0 0 50px #FF1493, 0 0 100px rgba(255, 20, 147, 0.4), inset 0 5px 15px rgba(255,255,255,0.9) !important;
             z-index: 100 !important;
         }
 
-        /* --- O INTERIOR DA CAIXA (SUB-ABAS) --- */
+        /* --- O INTERIOR DA CAIXA (Onde as filhas moram) --- */
         .stTabs .stTabs {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
@@ -94,10 +93,9 @@ def aplicar_estilo_sentinela():
             border: 4px solid #FF69B4 !important;
             margin-top: -20px !important;
             box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
-            position: relative;
         }
 
-        /* Fichas menores de Sub-pastas (Estilo 3D) */
+        /* Filhas menores (Fichas) */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #FDFDFD !important;
@@ -106,33 +104,16 @@ def aplicar_estilo_sentinela():
             color: #DB7093 !important;
             border: 1px solid #FFD1DC !important;
             margin-right: 5px !important;
-            box-shadow: 4px 0 10px rgba(0,0,0,0.05) !important;
+            transform: none !important; /* Não deixa a sub-aba herdar o pulo da mãe */
         }
 
-        /* SUB-PASTA ATIVA (FOCO NEON) */
+        /* Filha Ativa (O Shine Metalizado que você ama) */
         .stTabs .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFD1DC 0%, #FF69B4 100%) !important;
             color: white !important;
             transform: translateY(-12px) !important;
             box-shadow: 0 0 25px #FF69B4, inset 0 2px 5px rgba(255,255,255,0.5) !important;
             border-bottom: 5px solid white !important;
-        }
-
-        /* HOVER: BRILHO AO PASSAR O MOUSE */
-        .stTabs [data-baseweb="tab"]:hover {
-            filter: brightness(1.2) saturate(1.2) !important;
-            cursor: pointer !important;
-        }
-
-        /* BOTÃO ADM (STILIZADO JOGO) */
-        div.stButton > button:has(div:contains("ABRIR GESTÃO ADMINISTRATIVA")) {
-            background: linear-gradient(145deg, #FF69B4, #D4145A) !important;
-            color: white !important;
-            box-shadow: 0 0 30px rgba(255, 20, 147, 0.6) !important;
-            border: 2px solid white !important;
-            border-radius: 50px !important;
-            font-weight: 800 !important;
-            text-transform: uppercase;
         }
         </style>
     """, unsafe_allow_html=True)
