@@ -25,7 +25,7 @@ def aplicar_estilo_sentinela():
 
         /* TÍTULOS */
         .titulo-principal { color: #1E1E1E; font-size: 2.5rem; font-weight: 800; margin-bottom: 5px; }
-        .barra-laranja { width: 80px; height: 6px; background: linear-gradient(90deg, #FF8C00, #FF4500); border-radius: 10px; margin-bottom: 30px; }
+        .barra-marsala { width: 80px; height: 6px; background: linear-gradient(90deg, #955251, #632424); border-radius: 10px; margin-bottom: 30px; }
 
         /* ABAS METALIZADAS COM BRILHO */
         .stTabs [data-baseweb="tab"] {
@@ -45,20 +45,20 @@ def aplicar_estilo_sentinela():
         }
 
         .stTabs [aria-selected="true"] {
-            background: linear-gradient(180deg, #FF9D26 0%, #FF6F00 50%, #E65C00 100%) !important;
+            background: linear-gradient(180deg, #955251 0%, #7A3535 50%, #632424 100%) !important;
             color: white !important;
             font-weight: 800 !important;
-            box-shadow: 0 -5px 15px rgba(230, 92, 0, 0.3) !important;
+            box-shadow: 0 -5px 15px rgba(99, 36, 36, 0.3) !important;
         }
 
         /* BOTÕES LUXO COM BRILHO NO HOVER */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
-            background: linear-gradient(180deg, #FF9D26 0%, #FF6F00 50%, #E65C00 100%) !important;
+            background: linear-gradient(180deg, #955251 0%, #7A3535 50%, #632424 100%) !important;
             color: white !important;
             border-radius: 50px !important;
             font-weight: 800 !important;
-            border: 1px solid #FF8C00 !important;
+            border: 1px solid #632424 !important;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 10px rgba(0,0,0,0.1) !important;
             transition: all 0.3s ease !important;
             text-transform: uppercase;
@@ -66,7 +66,7 @@ def aplicar_estilo_sentinela():
 
         .stButton > button:hover, .stDownloadButton > button:hover {
             transform: translateY(-2px) !important;
-            box-shadow: 0 8px 20px rgba(230, 92, 0, 0.4) !important;
+            box-shadow: 0 8px 20px rgba(99, 36, 36, 0.4) !important;
             filter: brightness(1.2) !important;
         }
 
@@ -74,7 +74,7 @@ def aplicar_estilo_sentinela():
             background-color: #ffffff;
             padding: 15px;
             border-radius: 12px;
-            border-left: 6px solid #FF6F00;
+            border-left: 6px solid #7A3535;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         </style>
