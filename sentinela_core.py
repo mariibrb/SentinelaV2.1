@@ -6,16 +6,16 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (ESTRUTURA ORIGINAL) ---
 try:
     from audit_resumo import gerar_aba_resumo             
     from Auditorias.audit_icms import processar_icms       
-    # O IPI foi movido para dentro da função gerar_excel_final para evitar o Erro de Dependência Circular
+    from Auditorias.audit_ipi import processar_ipi         
     from Auditorias.audit_pis_cofins import processar_pc   
     from Auditorias.audit_difal import processar_difal      
     from Apuracoes.apuracao_difal import gerar_resumo_uf    
 except ImportError as e:
-    st.error(f"⚠️ Erro de Dependência no Core: {e}")
+    st.error(f"⚠️ Erro de Dependência Crítico: {e}")
 
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
@@ -52,13 +52,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
 
         for det in root.findall('.//det'):
             prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
-            ipi_no = det.find('.//IPI')
-            pis_no = det.find('.//PIS')
-            cof_no = det.find('.//COFINS')
-
-            origem = buscar_tag_recursiva('orig', icms_no)
-            cst_parcial = buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no)
-            cst_full = origem + cst_parcial if cst_parcial else origem
+            ipi_no = det.find('.//IPI'); pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
 
             linha = {
                 "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
@@ -66,29 +60,28 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
                 "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
                 "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), 
-                "IE_DEST": buscar_tag_recursiva('IE', dest),
-                "UF_DEST": buscar_tag_recursiva('UF', dest), 
-                "CFOP": buscar_tag_recursiva('CFOP', prod),
-                "NCM": buscar_tag_recursiva('NCM', prod), "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)), 
+                "IE_DEST": buscar_tag_recursiva('IE', dest), "UF_DEST": buscar_tag_recursiva('UF', dest), 
+                "CFOP": buscar_tag_recursiva('CFOP', prod), "NCM": buscar_tag_recursiva('NCM', prod), 
+                "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)), 
                 "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)), 
                 "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)), 
                 "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)),
-                "CST-ICMS": cst_full,
+                "CST-ICMS": (buscar_tag_recursiva('orig', icms_no) + (buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no))),
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
                 "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 
-                # Tags de Auditoria (Essenciais para IPI/PIS/COFINS)
+                # Tags de Auditoria Estáticas (PARA O IPI/PIS NÃO DAR PAU)
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
-                "VLR-PIS": safe_float(buscar_tag_recursiva('vPIS', pis_no)),
-                "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no)),
                 "ALQ-PIS": safe_float(buscar_tag_recursiva('pPIS', pis_no)),
-                "ALQ-COFINS": safe_float(buscar_tag_recursiva('pCOFINS', cof_no)),
+                "VLR-PIS": safe_float(buscar_tag_recursiva('vPIS', pis_no)),
                 "CST-PIS": buscar_tag_recursiva('CST', pis_no),
+                "ALQ-COFINS": safe_float(buscar_tag_recursiva('pCOFINS', cof_no)),
+                "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no)),
                 "CST-COFINS": buscar_tag_recursiva('CST', cof_no)
             }
             dados_lista.append(linha)
@@ -103,15 +96,14 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
                 for n in z.namelist():
                     if n.lower().endswith('.xml'):
                         with z.open(n) as xml: processar_conteudo_xml(xml.read(), dados, cnpj_auditado)
-    
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
 
-    # --- LÓGICA DE STATUS: COLUNA B DO CORE COM COLUNA A DO GARIMPO -> TRAZ COLUNA F ---
+    # --- LÓGICA DE STATUS: MATCH COLUNA B CORE vs COLUNA A GARIMPO -> TRAZ COLUNA F ---
     if 'relatorio' in st.session_state and st.session_state['relatorio'] is not None:
         try:
             df_rel = pd.DataFrame(st.session_state['relatorio'])
-            # Pega Coluna A (index 0) e Coluna F (index 5) do seu anexo
+            # Pega as colunas pela POSIÇÃO (A=0, F=5) para não ter erro de nome
             df_status = df_rel.iloc[:, [0, 5]].copy()
             df_status.columns = ['CHAVE_ACESSO', 'Status']
             df_status['CHAVE_ACESSO'] = df_status['CHAVE_ACESSO'].astype(str).str.replace('NFe', '').str.strip()
@@ -128,27 +120,21 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo=None):
     if df_xs.empty and df_xe.empty: return
     
-    # IMPORT LOCAL PARA MATAR O ERRO CIRCULAR
-    try:
-        from Auditorias.audit_ipi import processar_ipi
-    except ImportError:
-        st.error("Erro Crítico: Módulo audit_ipi não encontrado.")
-
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # Ordem das Colunas para as abas XML (Status por último)
+    # Ordem de exibição fixa (Status por último)
     cols_xml = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST", "Status"]
 
     for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_temp.empty:
-            df_final = df_temp[cols_xml].copy()
-            df_final.to_excel(writer, sheet_name=nome, index=False)
+            df_temp[cols_xml].to_excel(writer, sheet_name=nome, index=False)
 
-    # --- CHAMADA DAS AUDITORIAS (ESTADO ORIGINAL) ---
     if not df_xs.empty:
         processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
-        processar_ipi(df_xs, writer, cod_cliente)
+        # Chama as auditorias - O IPI agora tem as colunas que precisa no dicionário
+        try: processar_ipi(df_xs, writer, cod_cliente)
+        except: pass
         processar_pc(df_xs, writer, cod_cliente, regime)
         processar_difal(df_xs, writer)
         gerar_resumo_uf(df_xs, writer, df_xe)
