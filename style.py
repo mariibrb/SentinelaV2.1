@@ -20,7 +20,7 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #FCF8F4 0%, #E8DCCB 100%) !important; 
         }
 
-        /* --- 2. ABAS MÃE (PASTAS EXTERNAS) --- */
+        /* --- 2. ABAS MESTRE --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         
         .stTabs [data-baseweb="tab-list"] {
@@ -29,7 +29,6 @@ def aplicar_estilo_sentinela():
             align-items: flex-end;
         }
 
-        /* Estilo das Mães */
         .stTabs [data-baseweb="tab"] {
             height: 80px !important;
             background: linear-gradient(180deg, #FDFDFD 0%, #D8C7B1 100%) !important;
@@ -42,35 +41,34 @@ def aplicar_estilo_sentinela():
             color: #8B5A2B !important;
         }
 
-        /* Ativas das Mães (Azul e Rosa) */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; color: white !important; }
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
 
-        /* --- 3. 📦 O CAIXOTÃO BRANCO (ENGLOBA TUDO: SUB-ABAS + CONTEÚDO) --- */
+        /* --- 3. 📦 O CAIXOTÃO BRANCO (COM NEON TURBINADO) --- */
         [data-testid="stTabPanel"] {
             background: white !important;
             padding: 40px !important;
             border-radius: 40px !important;
             margin-top: -5px !important;
             min-height: 600px !important;
+            border: 6px solid transparent !important;
         }
 
-        /* BORDINHA SOMBREADA NEON DO CAIXOTÃO (SETORIZADA) */
-        
-        /* Setor XML: Borda Azul Sombreada */
+        /* 🔵 NEON AZUL EXPLOSIVO (Setor XML) */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 6px solid #00D1FF !important;
-            box-shadow: 0 0 30px rgba(0, 209, 255, 0.4), 0 10px 60px rgba(0, 0, 0, 0.1) !important;
+            /* Aumentei de 30px para 80px de brilho */
+            box-shadow: 0 0 20px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.6), 0 10px 100px rgba(0, 0, 0, 0.1) !important;
         }
 
-        /* Setor Conformidade: Borda Rosa Sombreada (Igual à Foto) */
+        /* 💗 NEON ROSA EXPLOSIVO (Setor Conformidade) */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 6px solid #FF69B4 !important;
-            box-shadow: 0 0 30px rgba(255, 105, 180, 0.4), 0 10px 60px rgba(0, 0, 0, 0.1) !important;
+            /* Aumentei de 30px para 80px de brilho */
+            box-shadow: 0 0 20px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.6), 0 10px 100px rgba(0, 0, 0, 0.1) !important;
         }
 
-        /* --- 4. SUB-ABAS DENTRO DO CAIXOTÃO --- */
-        /* Reduzimos o tamanho e encaixamos dentro da moldura neon */
+        /* --- 4. SUB-ABAS INTERNAS --- */
         .stTabs .stTabs [data-baseweb="tab-list"] {
             padding: 10px 0 30px 0 !important;
             background: transparent !important;
@@ -82,31 +80,17 @@ def aplicar_estilo_sentinela():
             border-radius: 15px 40px 0 0 !important;
             font-size: 1.1rem !important;
             padding: 0 40px !important;
-            margin-right: -10px !important;
         }
 
-        /* Sub-aba Ativa Azul */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] {
-            background: #00BFFF !important;
-            color: white !important;
-            transform: translateY(-5px) !important;
-        }
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
 
-        /* Sub-aba Ativa Rosa */
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] {
-            background: #FF69B4 !important;
-            color: white !important;
-            transform: translateY(-5px) !important;
-        }
-
-        /* --- 5. AREA DE UPLOAD DENTRO DO CAIXOTÃO --- */
+        /* --- 5. AREA DE UPLOAD --- */
         [data-testid="stFileUploader"] {
             background: #FFFFFF !important;
             border: 2px dashed #D8C7B1 !important;
             border-radius: 20px !important;
             padding: 20px !important;
-            margin-bottom: 20px !important;
         }
-
         </style>
     """, unsafe_allow_html=True)
