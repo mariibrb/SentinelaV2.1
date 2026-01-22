@@ -6,16 +6,15 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- IMPORTAÇÃO DOS MÓDULOS (BLINDAGEM CONTRA IMPORT CIRCULAR) ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (SEM O IPI NO TOPO PARA NÃO TRAVAR) ---
 try:
     from audit_resumo import gerar_aba_resumo             
     from Auditorias.audit_icms import processar_icms       
-    # O IPI será importado dentro da função gerar_excel_final para evitar o erro
     from Auditorias.audit_pis_cofins import processar_pc   
     from Auditorias.audit_difal import processar_difal      
     from Apuracoes.apuracao_difal import gerar_resumo_uf    
 except ImportError as e:
-    st.error(f"⚠️ Erro de Importação no Core: {e}")
+    st.error(f"⚠️ Erro de Dependência no Core: {e}")
 
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
@@ -52,7 +51,13 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
 
         for det in root.findall('.//det'):
             prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
-            ipi_no = det.find('.//IPI'); pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
+            ipi_no = det.find('.//IPI')
+            pis_no = det.find('.//PIS')
+            cof_no = det.find('.//COFINS')
+
+            origem = buscar_tag_recursiva('orig', icms_no)
+            cst_parcial = buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no)
+            cst_full = origem + cst_parcial if cst_parcial else origem
 
             linha = {
                 "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
@@ -67,13 +72,14 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)), 
                 "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)), 
                 "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)),
-                "CST-ICMS": (buscar_tag_recursiva('orig', icms_no) + (buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no))),
+                "CST-ICMS": cst_full,
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
                 "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 
+                # Tags de Auditoria (IPI, PIS, COFINS)
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
@@ -115,7 +121,7 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo=None):
     if df_xs.empty and df_xe.empty: return
     
-    # IMPORT LOCAL DO IPI PARA QUEBRAR O LOOP CIRCULAR
+    # --- IMPORT LOCAL (QUEBRA O ERRO CIRCULAR) ---
     try:
         from Auditorias.audit_ipi import processar_ipi
     except Exception as e:
@@ -132,9 +138,11 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
 
     if not df_xs.empty:
         processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
-        # Chama a função importada localmente
-        try: processar_ipi(df_xs, writer, cod_cliente)
-        except Exception as e: st.warning(f"Aviso: Aba de IPI não gerada: {e}")
+        # Chama a função que foi importada localmente
+        try:
+            processar_ipi(df_xs, writer, cod_cliente)
+        except NameError:
+            st.error("Erro Crítico: A função processar_ipi não pôde ser carregada.")
         
         processar_pc(df_xs, writer, cod_cliente, regime)
         processar_difal(df_xs, writer)
