@@ -18,8 +18,9 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #F8F9FA 0%, #CED4DA 100%) !important; 
         }
 
-        /* --- 2. TÍTULO PRINCIPAL --- */
+        /* --- 2. 🚫 REMOÇÃO TOTAL DA CAIXA BRANCA DO TÍTULO --- */
         div[data-testid="stVerticalBlock"] > div:has(.titulo-principal),
+        div[data-testid="stVerticalBlock"] > div:first-child,
         .element-container:has(.titulo-principal) {
             background-color: transparent !important;
             background: transparent !important;
@@ -38,10 +39,12 @@ def aplicar_estilo_sentinela():
             text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.8) !important;
         }
 
-        /* --- 3. ABAS MESTRE --- */
+        /* --- 3. ABAS MESTRE DIAMANTE (PRATA) --- */
+        .stTabs { overflow: visible !important; }
         .stTabs [data-baseweb="tab-list"] {
             gap: 15px !important; 
-            padding: 60px 0 0 20px !important; 
+            padding: 600px 0 0 20px !important; 
+            overflow: visible !important;
             background: transparent !important;
         }
 
@@ -56,11 +59,11 @@ def aplicar_estilo_sentinela():
             color: #495057 !important;
         }
 
-        /* Cores Ativas das Abas Mãe */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; color: white !important; }
-        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
+        /* Ativas das Mães */
+        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; transform: translateY(-30px) !important; color: white !important; }
+        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; transform: translateY(-30px) !important; color: white !important; }
 
-        /* --- 4. PAINEL DAS ABAS (O CAIXOTÃO) --- */
+        /* --- 4. 📦 O CAIXOTÃO (PASTA MÃE) --- */
         [data-testid="stTabPanel"] {
             background: #FFFFFF !important;
             padding: 50px !important;
@@ -68,54 +71,94 @@ def aplicar_estilo_sentinela():
             margin-top: -5px !important;
             border: 6px solid transparent !important;
             min-height: 800px !important;
+            overflow: visible !important;
         }
 
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
+        /* Neon Setorizado */
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
+            border-color: #00D1FF !important;
+            box-shadow: 0 0 30px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.4) !important;
+        }
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
+            border-color: #FF69B4 !important;
+            box-shadow: 0 0 30px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4) !important;
+        }
 
-        /* --- 5. BOTÕES ESTILIZADOS --- */
-        div.stButton > button {
-            width: 100% !important;
-            border-radius: 15px !important;
+        /* --- 5. SUB-ABAS SETORIZADAS --- */
+        .stTabs .stTabs [data-baseweb="tab-list"] { padding: 0 0 30px 0 !important; }
+        .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
-            font-family: 'Montserrat', sans-serif !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-            transition: all 0.3s ease !important;
-            border: 2px solid #ADB5BD !important;
-            background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
-            color: #495057 !important;
+            background: #F1F3F5 !important;
+            border-radius: 15px 45px 0 0 !important;
         }
 
-        /* Hover dos Botões baseado na aba ativa */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) div.stButton > button:hover {
-            background: #00BFFF !important;
-            color: white !important;
-            box-shadow: 0 0 20px rgba(0, 191, 255, 0.6) !important;
-            border-color: transparent !important;
-        }
+        .stTabs .stTabs [aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; }
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #FF69B4 !important; }
 
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) div.stButton > button:hover {
-            background: #FF69B4 !important;
-            color: white !important;
-            box-shadow: 0 0 20px rgba(255, 105, 180, 0.6) !important;
-            border-color: transparent !important;
-        }
-
-        /* Botões de Download (st.download_button) */
-        div.stDownloadButton > button {
-            background: #495057 !important;
-            color: white !important;
-            border: none !important;
-            height: 50px !important;
-        }
-
-        /* --- 6. UPLOADER (ENVELOPE) --- */
+        /* --- 6. ✉️ ENVELOPE COM ÍCONE 📄 --- */
         [data-testid="stFileUploader"] {
             padding: 50px 45px 45px 45px !important;
             border-radius: 10px 10px 45px 45px !important;
             border-top: 18px solid #FDFDFD !important;
             box-shadow: 0 15px 40px rgba(0,0,0,0.1) !important;
+            margin: 25px 0 !important;
+            position: relative !important;
+        }
+
+        [data-testid="stFileUploader"]::before {
+            content: "📄"; 
+            position: absolute;
+            top: -32px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 30px;
+            z-index: 99;
+        }
+
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
+
+        /* --- 7. 📄 ÁREA DE AUDITORIA --- */
+        div.stExpander, div.element-container:has(h1, h2, h3), .stDataFrame {
+            background-color: white !important;
+            padding: 30px !important;
+            border-radius: 20px !important;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.03) !important;
+            border: 1px solid #E9ECEF !important;
+        }
+
+        /* --- 8. 🎯 BOTÕES PERSONALIZADOS (Remoção do Vermelho/Branco) --- */
+        div.stButton > button {
+            background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
+            color: #495057 !important;
+            border: 2px solid #ADB5BD !important;
+            border-radius: 15px !important;
+            font-weight: 800 !important;
+            height: 50px !important;
+            width: 100% !important;
+            transition: 0.3s !important;
+        }
+
+        /* Cor do botão na Aba XML */
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) div.stButton > button:hover {
+            background: #00BFFF !important;
+            color: white !important;
+            border-color: #00BFFF !important;
+        }
+
+        /* Cor do botão na Aba Conformidade */
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) div.stButton > button:hover {
+            background: #FF69B4 !important;
+            color: white !important;
+            border-color: #FF69B4 !important;
+        }
+        
+        /* Ajuste para botões primários (vermelhos) do Streamlit */
+        div.stButton > button[kind="primary"] {
+            background: #495057 !important;
+            color: white !important;
+            border: none !important;
         }
 
         </style>
