@@ -10,7 +10,7 @@ def aplicar_estilo_sentinela():
             min-width: 350px !important;
             max-width: 350px !important;
             background-color: #F3E9DC !important; 
-            border-right: 5px solid #FF69B4 !important;
+            border-right: 4px solid #FF69B4 !important;
             z-index: 999999 !important;
             box-shadow: 10px 0 30px rgba(0,0,0,0.1) !important;
         }
@@ -63,7 +63,7 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* --- 💡 FIXAÇÃO DAS MÃES ATIVAS (NEON EXTREMO) --- */
+        /* --- ABAS MÃE ATIVAS (NEON EXTREMO) --- */
 
         /* 🔵 ABA 1 (XML): AZUL CROMADO + GLOW */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
@@ -85,30 +85,27 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- 📦 INTERIOR DA CAIXA (PADRONIZADO PARA AMBOS) --- */
-        
-        /* Aplica o caixote branco em todas as abas */
-        [data-testid="stTabPanel"] {
+        /* --- 📦 INTERIOR DA CAIXA (O CAIXOTE BRILHANTE) --- */
+
+        /* CAIXOTE XML (Contorno Azul Neon) */
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
             border-radius: 0 60px 60px 60px !important;
+            border: 4px solid #00D1FF !important; /* BORDA AZUL AQUI */
+            border-top: 8px solid #00BFFF !important; /* TOPO MAIS FORTE */
             margin-top: -20px !important;
-            box-shadow: inset 0 20px 40px rgba(0,0,0,0.05) !important;
-            border-top: 8px solid transparent !important;
-            border: 4px solid transparent !important;
-        }
-
-        /* 🔵 Quando XML está aberto: Contorno Azul Neon */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border: 4px solid #00D1FF !important;
-            border-top: 8px solid #00BFFF !important;
             box-shadow: 0 10px 60px rgba(0, 209, 255, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
         }
 
-        /* 💗 Quando Conformidade está aberta: Contorno Rosa Neon */
+        /* CAIXOTE FISCAL (Contorno Rosa Neon) */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border: 4px solid #FFB6C1 !important;
-            border-top: 8px solid #FF69B4 !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+            padding: 40px !important;
+            border-radius: 0 60px 60px 60px !important;
+            border: 4px solid #FFB6C1 !important; /* BORDA ROSA AQUI */
+            border-top: 8px solid #FF69B4 !important; /* TOPO MAIS FORTE */
+            margin-top: -20px !important;
             box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
         }
 
@@ -124,7 +121,6 @@ def aplicar_estilo_sentinela():
             transform: none !important;
         }
 
-        /* Sub-aba Ativa (Glow Neon igual à mãe) */
         .stTabs .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFD1DC 0%, #FF69B4 100%) !important;
             color: white !important;
