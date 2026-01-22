@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (NÃO MEXER AQUI) ---
 try:
     from audit_resumo import gerar_aba_resumo             
     from Auditorias.audit_icms import processar_icms       
@@ -16,7 +16,7 @@ try:
     from Apuracoes.apuracao_difal import gerar_resumo_uf    
     from Gerenciais.audit_gerencial import gerar_abas_gerenciais
 except ImportError as e:
-    st.error(f"⚠️ Erro de Dependência no Core: {e}")
+    st.error(f"⚠️ Erro de Importação Crítico: {e}")
 
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
@@ -36,6 +36,7 @@ def buscar_tag_recursiva(tag_alvo, no):
         if tag_nome == tag_alvo: return elemento.text if elemento.text else ""
     return ""
 
+# --- MOTOR DE EXTRAÇÃO (LEITURA DE TODAS AS TAGS) ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -66,10 +67,9 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
                 "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
                 "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), 
-                "IE_DEST": buscar_tag_recursiva('IE', dest),
-                "UF_DEST": buscar_tag_recursiva('UF', dest), 
-                "CFOP": buscar_tag_recursiva('CFOP', prod),
-                "NCM": buscar_tag_recursiva('NCM', prod), "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)), 
+                "IE_DEST": buscar_tag_recursiva('IE', dest), "UF_DEST": buscar_tag_recursiva('UF', dest), 
+                "CFOP": buscar_tag_recursiva('CFOP', prod), "NCM": buscar_tag_recursiva('NCM', prod), 
+                "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)), 
                 "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)), 
                 "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)), 
                 "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)),
@@ -80,13 +80,12 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 
-                # --- DADOS PARA O IPI NÃO QUEBRAR ---
+                # Tags essenciais para as abas especialistas
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
                 "VLR-PIS": safe_float(buscar_tag_recursiva('vPIS', pis_no)),
                 "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no)),
-                
                 "Status": "AGUARDANDO" 
             }
             dados_lista.append(linha)
@@ -105,19 +104,21 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
 
-    # --- LÓGICA DE CRUZAMENTO COM ANEXO DE AUTENTICIDADE ---
-    # Busca o anexo nos arquivos subidos (ae ou as_f que vem do App)
+    # --- LÓGICA DE CRUZAMENTO COM GARIMPO (AUTENTICIDADE) ---
     if 'relatorio' in st.session_state and st.session_state['relatorio'] is not None:
         try:
             df_rel = pd.DataFrame(st.session_state['relatorio'])
             df_rel.columns = [str(c).strip().upper() for c in df_rel.columns]
             
-            # Garante que temos a chave para o merge
-            if 'CHAVE' in df_rel.columns:
-                df_rel = df_rel.rename(columns={'CHAVE': 'CHAVE_ACESSO', 'STATUS': 'SITUACAO_GARIMPO'})
-                df = pd.merge(df, df_rel[['CHAVE_ACESSO', 'SITUACAO_GARIMPO']], on='CHAVE_ACESSO', how='left')
-                df['Status'] = df['SITUACAO_GARIMPO'].fillna("SEM REFERÊNCIA (FAZER GARIMPO)")
-                df.drop(columns=['SITUACAO_GARIMPO'], inplace=True)
+            # Procura coluna Chave ou Chave de Acesso
+            col_chave = next((c for c in df_rel.columns if 'CHAVE' in c), None)
+            col_status = next((c for c in df_rel.columns if 'STATUS' in c or 'SITUAÇÃO' in c), None)
+
+            if col_chave and col_status:
+                df_rel = df_rel.rename(columns={col_chave: 'CHAVE_ACESSO', col_status: 'SITUACAO_REAL'})
+                df = pd.merge(df, df_rel[['CHAVE_ACESSO', 'SITUACAO_REAL']], on='CHAVE_ACESSO', how='left')
+                df['Status'] = df['SITUACAO_REAL'].fillna("SEM REFERÊNCIA (FAZER GARIMPO)")
+                df.drop(columns=['SITUACAO_REAL'], inplace=True)
         except: pass
 
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
@@ -128,20 +129,15 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # Colunas de exibição XML (Status é a ÚLTIMA)
-    cols_xml = [
-        "TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT",
-        "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS",
-        "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST",
-        "VAL-FCP-ST", "Status"
-    ]
+    # Ordem das 22 Colunas (Status por Último)
+    cols_xml = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST", "Status"]
 
     for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_temp.empty:
             df_final = df_temp[cols_xml].copy()
             df_final.to_excel(writer, sheet_name=nome, index=False)
 
-    # --- CHAMA AS AUDITORIAS (O IPI agora tem tudo o que precisa) ---
+    # --- CHAMADA DAS AUDITORIAS (Nomes garantidos pelas importações no topo) ---
     if not df_xs.empty:
         processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
         processar_ipi(df_xs, writer, cod_cliente)
