@@ -17,7 +17,7 @@ def init_db():
     conn = sqlite3.connect('sentinela_usuarios.db')
     c = conn.cursor()
     
-    # Criamos a tabela base caso não exista - AGORA COM TODAS AS COLUNAS DE PERMISSÃO
+    # Criamos a tabela base caso não exista - AGORA COM CAMPO USUARIO E XML
     c.execute('''CREATE TABLE IF NOT EXISTS usuarios 
                  (nome TEXT, 
                   usuario TEXT,
@@ -25,19 +25,19 @@ def init_db():
                   senha TEXT, 
                   status TEXT, 
                   nivel TEXT,
-                  perm_xml INTEGER DEFAULT 0,
+                  perm_xml INTEGER DEFAULT 1,
                   perm_icms INTEGER DEFAULT 0,
                   perm_difal INTEGER DEFAULT 0,
                   perm_pis INTEGER DEFAULT 0,
                   perm_ret INTEGER DEFAULT 0)''')
     
-    # Lógica de Migração de Colunas (Garante que se você mudar as permissões, o banco não quebre)
+    # Lógica de Migração de Colunas (Garante integridade total do esquema)
     c.execute("PRAGMA table_info(usuarios)")
     colunas_atuais = [col[1] for col in c.fetchall()]
     
     colunas_novas = {
         'usuario': 'TEXT',
-        'perm_xml': 'INTEGER DEFAULT 0',
+        'perm_xml': 'INTEGER DEFAULT 1',
         'perm_icms': 'INTEGER DEFAULT 0',
         'perm_difal': 'INTEGER DEFAULT 0',
         'perm_pis': 'INTEGER DEFAULT 0',
@@ -59,8 +59,7 @@ def init_db():
                      VALUES (?, ?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1, 1)""", 
                   ('Mariana Mendes', 'mariana', email_admin, nova_senha_hash))
     else:
-        # Garante que Mariana tenha sempre nível ADMIN e permissões totais
-        # O nome no banco agora é respeitado para você poder alterar no Painel ADM
+        # Garante integridade do login mestre MAS permite que o nome seja alterado no painel ADM
         c.execute("""UPDATE usuarios 
                      SET nivel='ADMIN', perm_xml=1, perm_icms=1, perm_difal=1, perm_pis=1, perm_ret=1 
                      WHERE email=?""", 
@@ -246,15 +245,15 @@ if not st.session_state['user_data']:
                             conn = sqlite3.connect('sentinela_usuarios.db')
                             conn.execute("""INSERT INTO usuarios 
                                             (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
-                                            VALUES (?, ?, ?, ?, 'PENDENTE', 'USER', 0, 0, 0, 0, 0)""", 
+                                            VALUES (?, ?, ?, ?, 'PENDENTE', 'USER', 1, 0, 0, 0, 0)""", 
                                          (n_nome, n_user, n_email, hash_senha(n_pass)))
                             conn.commit()
                             conn.close()
-                            st.success("Solicitação enviada! Você será notificado após a análise.")
+                            st.success("Solicitação enviada! Você será notificado após a análise do sistema.")
                         except Exception:
                             st.error("Este e-mail ou usuário já está cadastrado.")
                     else:
-                        st.warning("Preencha todos os campos obrigatórios.")
+                        st.warning("Por favor, preencha todos os campos obrigatórios.")
     st.stop()
 
 # --- TÍTULO PRINCIPAL (AGORA NO TOPO ABSOLUTO) ---
@@ -264,6 +263,7 @@ st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-
 modo_adm = st.session_state.get('show_adm', False)
 
 if st.session_state['user_data']['nivel'] == 'ADMIN':
+    # Botão para alternar entre ADM e Auditoria
     if not modo_adm:
         if st.button("🛠️ ABRIR GESTÃO ADMINISTRATIVA", use_container_width=True):
             st.session_state['show_adm'] = True
@@ -284,7 +284,7 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                 with st.container(border=True):
                     c1, c2, c3, c4 = st.columns([2.5, 1.5, 3, 2])
                     
-                    # Edição de Cadastro
+                    # Edição de Cadastro - AGORA COM USUARIO
                     edit_nome = c1.text_input("Nome Completo", value=row['nome'], key=f"n_{idx}")
                     edit_user = c1.text_input("Usuário Login", value=row['usuario'], key=f"u_{idx}")
                     edit_mail = c2.text_input("E-mail", value=row['email'], key=f"m_{idx}")
@@ -296,11 +296,11 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                         conn.commit()
                         st.info("Senha resetada para: 123456")
 
-                    # FLAGS DE PERMISSÃO AUMENTADAS
+                    # FLAGS DE PERMISSÃO INCLUINDO XML
                     p_x = c3.checkbox("Análise XML", value=bool(row['perm_xml']), key=f"px_{idx}")
-                    p_i = c3.checkbox("Audit ICMS", value=bool(row['perm_icms']), key=f"i_{idx}")
-                    p_d = c3.checkbox("Audit DIFAL", value=bool(row['perm_difal']), key=f"d_{idx}")
-                    p_p = c3.checkbox("Audit PIS", value=bool(row['perm_pis']), key=f"p_{idx}")
+                    p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
+                    p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
+                    p_p = c3.checkbox("Audit PIS/COFINS", value=bool(row['perm_pis']), key=f"p_{idx}")
                     p_r = c3.checkbox("Audit RET", value=bool(row['perm_ret']), key=f"r_{idx}")
 
                     if not is_me:
@@ -318,13 +318,13 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                             conn.execute("DELETE FROM usuarios WHERE email=?", (row['email'],))
                             conn.commit(); st.rerun()
                             
-                        if c4.button("💾 SALVAR", key=f"save_{idx}", use_container_width=True, type="primary"):
+                        if c4.button("💾 SALVAR ALTERAÇÕES", key=f"save_{idx}", use_container_width=True, type="primary"):
                             conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
                                          (edit_nome, edit_user, edit_mail, int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit(); st.success("Salvo!")
                     else:
                         c4.write("🛡️ Conta Mestre")
-                        if c4.button("💾 ATUALIZAR PERFIL", key=f"sv_me_{idx}", use_container_width=True, type="primary"):
+                        if c4.button("💾 ATUALIZAR MEU PERFIL", key=f"sv_me_{idx}", use_container_width=True, type="primary"):
                             conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
                                          (edit_nome, edit_user, edit_mail, int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                             conn.commit()
@@ -349,13 +349,13 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR DINÂMICA ---
+# --- SIDEBAR (DINÂMICA) ---
 emp_sel = ""
 with st.sidebar:
     if os.path.exists(".streamlit/Sentinela.png"):
         st.image(".streamlit/Sentinela.png", use_container_width=True)
     st.markdown("---")
-    st.write(f"👋 Olá, **{st.session_state['user_data']['nome']}**")
+    st.write(f"👤 Olá, **{st.session_state['user_data']['nome']}**")
     if st.button("🚪 SAIR DO SISTEMA", use_container_width=True):
         st.session_state.clear()
         st.rerun()
@@ -384,14 +384,14 @@ with st.sidebar:
                 if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
                     st.download_button("Baixar Modelo", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
     else:
-        st.info("⚙️ Modo Administrativo Ativo.\nClique em 'FECHAR PAINEL ADM' para voltar.")
+        st.info("⚙️ Modo Administrativo Ativo.\nClique em 'FECHAR PAINEL ADM' para voltar à auditoria.")
 
-# --- ÁREA CENTRAL (RESPEITANDO PERMISSÕES DINÂMICAS) ---
+# --- ÁREA CENTRAL (PERMISSÕES DINÂMICAS) ---
 if emp_sel and not modo_adm:
     perms = st.session_state['user_data']['perms']
     abas_v = []
     
-    # Montagem dinâmica das abas permitidas
+    # Montagem dinâmica das abas conforme permissões ADM
     if perms.get('xml'): abas_v.append("📂 ANÁLISE XML")
     if perms.get('icms'): abas_v.append("📊 ICMS/IPI")
     if perms.get('difal'): abas_v.append("⚖️ DIFAL/ST")
@@ -477,11 +477,12 @@ if emp_sel and not modo_adm:
                     st.markdown("#### 🏨 Auditoria RET")
                     if ret_sel:
                         c1, c2, c3 = st.columns(3)
-                        with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"ret_s_{v}")
-                        with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"ret_e_{v}")
+                        with c1: st.file_uploader("📑 Saídas RET", type=['xlsx'], key=f"ret_s_{v}")
+                        with c2: st.file_uploader("📑 Entradas RET", type=['xlsx'], key=f"ret_e_{v}")
                         with c3: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"dom_ret_{v}")
                         st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
-                    else: st.warning("⚠️ Ative o RET na Sidebar.")
+                    else:
+                        st.warning("⚠️ Habilite o RET na Sidebar para este módulo.")
 
                 elif nome_aba == "💰 PIS/COFINS":
                     st.markdown("#### 💰 Auditoria PIS/Cofins")
@@ -496,8 +497,9 @@ if emp_sel and not modo_adm:
             st.markdown("---")
             with st.popover("📥 ACESSAR DOWNLOADS SEGUROS", use_container_width=True):
                 if st.text_input("Senha", type="password", key="p_down") == "Senhaforte@123":
-                    st.download_button("💾 RELATÓRIO FINAL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
+                    st.download_button("💾 RELATÓRIO FINAL EXCEL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
                     st.download_button("📂 ZIP ORGANIZADO", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+            
             st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
             sc = st.session_state.get('st_counts')
             c1, c2, c3 = st.columns(3)
@@ -506,9 +508,9 @@ if emp_sel and not modo_adm:
             c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
             cr, cf = st.columns(2)
             with cr:
-                st.write("**Resumo por Série:**"); st.dataframe(st.session_state['df_resumo'], hide_index=True)
+                st.write("**Resumo por Série:**"); st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
             with cf:
-                st.write("**Notas Faltantes:**"); st.dataframe(st.session_state['df_faltantes'], hide_index=True)
+                st.write("**Notas Faltantes:**"); st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
     else:
         st.warning("⚠️ Você não possui permissões de auditoria ativa. Contate a administração.")
 elif not modo_adm:
