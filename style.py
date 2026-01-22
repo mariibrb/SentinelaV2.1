@@ -3,119 +3,131 @@ import streamlit as st
 def aplicar_estilo_sentinela():
     st.markdown("""
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
 
-        /* LIMPEZA TOTAL DO TOPO */
+        /* RESET TOTAL DO VISUAL "WINDOWS XP" */
         header, .st-emotion-cache-18ni7ap, .st-emotion-cache-zq59db, 
         #keyboard_double, .st-emotion-cache-10oheav, 
         span[data-testid="stHeaderActionElements"],
         button[title="View keyboard shortcuts"] {
             display: none !important;
             visibility: hidden !important;
-            height: 0px !important;
-            padding: 0px !important;
-            margin: 0px !important;
         }
         
-        /* FUNDO OFF-WHITE QUENTE */
+        /* FUNDO DE ESTÚDIO (SUAVE E MODERNO) */
         .stApp {
-            background-color: #FDFBF9 !important; 
+            background: radial-gradient(circle at top left, #FDFBF9 0%, #F5EFE6 100%) !important;
         }
 
-        /* AJUSTE DO CONTEÚDO */
-        .block-container { padding-top: 1.5rem !important; }
-        html, body, [class*="st-"] { font-family: 'Inter', sans-serif; }
+        .block-container { padding-top: 2rem !important; }
+        
+        /* FONTE DE GRIFE (JAKARTA SANS) */
+        html, body, [class*="st-"] { 
+            font-family: 'Plus Jakarta Sans', sans-serif !important; 
+        }
 
-        /* --- O NOVO CABEÇALHO DESIGNER --- */
+        /* --- O TÍTULO "APPLE STYLE" --- */
         .titulo-principal { 
-            color: #5D3A1A; 
-            font-size: 3rem; 
+            color: #3D2B1F; 
+            font-size: 3.5rem; 
             font-weight: 800; 
-            margin-bottom: 0px;
-            letter-spacing: -1px;
-            background: linear-gradient(90deg, #5D3A1A, #A67B5B);
+            margin-bottom: -10px;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, #5D3A1A 0%, #A67B5B 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 5px 10px rgba(93, 58, 26, 0.1));
         }
 
-        /* BARRA DESIGNER (EFEITO PÍLULA) */
+        /* BARRA DE LUXO (PÍLULA NEUMÓRFICA) */
         .barra-marsala { 
-            width: 120px; 
-            height: 8px; 
-            background: linear-gradient(90deg, #FF69B4, #A67B5B); 
+            width: 100px; 
+            height: 10px; 
+            background: #FF69B4; 
             border-radius: 50px; 
-            margin-bottom: 40px;
-            box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+            margin-bottom: 50px;
+            box-shadow: 0 10px 20px rgba(255, 105, 180, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.5);
         }
 
-        /* CARD DE VIDRO PARA O TÍTULO (OPCIONAL NO HTML) */
-        .header-card {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            padding: 20px 40px;
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 20px 40px rgba(93, 58, 26, 0.08);
-            margin-bottom: 40px;
-            display: inline-block;
+        /* --- ABAS "SOFT UI" (O FIM DO QUADRADO) --- */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 15px !important;
+            background: transparent !important;
         }
 
-        /* --- ABAS ARREDONDADAS E METALIZADAS --- */
         .stTabs [data-baseweb="tab"] {
-            height: 60px !important;
-            background: #E6D5C3 !important; 
-            border-radius: 20px 20px 20px 20px !important; /* Arredondado total */
-            padding: 10px 35px !important;
-            margin-right: 10px !important;
-            font-size: 18px !important; 
+            height: 55px !important;
+            background: rgba(230, 213, 195, 0.4) !important;
+            border-radius: 30px !important; /* Totalmente curvas */
+            padding: 0px 35px !important;
+            font-size: 16px !important; 
             font-weight: 600 !important;
-            color: #5D3A1A !important;
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1) !important;
-            border: 1px solid rgba(255,255,255,0.5) !important;
+            color: #5B4D42 !important;
+            border: 1px solid rgba(255, 255, 255, 0.6) !important;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.02), inset 2px 2px 5px rgba(255,255,255,0.7) !important;
         }
 
         .stTabs [data-baseweb="tab"]:hover {
-            transform: translateY(-5px) scale(1.02) !important;
-            background: #F0E2D3 !important;
-            color: #3E2511 !important;
-            box-shadow: 0 15px 30px rgba(255, 105, 180, 0.25) !important;
+            transform: translateY(-5px) scale(1.05) !important;
+            background: white !important;
+            color: #FF69B4 !important;
+            box-shadow: 0 15px 30px rgba(255, 105, 180, 0.2) !important;
         }
 
         .stTabs [aria-selected="true"] {
-            background: linear-gradient(135deg, #A67B5B 0%, #5D3A1A 100%) !important;
-            color: #FFFFFF !important;
-            font-weight: 800 !important;
-            box-shadow: 0 10px 25px rgba(93, 58, 26, 0.3) !important;
-            border: 2px solid #FF69B4 !important; /* Borda Pink de Destaque */
-        }
-
-        /* --- BOTÕES "PÍLULA" LUXO --- */
-        .stButton > button, .stDownloadButton > button {
-            width: 100%;
-            background: linear-gradient(135deg, #A67B5B 0%, #5D3A1A 100%) !important;
-            color: #FFFFFF !important;
-            border-radius: 100px !important; /* Estilo Pílula moderna */
-            padding: 15px 30px !important;
+            background: #3D2B1F !important;
+            color: white !important;
             font-weight: 700 !important;
             border: none !important;
-            box-shadow: 0 10px 20px rgba(93, 58, 26, 0.2), inset 0 2px 2px rgba(255,255,255,0.2) !important;
-            transition: all 0.3s ease !important;
+            box-shadow: 0 15px 35px rgba(61, 43, 31, 0.4) !important;
+        }
+
+        /* --- BOTÕES "3D LUXO" --- */
+        .stButton > button, .stDownloadButton > button {
+            width: 100%;
+            background: linear-gradient(145deg, #A67B5B, #5D3A1A) !important;
+            color: #FFFFFF !important;
+            border-radius: 40px !important;
+            padding: 18px 30px !important;
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            letter-spacing: 1px;
+            border: 2px solid rgba(255, 105, 180, 0.3) !important; /* Contorno Pink Sutil */
+            box-shadow: 8px 8px 20px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+            transition: all 0.3s ease-in-out !important;
+            text-transform: uppercase;
         }
 
         .stButton > button:hover, .stDownloadButton > button:hover {
-            transform: scale(1.02) !important;
-            box-shadow: 0 15px 30px rgba(255, 105, 180, 0.4) !important; /* Brilho Pink Glow */
-            filter: brightness(1.1) !important;
+            transform: scale(1.03) !important;
+            box-shadow: 0 20px 40px rgba(255, 105, 180, 0.4) !important; /* Brilho Rosa real */
+            border-color: #FF69B4 !important;
         }
 
-        /* CONTAINER DE STATUS DESIGNER */
+        /* --- CONTAINER DE STATUS (MODERNO) --- */
         .status-container {
-            background: white;
-            padding: 20px;
-            border-radius: 25px;
-            border-left: 10px solid #FF69B4;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-            border-top: 1px solid #f0f0f0;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 35px;
+            border-left: 12px solid #FF69B4;
+            box-shadow: 15px 15px 40px rgba(0,0,0,0.03);
+            border-top: 1px solid rgba(255,255,255,0.8);
+        }
+
+        /* CARD DE INFORMAÇÕES (MÉTRICAS) */
+        [data-testid="stMetric"] {
+            background: white !important;
+            padding: 20px !important;
+            border-radius: 30px !important;
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.02) !important;
+            border: 1px solid #f0f0f0 !important;
+        }
+
+        [data-testid="stMetricValue"] {
+            color: #3D2B1F !important;
+            font-weight: 800 !important;
         }
         </style>
     """, unsafe_allow_html=True)
