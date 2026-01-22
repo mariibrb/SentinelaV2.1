@@ -68,7 +68,6 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
                 "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 
-                # --- TAGS PARA SUA ANÁLISE TRIBUTÁRIA ---
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
@@ -93,7 +92,7 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DAS 06 ABAS (ORDEM: RESUMO PRIMEIRO) ---
+# --- GERAÇÃO DAS 06 ABAS (ORDEM: RESUMO COMO A PRIMEIRA ABA) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo=None):
     if df_xs.empty and df_xe.empty: return
     
@@ -105,19 +104,14 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         st.error(f"⚠️ Erro ao carregar módulos especialistas: {e}")
         return
 
-    # --- ABA 1: RESUMO (Agora no início) ---
+    # --- ABA 1: RESUMO (EXECUTADA PRIMEIRO PARA APARECER NA FRENTE) ---
     try: 
         audit_resumo.gerar_aba_resumo(writer)
     except Exception as e: 
         st.warning(f"Erro ao gerar Aba Resumo: {e}")
 
-    # Abas de Conferência (Dumps XML)
-    for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
-        if not df_temp.empty:
-            df_temp.to_excel(writer, sheet_name=nome, index=False)
-
+    # Abas de Auditoria Especialistas
     if not df_xs.empty:
-        # Auditorias Especialistas
         audit_icms.processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
         
         try: audit_ipi.processar_ipi(df_xs, writer, cod_cliente)
@@ -131,3 +125,8 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         
         try: apuracao_difal.gerar_resumo_uf(df_xs, writer, df_xe)
         except: pass
+
+    # Abas de Conferência (Dumps XML) - No final
+    for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
+        if not df_temp.empty:
+            df_temp.to_excel(writer, sheet_name=nome, index=False)
