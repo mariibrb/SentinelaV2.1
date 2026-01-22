@@ -5,39 +5,23 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* --- TRAVA MESTRE: SIDEBAR ETERNA --- */
+        /* --- TRAVA MESTRE: SIDEBAR --- */
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             max-width: 350px !important;
-            display: block !important;
-            visibility: visible !important;
-            position: relative !important;
             background-color: #F3E9DC !important; 
-            border-right: 2px solid #FFB6C1 !important; 
+            border-right: 3px solid #FFB6C1 !important; 
             z-index: 999999 !important;
         }
 
-        /* REMOVE BOTÕES DE FECHAR SIDEBAR */
-        [data-testid="sidebar-close-button"], 
-        button[aria-label="Close sidebar"],
-        .st-emotion-cache-6qob1r {
-            display: none !important;
-            visibility: hidden !important;
-        }
-
         /* RESET DO LIXO VISUAL */
-        header, .st-emotion-cache-zq59db, 
-        #keyboard_double, .st-emotion-cache-10oheav, 
-        span[data-testid="stHeaderActionElements"] {
-            display: none !important;
-        }
+        header, [data-testid="stHeader"] { display: none !important; }
 
         /* FUNDO MOCHA MOUSSE */
         .stApp { 
             background: radial-gradient(circle at top left, #FCF8F4 0%, #F3E9DC 100%) !important; 
         }
         
-        .block-container { padding-top: 2.5rem !important; }
         html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
 
         /* --- TÍTULO DESIGNER --- */
@@ -47,80 +31,82 @@ def aplicar_estilo_sentinela():
             font-size: 3.2rem; 
             font-weight: 800; 
             text-transform: uppercase;
-            line-height: 1;
         }
 
-        /* --- DIVISÓRIAS DE FICHÁRIO METALIZADO --- */
+        /* --- ESTILIZAÇÃO DIVISÓRIAS METALIZADAS --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 5px !important;
-            background-color: transparent !important;
-        }
-
-        /* Estilo Base para todas as Abas (Pai e Filho) */
+        /* Abas Inativas (Metal Fosco) */
         .stTabs [data-baseweb="tab"] {
-            height: 60px !important;
-            background: linear-gradient(180deg, #F0F0F0 0%, #D1D1D1 100%) !important;
-            border-radius: 15px 40px 0 0 !important;
-            margin-right: -10px !important;
+            height: 65px !important;
+            background: linear-gradient(180deg, #FFFFFF 0%, #E0E0E0 100%) !important;
+            border-radius: 20px 45px 0 0 !important;
+            margin-right: -15px !important;
             padding: 0px 45px !important;
-            border: 1px solid #C0C0C0 !important;
+            border: 1px solid #D1D1D1 !important;
             font-weight: 600 !important;
-            color: #888888 !important;
+            color: #A0A0A0 !important;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 5px 0 10px rgba(0,0,0,0.05) !important;
+            box-shadow: 5px 0 10px rgba(0,0,0,0.05) !important;
         }
 
-        /* --- LÓGICA DE CORES POR CONTEXTO (BASEADO NO TEXTO) --- */
+        /* --- O BRILHO NEON (GLOW) E METALIZADO --- */
 
-        /* FAMÍLIA XML: AZUL BEBÊ METALIZADO */
+        /* 🔵 ANÁLISE XML: AZUL BEBÊ COM NEON INTENSO */
         .stTabs [data-baseweb="tab"]:has(div:contains("XML"))[aria-selected="true"] {
-            background: linear-gradient(145deg, #B0E0E6 0%, #87CEEB 100%) !important;
-            color: #4682B4 !important;
-            z-index: 10 !important;
-            transform: translateY(-8px) !important;
-            border: 1px solid #ADD8E6 !important;
-            box-shadow: 0 10px 30px rgba(173, 216, 230, 0.6), inset 0 2px 4px rgba(255,255,255,0.8) !important;
+            background: linear-gradient(145deg, #E0FFFF 0%, #87CEEB 100%) !important; /* Efeito Metal */
+            color: #0056b3 !important;
+            transform: translateY(-15px) !important; /* Pulo maior */
+            border: 2px solid #00D1FF !important;
+            /* EFEITO GLOW MULTICAMADAS: */
+            box-shadow: 0 0 15px #00D1FF, 0 0 30px #00D1FF, 0 0 45px rgba(0, 209, 255, 0.3) !important; 
+            z-index: 100 !important;
+            text-shadow: 0 0 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* FAMÍLIA FISCAL: ROSA BEBÊ METALIZADO (Aplica em todas as sub-abas fiscais) */
+        /* 💗 FAMÍLIA FISCAL: ROSA BEBÊ COM NEON INTENSO (ICMS, PIS, RET, DIFAL) */
         .stTabs [data-baseweb="tab"]:has(div:contains("ICMS"))[aria-selected="true"],
         .stTabs [data-baseweb="tab"]:has(div:contains("PIS"))[aria-selected="true"],
         .stTabs [data-baseweb="tab"]:has(div:contains("RET"))[aria-selected="true"],
         .stTabs [data-baseweb="tab"]:has(div:contains("DIFAL"))[aria-selected="true"],
         .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE"))[aria-selected="true"] {
-            background: linear-gradient(145deg, #FFD1DC 0%, #FFB6C1 100%) !important;
-            color: #DB7093 !important;
-            z-index: 10 !important;
+            background: linear-gradient(145deg, #FFF0F5 0%, #FFB6C1 100%) !important; /* Efeito Metal Rosé */
+            color: #C71585 !important;
+            transform: translateY(-15px) !important; /* Pulo maior */
+            border: 2px solid #FF69B4 !important;
+            /* EFEITO GLOW MULTICAMADAS: */
+            box-shadow: 0 0 15px #FF69B4, 0 0 30px #FF69B4, 0 0 45px rgba(255, 105, 180, 0.3) !important;
+            z-index: 100 !important;
+            text-shadow: 0 0 5px rgba(255,255,255,0.8) !important;
+        }
+
+        /* BRILHO NO HOVER (QUANDO PASSA O MOUSE) */
+        .stTabs [data-baseweb="tab"]:hover {
             transform: translateY(-8px) !important;
-            border: 1px solid #FFB6C1 !important;
-            box-shadow: 0 10px 30px rgba(255, 182, 193, 0.6), inset 0 2px 4px rgba(255,255,255,0.8) !important;
+            filter: brightness(1.2) !important;
+            cursor: pointer !important;
         }
 
-        /* --- AJUSTE SUB-ABAS (MENORES, MAS COM O MESMO EFEITO) --- */
+        /* SUB-ABAS (TAMBÉM COM BRILHO ROSA) */
         .stTabs .stTabs [data-baseweb="tab"] {
-            height: 45px !important;
+            height: 48px !important;
             padding: 0px 25px !important;
-            font-size: 13px !important;
-            border-radius: 10px 25px 0 0 !important;
+            border-radius: 12px 30px 0 0 !important;
+            margin-right: -10px !important;
+        }
+        
+        .stTabs .stTabs [aria-selected="true"] {
+            background: #FFD1DC !important;
+            box-shadow: 0 0 20px #FFB6C1 !important; /* Glow nas sub-abas */
         }
 
-        /* --- BOTÕES DO SISTEMA --- */
-        .stButton > button, .stDownloadButton > button {
-            width: 100%;
-            background: linear-gradient(145deg, #C2936E, #8B5A2B) !important;
-            color: #FFFFFF !important;
-            border-radius: 40px !important;
-            padding: 12px 25px !important;
-            font-weight: 600 !important;
-            box-shadow: 0 8px 20px rgba(139, 90, 43, 0.2) !important;
-            text-transform: uppercase;
-        }
-
-        .stButton > button:hover {
-            transform: scale(1.02) !important;
-            box-shadow: 0 10px 25px rgba(255, 182, 193, 0.4) !important;
+        /* BOTÃO ADM COM BRILHO PULSANTE */
+        div.stButton > button:has(div:contains("ABRIR GESTÃO ADMINISTRATIVA")) {
+            background: linear-gradient(145deg, #FFB6C1, #FF1493) !important;
+            color: white !important; 
+            border: none !important;
+            box-shadow: 0 0 20px rgba(255, 20, 147, 0.6) !important;
+            font-weight: 800 !important;
         }
         </style>
     """, unsafe_allow_html=True)
