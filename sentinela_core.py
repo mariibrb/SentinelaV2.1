@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (VOLTANDO AO SEU PADRÃO ORIGINAL) ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (MANTIDOS NO TOPO) ---
 try:
     from audit_resumo import gerar_aba_resumo
     from Auditorias.audit_icms import processar_icms
@@ -40,7 +40,7 @@ def tratar_ncm_texto(ncm):
     if pd.isna(ncm) or ncm == "": return ""
     return re.sub(r'\D', '', str(ncm)).strip()
 
-# --- MOTOR DE PROCESSAMENTO XML (ORDEM EXATA DAS 22 COLUNAS) ---
+# --- MOTOR DE PROCESSAMENTO XML (22 COLUNAS COM TODAS AS TAGS RESTAURADAS) ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -57,9 +57,12 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
         chave = inf.attrib.get('Id', '')[3:]
 
         for det in root.findall('.//det'):
-            prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
+            prod = det.find('prod'); imp = det.find('imposto')
+            icms_no = det.find('.//ICMS')
+            ipi_no = det.find('.//IPI') # RESTAURADO
+            pis_no = det.find('.//PIS') # RESTAURADO
+            cof_no = det.find('.//COFINS') # RESTAURADO
             
-            # Tags para DIFAL e FCP
             v_icms_uf_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
             v_fcp_uf_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
 
@@ -71,7 +74,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "CNPJ_EMIT": cnpj_emit,                        # 5
                 "UF_EMIT": buscar_tag_recursiva('UF', emit),   # 6
                 "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), # 7
-                "IE_DEST": buscar_tag_recursiva('IE', dest),   # 8 (IE ACRESCENTADA AQUI)
+                "IE_DEST": buscar_tag_recursiva('IE', dest),   # 8
                 "UF_DEST": buscar_tag_recursiva('UF', dest),   # 9
                 "CFOP": buscar_tag_recursiva('CFOP', prod),    # 10
                 "NCM": tratar_ncm_texto(buscar_tag_recursiva('NCM', prod)), # 11
@@ -85,8 +88,14 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-DIFAL": v_icms_uf_dest + v_fcp_uf_dest,    # 19
                 "VAL-FCP-DEST": v_fcp_uf_dest,                  # 20
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),    # 21
-                "Status": "A PROCESSAR"                         # 22 (Para merge)
+                "Status": "A PROCESSAR"                         # 22
             }
+            # Colunas de apoio para o IPI/PIS/COFINS (que os módulos buscam no DataFrame)
+            linha["ALQ-IPI"] = safe_float(buscar_tag_recursiva('pIPI', ipi_no))
+            linha["VLR-IPI"] = safe_float(buscar_tag_recursiva('vIPI', ipi_no))
+            linha["VLR-PIS"] = safe_float(buscar_tag_recursiva('vPIS', pis_no))
+            linha["VLR-COFINS"] = safe_float(buscar_tag_recursiva('vCOFINS', cof_no))
+            
             dados_lista.append(linha)
     except: pass
 
@@ -110,7 +119,6 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     except: pass
     
     if not df_xs.empty:
-        # CRUZAMENTO COM GARIMPO (AUTENTICIDADE)
         mapa_status = {}
         for arquivo_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
             try:
@@ -122,7 +130,6 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
 
         df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(mapa_status).fillna('⚠️ N/Encontrada no Garimpo')
         
-        # Chamada dos módulos especialistas
         processar_icms(df_xs, writer, cod_cliente, df_xe)
         processar_ipi(df_xs, writer, cod_cliente)
         processar_pc(df_xs, writer, cod_cliente, regime)
