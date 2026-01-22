@@ -59,7 +59,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
             v_prod = safe_float(buscar_tag_recursiva('vProd', prod))
             ncm = buscar_tag_recursiva('NCM', prod)
             
-            # Garante que Origem + CST sejam capturados para a regra de 4%
+            # Origem + CST para garantir a regra de 4%
             origem = buscar_tag_recursiva('orig', icms_no)
             cst_parcial = buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no)
             cst_full = origem + cst_parcial if cst_parcial else origem
@@ -102,20 +102,25 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
 
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo=None):
     """
-    MÓDULO DE ESCRITA DEFINITIVO - SEM BLOQUEIOS
+    MÓDULO DE ESCRITA DEFINITIVO - ADICIONADA ABA RESUMO
     """
     if df_xs.empty and df_xe.empty: return
     
-    # 1. ABAS BÁSICAS
+    # 1. ABA RESUMO (A PRIMEIRA DO EXCEL)
+    try:
+        gerar_aba_resumo(writer)
+    except Exception as e:
+        st.warning(f"Aviso: Não foi possível gerar a aba de introdução: {e}")
+    
+    # 2. ABAS BÁSICAS
     df_xe.to_excel(writer, sheet_name='ENTRADAS_XML', index=False)
     df_xs.to_excel(writer, sheet_name='SAIDAS_XML', index=False)
     
-    # 2. AUDITORIA ICMS (Obrigatória se houver saídas)
+    # 3. AUDITORIA ICMS
     if not df_xs.empty:
-        # Chamada limpa com os nomes de parâmetros que o seu App usa
         processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
     
-    # 3. DEMAIS PROCESSAMENTOS (MANTIDOS COM TRY PARA SEGURANÇA)
+    # 4. DEMAIS PROCESSAMENTOS (MANTIDOS COM TRY PARA SEGURANÇA)
     try: processar_ipi(df_xs, writer, cod_cliente)
     except: pass
     try: processar_pc(df_xs, writer, cod_cliente, regime)
