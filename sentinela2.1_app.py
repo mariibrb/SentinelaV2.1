@@ -201,6 +201,7 @@ if not st.session_state['user_data']:
                 if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                     conn = sqlite3.connect('sentinela_usuarios.db')
                     c = conn.cursor()
+                    # AJUSTE NO LOGIN: Busca por usuário OU e-mail
                     c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
                                  FROM usuarios 
                                  WHERE (usuario=? OR email=?) AND senha=?""", 
@@ -229,7 +230,7 @@ if not st.session_state['user_data']:
             with st.container(border=True):
                 st.write("### Solicite seu acesso:")
                 n_nome = st.text_input("Nome Completo")
-                n_user = st.text_input("Usuário de Login (Ex: mariana)")
+                n_user = st.text_input("Defina seu Usuário (Ex: mariana)")
                 n_email = st.text_input("E-mail Profissional")
                 n_pass = st.text_input("Defina uma Senha", type="password")
                 if st.button("SOLICITAR LIBERAÇÃO", use_container_width=True):
@@ -256,14 +257,14 @@ if not st.session_state['user_data']:
                 if st.button("SOLICITAR NOVA SENHA", use_container_width=True):
                     if email_recup:
                         enviar_email("marii.brbj@gmail.com", "SOLICITAÇÃO DE RESET", f"O e-mail {email_recup} pediu reset de senha.")
-                        st.success("Solicitação enviada! Aguarde o retorno no seu e-mail.")
+                        st.success("Solicitação enviada! Aguarde retorno.")
 
     st.stop()
 
 # --- TÍTULO PRINCIPAL ---
 st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
-# --- PAINEL DE ADMINISTRAÇÃO ELITE (CONTROLE DE VISIBILIDADE) ---
+# --- PAINEL DE ADMINISTRAÇÃO ELITE ---
 modo_adm = st.session_state.get('show_adm', False)
 
 if st.session_state['user_data']['nivel'] == 'ADMIN':
@@ -309,7 +310,7 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                             if c4.button("✅ LIBERAR", key=f"ok_{idx}", use_container_width=True):
                                 conn.execute("""UPDATE usuarios SET status='ATIVO' WHERE email=?""", (row['email'],))
                                 conn.commit()
-                                enviar_email(row['email'], "ACESSO LIBERADO", "Seu acesso ao Sentinela foi ativado.")
+                                enviar_email(row['email'], "ACESSO LIBERADO", "Seu acesso ao Sentinela foi liberado.")
                                 st.rerun()
                         else:
                             if c4.button("⛔ BLOQUEAR", key=f"bk_{idx}", use_container_width=True):
@@ -344,8 +345,7 @@ def carregar_clientes():
                 df = pd.read_excel(p).dropna(subset=['CÓD', 'RAZÃO SOCIAL'])
                 df['CÓD'] = df['CÓD'].apply(lambda x: str(int(float(x))))
                 return df
-            except Exception:
-                continue
+            except Exception: continue
     return pd.DataFrame()
 
 df_cli = carregar_clientes()
@@ -458,8 +458,7 @@ if emp_sel and not modo_adm:
                                     
                                     st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'relatorio': rel_list, 'executado': True})
                                     st.rerun()
-                                except Exception as e:
-                                    st.error(f"Erro no Processamento: {e}")
+                                except Exception as e: st.error(f"Erro no Processamento: {e}")
 
                 elif nome_tab_p == "🏢 CONFORMIDADE DOMÍNIO":
                     sub_v = []
@@ -478,7 +477,6 @@ if emp_sel and not modo_adm:
                                     with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
                                     with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
                                     st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
-                                
                                 elif nome_sub == "⚖️ DIFAL/ST":
                                     st.markdown("#### Auditoria Difal / ST / FECP")
                                     c1, c2, c3 = st.columns(3)
@@ -486,7 +484,6 @@ if emp_sel and not modo_adm:
                                     with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
                                     with c3: st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
                                     st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
-
                                 elif nome_sub == "🏨 RET":
                                     st.markdown("#### Auditoria RET")
                                     if ret_sel:
@@ -495,9 +492,7 @@ if emp_sel and not modo_adm:
                                         with c2: st.file_uploader("📑 Entradas RET", type=['xlsx'], key=f"ret_e_{v}")
                                         with c3: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"dom_ret_{v}")
                                         st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
-                                    else: 
-                                        st.warning("⚠️ Habilite o RET na Sidebar para este módulo.")
-
+                                    else: st.warning("⚠️ Habilite o RET na Sidebar para este módulo.")
                                 elif nome_sub == "💰 PIS/COFINS":
                                     st.markdown("#### Auditoria PIS/Cofins")
                                     c1, c2, c3 = st.columns(3)
