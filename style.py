@@ -59,7 +59,7 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* --- 💡 FIXAÇÃO DA MÃE: FORÇANDO ROSA PINK NA CONFORMIDADE --- */
+        /* --- 💡 ABAS MÃE ATIVAS: NEON EXTREMO --- */
 
         /* 🔵 ABA 1 (XML): AZUL NEON QUANDO ATIVA */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
@@ -81,17 +81,17 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- INTERIOR DA CAIXA (SUB-ABAS) --- */
+        /* --- INTERIOR DA CAIXA (O CAIXOTE BRILHANTE) --- */
         .stTabs .stTabs {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
             border-radius: 0 60px 60px 60px !important;
-            border: 4px solid #FF69B4 !important; /* CONEXÃO COM A MÃE ROSA */
+            border: 4px solid #FF69B4 !important;
             margin-top: -20px !important;
             box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
         }
 
-        /* --- 💗 SUB-ABAS (CORRIGIDO PARA ROSA) --- */
+        /* --- 💗 SUB-ABAS (CORREÇÃO OBRIGATÓRIA PARA ROSA) --- */
         
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
@@ -103,7 +103,7 @@ def aplicar_estilo_sentinela():
             margin-right: 5px !important;
         }
 
-        /* ICMS/IPI e outras sub-abas agora brilham em Rosa Neon */
+        /* Garante que ICMS/IPI e as outras fiquem Rosa Neon ao serem clicadas */
         .stTabs .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFD1DC 0%, #FF69B4 100%) !important;
             color: white !important;
