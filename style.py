@@ -17,49 +17,49 @@ def aplicar_estilo_sentinela():
             margin: 0px !important;
         }
         
-        /* FUNDO CREME QUENTE (PARA COMBINAR COM O CHOCOLATE) */
+        /* FUNDO OFF-WHITE QUENTE */
         .stApp {
-            background-color: #FAF7F2 !important; 
+            background-color: #FDFBF9 !important; 
         }
 
         /* AJUSTE DO CONTEÚDO */
         .block-container { padding-top: 2rem !important; }
         html, body, [class*="st-"] { font-family: 'Inter', sans-serif; }
 
-        /* TÍTULOS EM CHOCOLATE PROFUNDO */
-        .titulo-principal { color: #3D2314; font-size: 2.5rem; font-weight: 800; margin-bottom: 5px; }
+        /* TÍTULOS EM MOCHA MOUSSE PROFUNDO */
+        .titulo-principal { color: #5D3A1A; font-size: 2.5rem; font-weight: 800; margin-bottom: 5px; }
         .barra-marsala { 
             width: 80px; 
             height: 6px; 
-            background: linear-gradient(90deg, #FF69B4, #3D2314); 
+            background: linear-gradient(90deg, #FF69B4, #A67B5B); 
             border-radius: 10px; 
             margin-bottom: 30px; 
         }
 
-        /* ABAS METALIZADAS - CHOCOLATE COM BRILHO */
+        /* ABAS METALIZADAS - CARAMELO MOCHA COM BRILHO */
         .stTabs [data-baseweb="tab"] {
             height: 70px !important;
-            background: #E3D5CA !important; /* Tom café com leite quente */
+            background: #E6D5C3 !important; /* Tom Mousse de Caramelo */
             border-radius: 15px 15px 0px 0px !important;
             padding: 10px 40px !important;
             font-size: 20px !important; 
             font-weight: 600 !important;
-            color: #3D2314 !important;
+            color: #5D3A1A !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
 
-        /* BRILHO PINK NO HOVER (O TOQUE MARIANA) */
+        /* BRILHO PINK NO HOVER (TOQUE MARIANA) */
         .stTabs [data-baseweb="tab"]:hover {
             filter: brightness(1.1) !important;
             transform: translateY(-3px) !important;
-            background: #F2E9E4 !important;
+            background: #F0E2D3 !important;
             box-shadow: 0 10px 20px rgba(255, 105, 180, 0.2) !important;
             border-top: 2px solid #FF69B4 !important;
         }
 
-        /* ABA ATIVA - CHOCOLATE AMARGO COM ILUMINAÇÃO PINK */
+        /* ABA ATIVA - MOCHA CARAMELO COM ILUMINAÇÃO PINK */
         .stTabs [aria-selected="true"] {
-            background: linear-gradient(180deg, #5C3D2E 0%, #3D2314 50%, #24140B 100%) !important;
+            background: linear-gradient(180deg, #A67B5B 0%, #5D3A1A 50%, #3E2511 100%) !important;
             color: #FFFFFF !important;
             font-weight: 800 !important;
             box-shadow: 0 -5px 20px rgba(255, 105, 180, 0.3) !important;
@@ -67,22 +67,22 @@ def aplicar_estilo_sentinela():
             filter: contrast(1.1) !important;
         }
 
-        /* BOTÕES LUXO - CHOCOLATE COM BORDA PINK DIAMOND */
+        /* BOTÕES LUXO - CARAMELO MOCHA COM BORDA PINK GLOSS */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
-            background: linear-gradient(180deg, #5C3D2E 0%, #3D2314 50%, #24140B 100%) !important;
+            background: linear-gradient(180deg, #A67B5B 0%, #5D3A1A 50%, #3E2511 100%) !important;
             color: #FFFFFF !important;
             border-radius: 50px !important;
             font-weight: 800 !important;
-            border: 2px solid #FF69B4 !important; /* PINK HOT */
-            box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.2), 0 4px 10px rgba(255, 105, 180, 0.2) !important;
+            border: 2px solid #FF69B4 !important; 
+            box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.3), 0 4px 10px rgba(255, 105, 180, 0.2) !important;
             transition: all 0.3s ease !important;
             text-transform: uppercase;
         }
 
         .stButton > button:hover, .stDownloadButton > button:hover {
             transform: translateY(-2px) !important;
-            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.5) !important; /* Brilho Pink forte no hover */
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.5) !important; 
             filter: brightness(1.2) !important;
         }
 
@@ -97,7 +97,7 @@ def aplicar_estilo_sentinela():
 
         /* MÉTRICAS */
         [data-testid="stMetricValue"] {
-            color: #3D2314 !important;
+            color: #5D3A1A !important;
             text-shadow: 0px 0px 10px rgba(255, 105, 180, 0.15);
         }
         </style>
