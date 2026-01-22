@@ -1,28 +1,41 @@
 import streamlit as st
 
 def aplicar_estilo_sentinela():
-    # Injeta o botão HOME flutuante via HTML/JS para garantir que a sidebar abra
+    # Injeta o botão de Reset Visual no canto direito como uma segurança extra
     st.markdown("""
-        <div id="botao-home-mestre" onclick="abrirSidebar()">
+        <div id="botao-home-mestre" onclick="window.location.reload()">
             <span style="font-size: 24px;">🏠</span>
         </div>
-
-        <script>
-        function abrirSidebar() {
-            // Procura o botão oficial da sidebar e clica nele automaticamente
-            var botoes = window.parent.document.querySelectorAll('button');
-            for (var i = 0; i < botoes.length; i++) {
-                if (botoes[i].ariaLabel === "Expand sidebar" || botoes[i].innerText === "Expand sidebar") {
-                    botoes[i].click();
-                }
-            }
-        }
-        </script>
 
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* BOTÃO HOME FLUTUANTE À DIREITA */
+        /* --- TRAVA MESTRE: SIDEBAR ETERNA --- */
+        /* Impede que a barra lateral seja escondida ou minimizada */
+        [data-testid="stSidebar"] {
+            min-width: 350px !important;
+            max-width: 350px !important;
+            display: block !important;
+            visibility: visible !important;
+            position: relative !important;
+            background-color: #F3E9DC !important;
+            border-right: 2px solid #FF69B4 !important;
+        }
+
+        /* Remove o botão oficial de "X" para você nem ter a opção de fechar */
+        [data-testid="sidebar-close-button"], 
+        button[aria-label="Close sidebar"],
+        .st-emotion-cache-6qob1r {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        /* Ajusta o corpo da página para respeitar o espaço da sidebar fixa */
+        .stMain {
+            margin-left: 0px !important;
+        }
+
+        /* BOTÃO HOME (RESET) À DIREITA */
         #botao-home-mestre {
             position: fixed;
             right: 30px;
@@ -35,34 +48,20 @@ def aplicar_estilo_sentinela():
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            z-index: 9999999;
+            z-index: 1000000;
             box-shadow: 0 10px 25px rgba(255, 20, 147, 0.4);
             border: 2px solid white;
             transition: all 0.3s ease;
         }
 
-        #botao-home-mestre:hover {
-            transform: scale(1.1) rotate(10deg);
-            box-shadow: 0 15px 35px rgba(255, 20, 147, 0.6);
-        }
-
-        /* RESET TOTAL E SEGURANÇA */
+        /* RESET DO LIXO VISUAL DO TOPO */
         header, .st-emotion-cache-zq59db, 
         #keyboard_double, .st-emotion-cache-10oheav, 
-        span[data-testid="stHeaderActionElements"],
-        button[title="View keyboard shortcuts"] {
+        span[data-testid="stHeaderActionElements"] {
             display: none !important;
-            visibility: hidden !important;
         }
 
-        /* GARANTE QUE A SETINHA PADRÃO TAMBÉM APAREÇA CASO PRECISE */
-        [data-testid="stSidebarCollapsedControl"] {
-            display: flex !important;
-            visibility: visible !important;
-            z-index: 1000001 !important;
-        }
-
-        /* FUNDO E TIPOGRAFIA (SEU PADRÃO APROVADO) */
+        /* FUNDO E TIPOGRAFIA BOUTIQUE */
         .stApp { background: radial-gradient(circle at top left, #FCF8F4 0%, #F3E9DC 100%) !important; }
         .block-container { padding-top: 2.5rem !important; }
         html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
@@ -79,9 +78,6 @@ def aplicar_estilo_sentinela():
             border-radius: 50px; margin-top: 10px; margin-bottom: 50px;
             box-shadow: 0 0 15px rgba(255, 105, 180, 0.8);
         }
-
-        /* SIDEBAR MOCHA BOUTIQUE */
-        [data-testid="stSidebar"] { background-color: #F3E9DC !important; border-right: 1px solid rgba(166, 123, 91, 0.2) !important; }
 
         /* ABAS COM BRILHO ROSA */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
