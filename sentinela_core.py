@@ -49,28 +49,20 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
             prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
             
             linha = {
-                "TIPO_SISTEMA": tipo_operacao,                 # 1
-                "CHAVE_ACESSO": str(chave).strip(),            # 2
-                "NUM_NF": buscar_tag_recursiva('nNF', ide),     # 3
-                "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide), # 4
-                "CNPJ_EMIT": cnpj_emit,                        # 5
-                "UF_EMIT": buscar_tag_recursiva('UF', emit),   # 6
-                "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), # 7
-                "IE_DEST": buscar_tag_recursiva('IE', dest),   # 8
-                "UF_DEST": buscar_tag_recursiva('UF', dest),   # 9
-                "CFOP": buscar_tag_recursiva('CFOP', prod),    # 10
-                "NCM": tratar_ncm_texto(buscar_tag_recursiva('NCM', prod)), # 11
-                "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)), # 12
-                "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)), # 13
-                "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)), # 14
-                "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)), # 15
-                "CST-ICMS": (buscar_tag_recursiva('orig', icms_no) + (buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no))), # 16
-                "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)), # 17
-                "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),      # 18
-                "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)), # 19
-                "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)), # 20
-                "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),    # 21
-                "Status": "A PROCESSAR" # 22
+                "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
+                "NUM_NF": buscar_tag_recursiva('nNF', ide), 
+                "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
+                "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
+                "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), 
+                "IE_DEST": buscar_tag_recursiva('IE', dest), "UF_DEST": buscar_tag_recursiva('UF', dest), 
+                "CFOP": buscar_tag_recursiva('CFOP', prod), "NCM": tratar_ncm_texto(buscar_tag_recursiva('NCM', prod)), 
+                "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)), "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)), 
+                "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)), "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)), 
+                "CST-ICMS": (buscar_tag_recursiva('orig', icms_no) + (buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no))), 
+                "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)), "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(), 
+                "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)), 
+                "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)), "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)), 
+                "Status": "A PROCESSAR"
             }
             dados_lista.append(linha)
     except: pass
@@ -90,59 +82,41 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DO EXCEL FINAL (COM IMPORTAÇÃO DINÂMICA) ---
+# --- GERAÇÃO DO EXCEL FINAL (DETECTOR DE FUNÇÕES) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
-    
     if not df_xs.empty:
-        # CRUZAMENTO COM GARIMPO
-        mapa_status = {}
-        for arquivo_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
+        # MAPEAR STATUS
+        st_map = {}
+        for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
             try:
-                arquivo_auth.seek(0)
-                if arquivo_auth.name.endswith('.xlsx'):
-                    df_auth = pd.read_excel(arquivo_auth, header=None)
-                else:
-                    df_auth = pd.read_csv(arquivo_auth, header=None, sep=None, engine='python')
-                
-                df_auth[0] = df_auth[0].astype(str).str.replace('NFe', '').str.strip()
-                mapa_status.update(df_auth.set_index(0)[5].to_dict())
+                f_auth.seek(0)
+                df_a = pd.read_excel(f_auth, header=None) if f_auth.name.endswith('.xlsx') else pd.read_csv(f_auth, header=None, sep=None, engine='python')
+                df_a[0] = df_a[0].astype(str).str.replace('NFe', '').str.strip()
+                st_map.update(df_a.set_index(0)[5].to_dict())
             except: continue
+        df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada no Garimpo')
 
-        df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(mapa_status).fillna('⚠️ N/Encontrada no Garimpo')
-        
-        # --- EXECUÇÃO DAS AUDITORIAS ---
-        
-        # 1. ICMS (Módulo Essencial)
-        try:
-            import Auditorias.audit_icms as mod_icms
-            mod_icms.processar_icms(df_xs, writer, cod_cliente, df_xe)
-        except Exception as e: st.error(f"Erro ICMS: {e}")
+        # --- EXECUÇÃO DINÂMICA ---
+        modulos = [
+            ('Auditorias.audit_icms', [df_xs, writer, cod_cliente, df_xe]),
+            ('Auditorias.audit_ipi', [df_xs, writer, cod_cliente]),
+            ('Auditorias.audit_pis_cofins', [df_xs, writer, cod_cliente, regime]),
+            ('Auditorias.audit_difal', [df_xs, writer])
+        ]
 
-        # 2. IPI (O que está dando erro de nome)
-        try:
-            import Auditorias.audit_ipi as mod_ipi
-            # Tenta os dois nomes mais comuns: processar_ipi ou audit_ipi
-            if hasattr(mod_ipi, 'processar_ipi'):
-                mod_ipi.processar_ipi(df_xs, writer, cod_cliente)
-            elif hasattr(mod_ipi, 'audit_ipi'):
-                mod_ipi.audit_ipi(df_xs, writer, cod_cliente)
-            else:
-                st.warning("⚠️ Módulo IPI carregado, mas a função de processamento não foi encontrada.")
-        except Exception as e: st.error(f"Erro IPI: {e}")
+        for mod_path, args in modulos:
+            try:
+                import importlib
+                m = importlib.import_module(mod_path)
+                # Tenta achar qualquer função que pareça a correta
+                funcs = [f for f in dir(m) if f.startswith(('processar', 'audit')) and callable(getattr(m, f))]
+                if funcs:
+                    getattr(m, funcs[0])(*args)
+                else:
+                    st.error(f"⚠️ Nenhuma função de auditoria achada em {mod_path}")
+            except Exception as e: st.error(f"Erro em {mod_path}: {e}")
 
-        # 3. PIS/COFINS
-        try:
-            import Auditorias.audit_pis_cofins as mod_pc
-            mod_pc.processar_pc(df_xs, writer, cod_cliente, regime)
-        except Exception as e: st.error(f"Erro PIS/COFINS: {e}")
-
-        # 4. DIFAL
-        try:
-            import Auditorias.audit_difal as mod_difal
-            mod_difal.processar_difal(df_xs, writer)
-        except Exception as e: st.error(f"Erro DIFAL: {e}")
-
-        # 5. Outros (Resumo, Gerenciais)
+        # Finalizações
         try:
             from audit_resumo import gerar_aba_resumo
             gerar_aba_resumo(writer)
