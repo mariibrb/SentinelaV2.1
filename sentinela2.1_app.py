@@ -177,6 +177,12 @@ st.markdown("""
         margin-top: 0px !important;
         padding-top: 0px !important;
     }
+    /* Estilo para reduzir a área da logo na sidebar */
+    .logo-container {
+        margin-top: -60px !important; 
+        margin-bottom: -40px !important;
+        padding: 0 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -310,13 +316,15 @@ v = st.session_state['v_ver']
 # --- SIDEBAR DINÂMICA (AQUI O BOTÃO FOI MOVIDO) ---
 emp_sel = ""
 with st.sidebar:
-    # --- AJUSTE DA LOGO NA PASTA STREAMLIT ---
+    # --- AJUSTE DA ÁREA DA LOGO (REDUZIDA VIA CSS) ---
+    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
     if os.path.exists("streamlit/logo.png"):
         st.image("streamlit/logo.png", use_container_width=True)
     elif os.path.exists("logo.png"):
         st.image("logo.png", use_container_width=True)
     elif os.path.exists(".streamlit/logo.png"):
         st.image(".streamlit/logo.png", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
     st.write(f"👤 Olá, **{st.session_state['user_data']['nome']}**")
