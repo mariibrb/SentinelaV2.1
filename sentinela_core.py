@@ -6,18 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (VOLTANDO AO SEU PADRÃO) ---
-try:
-    from audit_resumo import gerar_aba_resumo
-    from Auditorias.audit_icms import processar_icms
-    from Auditorias.audit_ipi import processar_ipi
-    from Auditorias.audit_pis_cofins import processar_pc
-    from Auditorias.audit_difal import processar_difal
-    from Apuracoes.apuracao_difal import gerar_resumo_uf
-    from Gerenciais.audit_gerencial import gerar_abas_gerenciais
-except ImportError as e:
-    st.error(f"⚠️ Erro de Dependência: {e}")
-
+# --- UTILITÁRIOS ---
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -40,6 +29,7 @@ def tratar_ncm_texto(ncm):
     if pd.isna(ncm) or ncm == "": return ""
     return re.sub(r'\D', '', str(ncm)).strip()
 
+# --- MOTOR DE PROCESSAMENTO XML (ORDEM EXATA DAS 22 COLUNAS) ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -100,12 +90,26 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
+# --- GERAÇÃO DO EXCEL FINAL (AQUI QUEBRAMOS O ERRO DE IMPORTAÇÃO) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
+    # Importação diferida: evita que o IPI tente ler o Core antes dele carregar
+    try:
+        from audit_resumo import gerar_aba_resumo
+        from Auditorias.audit_icms import processar_icms
+        from Auditorias.audit_ipi import processar_ipi
+        from Auditorias.audit_pis_cofins import processar_pc
+        from Auditorias.audit_difal import processar_difal
+        from Apuracoes.apuracao_difal import gerar_resumo_uf
+        from Gerenciais.audit_gerencial import gerar_abas_gerenciais
+    except ImportError as e:
+        st.error(f"⚠️ Erro ao carregar módulos especialistas: {e}")
+        return
+
     try: gerar_aba_resumo(writer)
     except: pass
     
     if not df_xs.empty:
-        # CRUZAMENTO COM GARIMPO (AUTENTICIDADE)
+        # CRUZAMENTO COM GARIMPO
         mapa_status = {}
         for arquivo_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
             try:
@@ -117,7 +121,7 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
 
         df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(mapa_status).fillna('⚠️ N/Encontrada no Garimpo')
         
-        # AUDITORIAS (Voltando ao seu motor original)
+        # Inicia Auditorias
         processar_icms(df_xs, writer, cod_cliente, df_xe)
         processar_ipi(df_xs, writer, cod_cliente)
         processar_pc(df_xs, writer, cod_cliente, regime)
