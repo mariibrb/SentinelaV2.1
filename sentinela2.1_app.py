@@ -458,9 +458,22 @@ elif emp_sel and not modo_adm:
                 if nome_tab_p == "📂 ANÁLISE XML":
                     st.markdown("### 📥 Central de Importação e Garimpo")
                     c1, c2, c3 = st.columns(3)
-                    with c1: u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
-                    with c2: u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
-                    with c3: u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
+                    with c1: 
+                        u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
+                        if u_xml:
+                            if st.button("🗑️ Excluir Tudo (XML)", use_container_width=True, key="clr_xml"):
+                                st.session_state['v_ver'] += 1; st.rerun()
+                    with c2: 
+                        u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
+                        if u_ae:
+                            if st.button("🗑️ Excluir Tudo (Entradas)", use_container_width=True, key="clr_ae"):
+                                st.session_state['v_ver'] += 1; st.rerun()
+                    with c3: 
+                        u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
+                        if u_as:
+                            if st.button("🗑️ Excluir Tudo (Saídas)", use_container_width=True, key="clr_as"):
+                                st.session_state['v_ver'] += 1; st.rerun()
+
                     if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True):
                         if u_xml:
                             with st.spinner("Auditando..."):
@@ -510,31 +523,75 @@ elif emp_sel and not modo_adm:
                                 if nome_sub == "📊 ICMS/IPI":
                                     st.markdown("#### Auditoria ICMS/IPI")
                                     c1, c2 = st.columns(2)
-                                    with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
-                                    with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
+                                    with c1: 
+                                        up1 = st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
+                                        if up1:
+                                            if st.button("🗑️ Excluir Saídas", use_container_width=True, key="clr_icms_s"):
+                                                st.session_state['v_ver'] += 1; st.rerun()
+                                    with c2: 
+                                        up2 = st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
+                                        if up2:
+                                            if st.button("🗑️ Excluir Entradas", use_container_width=True, key="clr_icms_e"):
+                                                st.session_state['v_ver'] += 1; st.rerun()
                                     st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
                                 elif nome_sub == "⚖️ DIFAL/ST":
                                     st.markdown("#### Auditoria Difal / ST / FECP")
                                     c1, c2, c3 = st.columns(3)
-                                    with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"dif_s_{v}")
-                                    with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
-                                    with c3: st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
+                                    with c1: 
+                                        up1 = st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"dif_s_{v}")
+                                        if up1:
+                                            if st.button("🗑️ Excluir Saídas", use_container_width=True, key="clr_dif_s"):
+                                                st.session_state['v_ver'] += 1; st.rerun()
+                                    with c2: 
+                                        up2 = st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
+                                        if up2:
+                                            if st.button("🗑️ Excluir Entradas", use_container_width=True, key="clr_dif_e"):
+                                                st.session_state['v_ver'] += 1; st.rerun()
+                                    with c3: 
+                                        up3 = st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
+                                        if up3:
+                                            if st.button("🗑️ Excluir Demonstrativo", use_container_width=True, key="clr_dif_d"):
+                                                st.session_state['v_ver'] += 1; st.rerun()
                                     st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
                                 elif nome_sub == "🏨 RET":
                                     st.markdown("#### Auditoria RET")
                                     if ret_sel:
                                         c1, c2, c3 = st.columns(3)
-                                        with c1: st.file_uploader("📑 Saídas RET", type=['xlsx'], key=f"ret_s_{v}")
-                                        with c2: st.file_uploader("📑 Entradas RET", type=['xlsx'], key=f"ret_e_{v}")
-                                        with c3: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"dom_ret_{v}")
+                                        with c1: 
+                                            up1 = st.file_uploader("📑 Saídas RET", type=['xlsx'], key=f"ret_s_{v}")
+                                            if up1:
+                                                if st.button("🗑️ Excluir Saídas", use_container_width=True, key="clr_ret_s"):
+                                                    st.session_state['v_ver'] += 1; st.rerun()
+                                        with c2: 
+                                            up2 = st.file_uploader("📑 Entradas RET", type=['xlsx'], key=f"ret_e_{v}")
+                                            if up2:
+                                                if st.button("🗑️ Excluir Entradas", use_container_width=True, key="clr_ret_e"):
+                                                    st.session_state['v_ver'] += 1; st.rerun()
+                                        with c3: 
+                                            up3 = st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"dom_ret_{v}")
+                                            if up3:
+                                                if st.button("🗑️ Excluir Demonstrativo", use_container_width=True, key="clr_ret_d"):
+                                                    st.session_state['v_ver'] += 1; st.rerun()
                                         st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
                                     else: st.warning("⚠️ Habilite o RET na Sidebar para este módulo.")
                                 elif nome_sub == "💰 PIS/COFINS":
                                     st.markdown("#### Auditoria PIS/Cofins")
                                     c1, c2, c3 = st.columns(3)
-                                    with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"pis_s_{v}")
-                                    with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"pis_e_{v}")
-                                    with c3: st.file_uploader("📄 Demonstrativo PIS/COFINS", type=['xlsx'], key=f"dom_pisc_{v}")
+                                    with c1: 
+                                        up1 = st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"pis_s_{v}")
+                                        if up1:
+                                            if st.button("🗑️ Excluir Saídas", use_container_width=True, key="clr_pis_s"):
+                                                st.session_state['v_ver'] += 1; st.rerun()
+                                    with c2: 
+                                        up2 = st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"pis_e_{v}")
+                                        if up2:
+                                            if st.button("🗑️ Excluir Entradas", use_container_width=True, key="clr_pis_e"):
+                                                st.session_state['v_ver'] += 1; st.rerun()
+                                    with c3: 
+                                        up3 = st.file_uploader("📄 Demonstrativo PIS/COFINS", type=['xlsx'], key=f"dom_pisc_{v}")
+                                        if up3:
+                                            if st.button("🗑️ Excluir Demonstrativo", use_container_width=True, key="clr_pis_d"):
+                                                st.session_state['v_ver'] += 1; st.rerun()
                                     st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
         
         # --- RESULTADOS GARIMPEIRO (MANTIDO CONFORME SUA SOLICITAÇÃO) ---
