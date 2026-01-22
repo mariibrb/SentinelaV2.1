@@ -12,6 +12,27 @@ from hashlib import sha256
 from style import aplicar_estilo_sentinela
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 
+# --- CONFIGURAÇÃO DE E-MAIL (FUNCIONALIDADE ADICIONADA) ---
+def enviar_email(destinatario, assunto, corpo):
+    remetente = "marii.brbj@gmail.com"
+    # Sua Chave de Segurança gerada no Google:
+    senha_app = "odmurqgqpamjlaog" 
+    
+    msg = MIMEMultipart()
+    msg['From'] = remetente
+    msg['To'] = destinatario
+    msg['Subject'] = assunto
+    msg.attach(MIMEText(corpo, 'plain'))
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(remetente, senha_app)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except:
+        return False
+
 # --- CONFIGURAÇÃO DE SEGURANÇA E BANCO DE DATOS ---
 def init_db():
     conn = sqlite3.connect('sentinela_usuarios.db')
@@ -235,6 +256,8 @@ if not st.session_state['user_data']:
                                          (n_nome, n_user, n_email, hash_senha(n_pass)))
                             conn.commit()
                             conn.close()
+                            # ENVIO DE E-MAIL DE AVISO PARA VOCÊ
+                            enviar_email("marii.brbj@gmail.com", "NOVA SOLICITAÇÃO SENTINELA", f"O usuário {n_nome} ({n_email}) solicitou acesso.")
                             st.success("Solicitação enviada! Você será notificado após a análise.")
                         except Exception:
                             st.error("Este e-mail ou usuário já está cadastrado.")
@@ -278,8 +301,11 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                     st_txt = "🟢 ATIVO" if row['status'] == 'ATIVO' else "🟡 PENDENTE"
                     c2.write(f"Status Atual: {st_txt}")
                     if c2.button("🔄 Reset Senha", key=f"rs_{idx}"):
-                        conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha("123456"), row['email']))
+                        nova_senha_txt = "123456"
+                        conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha(nova_senha_txt), row['email']))
                         conn.commit()
+                        # ENVIO DE E-MAIL PARA O USUÁRIO
+                        enviar_email(row['email'], "SENHA RESETADA - SENTINELA", f"Olá {row['nome']},\n\nSua senha foi resetada para: {nova_senha_txt}\nAltere no próximo login.")
                         st.info("Senha resetada para: 123456")
 
                     p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
@@ -292,7 +318,10 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                             if c4.button("✅ LIBERAR", key=f"ok_{idx}", use_container_width=True):
                                 conn.execute("""UPDATE usuarios SET nome=?, usuario=?, email=?, status='ATIVO', perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
                                              (edit_nome, edit_user, edit_mail, int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
-                                conn.commit(); st.rerun()
+                                conn.commit()
+                                # ENVIO DE E-MAIL PARA O USUÁRIO
+                                enviar_email(row['email'], "ACESSO LIBERADO - SENTINELA", f"Olá {row['nome']},\n\nSeu acesso ao sistema Sentinela foi liberado.")
+                                st.rerun()
                         else:
                             if c4.button("⛔ BLOQUEAR", key=f"bk_{idx}", use_container_width=True):
                                 conn.execute("UPDATE usuarios SET status='PENDENTE' WHERE email=?", (row['email'],))
@@ -359,14 +388,12 @@ with st.sidebar:
             st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}</div>", unsafe_allow_html=True)
             
             # --- VERIFICAÇÃO DOS AVISOS NO SIDEBAR ---
-            # 1. Base de Impostos
             path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
             if os.path.exists(path_base):
                 st.success("💎 Modo Elite: Base Localizada")
             else:
                 st.warning("🔍 Modo Cegas: Base não localizada")
                 
-            # 2. Base RET
             path_ret_base = f"RET/{cod_c}-RET_MG.xlsx"
             if os.path.exists(path_ret_base):
                 st.success("💎 Modo Elite: Base RET Localizada")
@@ -427,27 +454,22 @@ if emp_sel and not modo_adm:
                                                         res, is_p = identify_xml_info(xml_d, cnpj_limpo, name)
                                                         if res and res["Chave"] not in p_keys:
                                                             p_keys.add(res["Chave"])
-                                                            z_org.writestr(f"{res['Pasta']}/{name}", xml_d)
-                                                            z_todos.writestr(name, xml_d)
+                                                            z_org.writestr(f"{res['Pasta']}/{name}", xml_d); z_todos.writestr(name, xml_d)
                                                             rel_list.append(res)
                                                             if is_p:
                                                                 if res["Status"] in st_counts: st_counts[res["Status"]] += 1
                                                                 sk = (res["Tipo"], res["Série"])
                                                                 if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
-                                                                seq_map[sk]["nums"].add(res["Número"])
-                                                                seq_map[sk]["valor"] += res["Valor"]
+                                                                seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
                                     
                                     res_f, fal_f = [], []
                                     for (t, s), d in seq_map.items():
-                                        ns = d["nums"]
-                                        res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
-                                        for b in sorted(list(set(range(min(ns), max(ns) + 1)) - ns)):
-                                            fal_f.append({"Série": s, "Nº Faltante": b})
+                                        ns = d["nums"]; res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
+                                        for b in sorted(list(set(range(min(ns), max(ns) + 1)) - ns)): fal_f.append({"Série": s, "Nº Faltante": b})
                                     
                                     st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'relatorio': rel_list, 'executado': True})
                                     st.rerun()
-                                except Exception as e:
-                                    st.error(f"Erro no Processamento: {e}")
+                                except Exception as e: st.error(f"Erro no Processamento: {e}")
 
                 elif nome_tab_p == "🏢 CONFORMIDADE DOMÍNIO":
                     sub_abas_v = []
@@ -466,7 +488,6 @@ if emp_sel and not modo_adm:
                                     with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
                                     with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
                                     st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
-                                
                                 elif nome_sub == "⚖️ DIFAL/ST":
                                     st.markdown("#### Auditoria Difal / ST / FECP")
                                     c1, c2, c3 = st.columns(3)
@@ -474,7 +495,6 @@ if emp_sel and not modo_adm:
                                     with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
                                     with c3: st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
                                     st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
-
                                 elif nome_sub == "🏨 RET":
                                     st.markdown("#### Auditoria RET")
                                     if ret_sel:
@@ -483,9 +503,7 @@ if emp_sel and not modo_adm:
                                         with c2: st.file_uploader("📑 Entradas RET", type=['xlsx'], key=f"ret_e_{v}")
                                         with c3: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"dom_ret_{v}")
                                         st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
-                                    else: 
-                                        st.warning("⚠️ Habilite o RET na Sidebar para este módulo.")
-
+                                    else: st.warning("⚠️ Habilite o RET na Sidebar.")
                                 elif nome_sub == "💰 PIS/COFINS":
                                     st.markdown("#### Auditoria PIS/Cofins")
                                     c1, c2, c3 = st.columns(3)
@@ -501,19 +519,11 @@ if emp_sel and not modo_adm:
                 if st.text_input("Senha", type="password", key="p_down") == "Senhaforte@123":
                     st.download_button("💾 RELATÓRIO FINAL EXCEL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
                     st.download_button("📂 ZIP ORGANIZADO", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
-            
             st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
-            sc = st.session_state.get('st_counts')
-            c1, c2, c3 = st.columns(3)
-            c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
-            c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0))
-            c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
+            sc = st.session_state.get('st_counts'); c1, c2, c3 = st.columns(3)
+            c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', []))); c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
             cr, cf = st.columns(2)
-            with cr:
-                st.write("**Resumo por Série:**"); st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
-            with cf:
-                st.write("**Notas Faltantes:**"); st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
-    else:
-        st.warning("⚠️ Você não possui permissões de auditoria ativa. Contate a administração.")
-elif not modo_adm:
-    st.info("👈 Selecione a empresa na barra lateral para começar a auditoria.")
+            with cr: st.write("**Resumo por Série:**"); st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
+            with cf: st.write("**Notas Faltantes:**"); st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
+    else: st.warning("⚠️ Você não possui permissões de auditoria ativa.")
+elif not modo_adm: st.info("👈 Selecione a empresa na barra lateral para começar a auditoria.")
