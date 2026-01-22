@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit st
 
 def aplicar_estilo_sentinela():
     st.markdown("""
@@ -10,7 +10,7 @@ def aplicar_estilo_sentinela():
             min-width: 350px !important;
             max-width: 350px !important;
             background-color: #F3E9DC !important; 
-            border-right: 4px solid #FF69B4 !important;
+            border-right: 5px solid #FF69B4 !important;
             z-index: 999999 !important;
             box-shadow: 10px 0 30px rgba(0,0,0,0.1) !important;
         }
@@ -48,7 +48,7 @@ def aplicar_estilo_sentinela():
             align-items: flex-end;
         }
 
-        /* Estilo Inativo: Metal Bronzeado Mocha */
+        /* Aba Inativa: Metal Bronzeado Mocha */
         .stTabs [data-baseweb="tab"] {
             height: 90px !important;
             background: linear-gradient(180deg, #FDFDFD 0%, #D8C7B1 100%) !important;
@@ -63,9 +63,9 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* --- ABAS MÃE ATIVAS (NEON EXTREMO) --- */
+        /* --- ABA MÃE ATIVA: NEON EXTREMO --- */
 
-        /* 🔵 ABA 1 (XML): AZUL CROMADO + GLOW */
+        /* 🔵 ABA 1 (XML): AZUL NEON */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
@@ -75,7 +75,7 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* 💗 ABA 2 (CONFORMIDADE): ROSA PINK GLOSS + GLOW */
+        /* 💗 ABA 2 (CONFORMIDADE): ROSA NEON */
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             color: white !important;
@@ -85,31 +85,33 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- 📦 INTERIOR DA CAIXA (O CAIXOTE BRILHANTE) --- */
+        /* --- 📦 O CAIXOTE BRANCO COM BORDA NEON (PADRONIZADO) --- */
 
-        /* CAIXOTE XML (Contorno Azul Neon) */
+        /* Aplica a base branca para todas as abas */
+        [data-testid="stTabPanel"] {
+            background: rgba(255, 255, 255, 0.85) !important;
+            padding: 40px !important;
+            border-radius: 0 60px 60px 60px !important;
+            margin-top: -20px !important;
+            box-shadow: inset 0 20px 40px rgba(0,0,0,0.05) !important;
+            border: 4px solid transparent !important;
+        }
+
+        /* CAIXOTE DA ANÁLISE XML (Contorno Azul) */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            background: rgba(255, 255, 255, 0.85) !important;
-            padding: 40px !important;
-            border-radius: 0 60px 60px 60px !important;
-            border: 4px solid #00D1FF !important; /* BORDA AZUL AQUI */
-            border-top: 8px solid #00BFFF !important; /* TOPO MAIS FORTE */
-            margin-top: -20px !important;
-            box-shadow: 0 10px 60px rgba(0, 209, 255, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
+            border: 4px solid #00D1FF !important;
+            border-top: 8px solid #00BFFF !important;
+            box-shadow: 0 15px 50px rgba(0, 209, 255, 0.3) !important;
         }
 
-        /* CAIXOTE FISCAL (Contorno Rosa Neon) */
+        /* CAIXOTE DA CONFORMIDADE (Contorno Rosa) */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            background: rgba(255, 255, 255, 0.85) !important;
-            padding: 40px !important;
-            border-radius: 0 60px 60px 60px !important;
-            border: 4px solid #FFB6C1 !important; /* BORDA ROSA AQUI */
-            border-top: 8px solid #FF69B4 !important; /* TOPO MAIS FORTE */
-            margin-top: -20px !important;
-            box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
+            border: 4px solid #FFB6C1 !important;
+            border-top: 8px solid #FF69B4 !important;
+            box-shadow: 0 15px 50px rgba(255, 105, 180, 0.3) !important;
         }
 
-        /* --- SUB-ABAS (SÓ APARECEM NO FISCAL) --- */
+        /* --- SUB-ABAS (SÓ NO FISCAL) --- */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #FDFDFD !important;
@@ -118,14 +120,13 @@ def aplicar_estilo_sentinela():
             color: #DB7093 !important;
             border: 1px solid #FFD1DC !important;
             margin-right: 5px !important;
-            transform: none !important;
         }
 
         .stTabs .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFD1DC 0%, #FF69B4 100%) !important;
             color: white !important;
             transform: translateY(-12px) !important;
-            box-shadow: 0 0 25px #FF69B4, inset 0 2px 5px rgba(255,255,255,0.5) !important;
+            box-shadow: 0 0 25px #FF69B4 !important;
             border-bottom: 5px solid white !important;
         }
         </style>
