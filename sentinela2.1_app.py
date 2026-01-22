@@ -251,7 +251,6 @@ if not st.session_state['user_data']:
                     if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                         conn = sqlite3.connect('sentinela_usuarios.db')
                         c = conn.cursor()
-                        # AJUSTE NO LOGIN: Busca por usuário OU e-mail para permitir 'mariana'
                         c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
                                      FROM usuarios 
                                      WHERE (usuario=? OR email=?) AND senha=?""", 
@@ -285,7 +284,6 @@ if not st.session_state['user_data']:
                     if n_nome and n_email and n_pass:
                         try:
                             conn = sqlite3.connect('sentinela_usuarios.db')
-                            # AJUSTE: O e-mail agora é automaticamente o usuário
                             conn.execute("""INSERT INTO usuarios 
                                             (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
                                             VALUES (?, ?, ?, ?, 'PENDENTE', 'USER', 1, 0, 0, 0, 0)""", 
@@ -400,7 +398,7 @@ with st.sidebar:
     else:
         st.info("⚙️ Modo Administrativo Ativo.")
 
-# PAINEL ADM E ÁREA CENTRAL (MANTIDOS INTEGRALMENTE)
+# PAINEL ADM E ÁREA CENTRAL
 if modo_adm:
     with st.container(border=True):
         st.subheader("🛠️ PAINEL DE CONTROLE DE USUÁRIOS")
@@ -594,35 +592,20 @@ elif emp_sel and not modo_adm:
                                                 st.session_state['v_ver'] += 1; st.rerun()
                                     st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
         
-        # --- RESULTADOS GARIMPEIRO (MANTIDO CONFORME SUA SOLICITAÇÃO) ---
+        # --- ÁREA DE DOWNLOADS (TRAVA DE SENHA REMOVIDA) ---
         if st.session_state.get('executado'):
             st.markdown("---")
             st.write("### 📥 Área de Downloads")
             c1, c2, c3 = st.columns(3)
             
-            # BLOCO BOTÃO 1
             with c1:
-                if st.button("💾 RELATÓRIO EXCEL", use_container_width=True, key="btn_d1"):
-                    st.session_state['show_p1'] = True
-                if st.session_state.get('show_p1'):
-                    if st.text_input("Senha para Relatório", type="password", key="p1") == "Senhaforte@123":
-                        st.download_button("Clique para Baixar", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
+                st.download_button("💾 BAIXAR RELATÓRIO EXCEL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, type="primary")
 
-            # BLOCO BOTÃO 2
             with c2:
-                if st.button("📂 ZIP ORGANIZADO", use_container_width=True, key="btn_d2"):
-                    st.session_state['show_p2'] = True
-                if st.session_state.get('show_p2'):
-                    if st.text_input("Senha para ZIP", type="password", key="p2") == "Senhaforte@123":
-                        st.download_button("Clique para Baixar", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+                st.download_button("📂 BAIXAR ZIP ORGANIZADO", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
 
-            # BLOCO BOTÃO 3
             with c3:
-                if st.button("📦 TODOS XMLS", use_container_width=True, key="btn_d3"):
-                    st.session_state['show_p3'] = True
-                if st.session_state.get('show_p3'):
-                    if st.text_input("Senha para Todos", type="password", key="p3") == "Senhaforte@123":
-                        st.download_button("Clique para Baixar", st.session_state['z_todos'], "todos_xmls.zip", use_container_width=True)
+                st.download_button("📦 BAIXAR TODOS XMLS", st.session_state['z_todos'], "todos_xmls.zip", use_container_width=True)
 
             st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
             sc = st.session_state.get('st_counts'); d1, d2, d3 = st.columns(3)
