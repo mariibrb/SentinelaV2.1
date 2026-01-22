@@ -5,8 +5,8 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* RESET TOTAL E CONTROLE DE SIDEBAR */
-        header, .st-emotion-cache-18ni7ap, .st-emotion-cache-zq59db, 
+        /* RESET TOTAL DO VISUAL */
+        header, .st-emotion-cache-zq59db, 
         #keyboard_double, .st-emotion-cache-10oheav, 
         span[data-testid="stHeaderActionElements"],
         button[title="View keyboard shortcuts"] {
@@ -14,11 +14,18 @@ def aplicar_estilo_sentinela():
             visibility: hidden !important;
         }
         
-        /* SETA DE REABRIR SIDEBAR EM PINK */
-        [data-testid="sidebar-close-button"], .st-emotion-cache-6qob1r button {
+        /* --- TRAVA DE SEGURANÇA: FORÇAR A SETINHA DA SIDEBAR A APARECER --- */
+        /* Esse seletor garante que o botão de abrir a sidebar (setinha) apareça em PINK */
+        section[data-testid="stSidebarCollapsedControl"] {
             display: flex !important;
             visibility: visible !important;
-            color: #FF69B4 !important;
+            background-color: rgba(255, 105, 180, 0.1) !important;
+            border-radius: 0 10px 10px 0 !important;
+        }
+        
+        section[data-testid="stSidebarCollapsedControl"] button {
+            color: #FF69B4 !important; /* Setinha Pink */
+            transform: scale(1.2);
         }
 
         /* FUNDO AREIA QUENTE BOUTIQUE */
@@ -41,7 +48,6 @@ def aplicar_estilo_sentinela():
         }
         .titulo-principal span { font-weight: 200 !important; color: #A67B5B; }
 
-        /* LINHA DE LUZ FILIFORME PINK */
         .barra-marsala { 
             width: 60px; height: 3px; background: #FF69B4; 
             border-radius: 50px; margin-top: 10px; margin-bottom: 50px;
@@ -54,15 +60,9 @@ def aplicar_estilo_sentinela():
             border-right: 1px solid rgba(166, 123, 91, 0.2) !important;
         }
 
-        /* --- HIERARQUIA DE ABAS COM BRILHO RESTAURADO --- */
+        /* --- ABAS COM HIERARQUIA E BRILHO --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 12px !important;
-            background-color: transparent !important;
-            margin-bottom: 20px !important;
-        }
-
-        /* Pílulas Gerais (Nível 1) */
+        
         .stTabs [data-baseweb="tab"] {
             height: 48px !important;
             background: rgba(166, 123, 91, 0.15) !important;
@@ -75,37 +75,24 @@ def aplicar_estilo_sentinela():
             border: 1px solid rgba(255, 255, 255, 0.5) !important;
         }
 
-        /* O BRILHO ROSA NO HOVER (RESTAURADO) */
+        /* O BRILHO ROSA NO HOVER */
         .stTabs [data-baseweb="tab"]:hover {
             transform: translateY(-3px) !important;
             background: white !important;
             color: #FF69B4 !important;
             filter: brightness(1.1) !important;
-            box-shadow: 0 12px 25px rgba(255, 105, 180, 0.4) !important; /* Brilho neon pink */
+            box-shadow: 0 12px 25px rgba(255, 105, 180, 0.4) !important;
             border-top: 2px solid #FF69B4 !important;
         }
 
-        /* Aba Selecionada (Foco no Mocha) */
         .stTabs [aria-selected="true"] {
             background: #5D3A1A !important;
             color: white !important;
             font-weight: 600 !important;
             box-shadow: 0 8px 20px rgba(93, 58, 26, 0.2) !important;
-            border: none !important;
         }
 
-        /* Abas Filhas (Nível 2) - Conexão Tracejada */
-        [data-testid="stVerticalBlock"] [data-testid="stVerticalBlock"] .stTabs [data-baseweb="tab"] {
-            height: 40px !important;
-            font-size: 13px !important;
-            padding: 0px 20px !important;
-            background: rgba(255, 255, 255, 0.5) !important;
-            border-radius: 15px !important;
-            margin-top: 10px !important;
-            border: 1px dashed #A67B5B !important;
-        }
-
-        /* --- BOTÃO ADM EXCLUSIVO MARIANA (PINK & MARROM) --- */
+        /* --- BOTÃO ADM EXCLUSIVO MARIANA --- */
         div.stButton > button:has(div:contains("ABRIR GESTÃO ADMINISTRATIVA")) {
             background: linear-gradient(145deg, #FF69B4, #FF1493) !important;
             color: #5D3A1A !important; 
@@ -115,7 +102,7 @@ def aplicar_estilo_sentinela():
             font-weight: 800 !important;
         }
 
-        /* --- BOTÕES DO SISTEMA (CARAMELO MOCHA) --- */
+        /* --- BOTÕES DO SISTEMA --- */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
             background: linear-gradient(145deg, #C2936E, #8B5A2B) !important;
@@ -126,22 +113,12 @@ def aplicar_estilo_sentinela():
             border: 1px solid rgba(255, 255, 255, 0.2) !important; 
             box-shadow: 8px 8px 20px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.2) !important;
             transition: all 0.3s ease-in-out !important;
-            text-transform: uppercase;
         }
 
         .stButton > button:hover, .stDownloadButton > button:hover {
             transform: scale(1.02) !important;
-            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.35) !important; /* Brilho pink no botão */
+            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.35) !important;
             filter: brightness(1.1) !important;
-        }
-
-        /* CONTAINER DE STATUS */
-        .status-container {
-            background: white;
-            padding: 20px;
-            border-radius: 30px;
-            border-left: 6px solid #FF69B4;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
         }
         </style>
     """, unsafe_allow_html=True)
