@@ -5,17 +5,27 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* RESET TOTAL E REMOÇÃO DO BOTÃO DE FECHAR SIDEBAR */
+        /* RESET TOTAL E CONTROLE DE SIDEBAR */
         header, .st-emotion-cache-18ni7ap, .st-emotion-cache-zq59db, 
         #keyboard_double, .st-emotion-cache-10oheav, 
         span[data-testid="stHeaderActionElements"],
-        button[title="View keyboard shortcuts"],
-        [data-testid="sidebar-close-button"] { /* REMOVE O BOTÃO DE FECHAR */
+        button[title="View keyboard shortcuts"] {
             display: none !important;
             visibility: hidden !important;
         }
         
-        .stApp { background: #FDFBF9 !important; }
+        /* SETA DE REABRIR SIDEBAR EM PINK */
+        [data-testid="sidebar-close-button"], .st-emotion-cache-6qob1r button {
+            display: flex !important;
+            visibility: visible !important;
+            color: #FF69B4 !important;
+        }
+
+        /* FUNDO AREIA QUENTE BOUTIQUE */
+        .stApp {
+            background: radial-gradient(circle at top left, #FCF8F4 0%, #F3E9DC 100%) !important;
+        }
+
         .block-container { padding-top: 2.5rem !important; }
         html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
 
@@ -31,47 +41,28 @@ def aplicar_estilo_sentinela():
         }
         .titulo-principal span { font-weight: 200 !important; color: #A67B5B; }
 
+        /* LINHA DE LUZ FILIFORME PINK */
         .barra-marsala { 
             width: 60px; height: 3px; background: #FF69B4; 
             border-radius: 50px; margin-top: 10px; margin-bottom: 50px;
-            box-shadow: 0 0 15px rgba(255, 105, 180, 0.6);
+            box-shadow: 0 0 15px rgba(255, 105, 180, 0.8);
         }
 
-        /* --- SIDEBAR BOUTIQUE (FIXO E SEM BOTÃO) --- */
+        /* --- SIDEBAR BOUTIQUE --- */
         [data-testid="stSidebar"] {
             background-color: #F3E9DC !important;
             border-right: 1px solid rgba(166, 123, 91, 0.2) !important;
         }
-        
-        /* Força a largura e impede o colapso visual */
-        [data-testid="stSidebar"][aria-expanded="true"] {
-            min-width: 350px !important;
-            max-width: 350px !important;
-        }
 
-        /* --- HIERARQUIA DE ABAS (O SEGREDO DA CONEXÃO) --- */
+        /* --- HIERARQUIA DE ABAS COM BRILHO RESTAURADO --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
-        
-        /* Abas Pai (Nível 1) - Maiores e imponentes */
         .stTabs [data-baseweb="tab-list"] {
             gap: 12px !important;
             background-color: transparent !important;
             margin-bottom: 20px !important;
         }
 
-        /* Abas Filhas (Nível 2 - Dentro de Conformidade) */
-        /* Aplicamos um recuo e uma escala menor para parecerem "dentro" */
-        [data-testid="stVerticalBlock"] [data-testid="stVerticalBlock"] .stTabs [data-baseweb="tab"] {
-            height: 40px !important;
-            font-size: 13px !important;
-            padding: 0px 20px !important;
-            background: rgba(255, 255, 255, 0.5) !important;
-            border-radius: 15px !important;
-            margin-top: 10px !important;
-            border: 1px dashed #BC8F8F !important; /* Linha tracejada para indicar conexão */
-        }
-
-        /* Efeito de Pílulas Flutuantes Gerais */
+        /* Pílulas Gerais (Nível 1) */
         .stTabs [data-baseweb="tab"] {
             height: 48px !important;
             background: rgba(166, 123, 91, 0.15) !important;
@@ -80,51 +71,76 @@ def aplicar_estilo_sentinela():
             font-size: 15px !important; 
             font-weight: 400 !important;
             color: #5D3A1A !important;
-            transition: all 0.4s ease !important;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            border: 1px solid rgba(255, 255, 255, 0.5) !important;
         }
 
+        /* O BRILHO ROSA NO HOVER (RESTAURADO) */
         .stTabs [data-baseweb="tab"]:hover {
-            transform: translateY(-2px) !important;
+            transform: translateY(-3px) !important;
             background: white !important;
             color: #FF69B4 !important;
-            box-shadow: 0 10px 20px rgba(255, 105, 180, 0.2) !important;
+            filter: brightness(1.1) !important;
+            box-shadow: 0 12px 25px rgba(255, 105, 180, 0.4) !important; /* Brilho neon pink */
+            border-top: 2px solid #FF69B4 !important;
         }
 
+        /* Aba Selecionada (Foco no Mocha) */
         .stTabs [aria-selected="true"] {
             background: #5D3A1A !important;
             color: white !important;
             font-weight: 600 !important;
             box-shadow: 0 8px 20px rgba(93, 58, 26, 0.2) !important;
+            border: none !important;
         }
 
-        /* --- BOTÃO ADMINISTRATIVO PINK & MARROM --- */
+        /* Abas Filhas (Nível 2) - Conexão Tracejada */
+        [data-testid="stVerticalBlock"] [data-testid="stVerticalBlock"] .stTabs [data-baseweb="tab"] {
+            height: 40px !important;
+            font-size: 13px !important;
+            padding: 0px 20px !important;
+            background: rgba(255, 255, 255, 0.5) !important;
+            border-radius: 15px !important;
+            margin-top: 10px !important;
+            border: 1px dashed #A67B5B !important;
+        }
+
+        /* --- BOTÃO ADM EXCLUSIVO MARIANA (PINK & MARROM) --- */
         div.stButton > button:has(div:contains("ABRIR GESTÃO ADMINISTRATIVA")) {
             background: linear-gradient(145deg, #FF69B4, #FF1493) !important;
             color: #5D3A1A !important; 
             border-radius: 40px !important;
             border: 2px solid #5D3A1A !important;
-            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4) !important;
+            box-shadow: 0 10px 25px rgba(255, 20, 147, 0.5) !important;
             font-weight: 800 !important;
         }
 
-        /* --- BOTÕES DO SISTEMA --- */
+        /* --- BOTÕES DO SISTEMA (CARAMELO MOCHA) --- */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
-            background: linear-gradient(145deg, #A67B5B, #5D3A1A) !important;
+            background: linear-gradient(145deg, #C2936E, #8B5A2B) !important;
             color: #FFFFFF !important;
             border-radius: 40px !important;
             padding: 12px 25px !important;
-            font-size: 13px !important;
             font-weight: 600 !important;
-            border: none !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important; 
+            box-shadow: 8px 8px 20px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.2) !important;
+            transition: all 0.3s ease-in-out !important;
             text-transform: uppercase;
         }
 
+        .stButton > button:hover, .stDownloadButton > button:hover {
+            transform: scale(1.02) !important;
+            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.35) !important; /* Brilho pink no botão */
+            filter: brightness(1.1) !important;
+        }
+
+        /* CONTAINER DE STATUS */
         .status-container {
             background: white;
             padding: 20px;
             border-radius: 30px;
-            border-left: 5px solid #FF69B4;
+            border-left: 6px solid #FF69B4;
             box-shadow: 0 10px 30px rgba(0,0,0,0.03);
         }
         </style>
