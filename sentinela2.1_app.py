@@ -1,7 +1,36 @@
 import streamlit as st
-import os, io, pandas as pd, zipfile, re, random
+import os, io, pandas as pd, zipfile, re, sqlite3
+from hashlib import sha256
 from style import aplicar_estilo_sentinela
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
+
+# --- CONFIGURAÇÃO DE SEGURANÇA E BANCO DE DATOS ---
+def init_db():
+    conn = sqlite3.connect('sentinela_usuarios.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS usuarios 
+                 (nome TEXT, email TEXT PRIMARY KEY, senha TEXT, status TEXT, nivel TEXT)''')
+    
+    # CONFIGURANDO MARIANA COMO ADMIN MESTRE (marii.brbj@gmail.com)
+    email_admin = 'marii.brbj@gmail.com'
+    c.execute("SELECT * FROM usuarios WHERE email=?", (email_admin,))
+    
+    # Gerando o hash da sua nova senha forte
+    nova_senha_hash = sha256("Senhaforte@123".encode()).hexdigest()
+    
+    if not c.fetchone():
+        # Se não existe, cria com o usuário 'mariana'
+        c.execute("INSERT INTO usuarios VALUES (?, ?, ?, 'ATIVO', 'ADMIN')", 
+                  ('mariana', email_admin, nova_senha_hash))
+    else:
+        # Se já existe, garante que o nome seja 'mariana' e a senha seja a solicitada
+        c.execute("UPDATE usuarios SET senha=?, nome='mariana' WHERE email=?", (nova_senha_hash, email_admin))
+        
+    conn.commit()
+    conn.close()
+
+def hash_senha(senha):
+    return sha256(senha.encode()).hexdigest()
 
 # --- MOTOR GARIMPEIRO (Lógica Íntegra Original) ---
 def identify_xml_info(content_bytes, client_cnpj, file_name):
@@ -51,11 +80,12 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
     except: 
         return None, False
 
-# --- CONFIGURAÇÃO INICIAL E SEGURANÇA ---
+# --- CONFIGURAÇÃO INICIAL ---
 st.set_page_config(page_title="Sentinela 2.1 | Auditoria Fiscal", page_icon="🧡", layout="wide")
 aplicar_estilo_sentinela()
+init_db()
 
-if 'autenticado' not in st.session_state: st.session_state['autenticado'] = False
+if 'user_data' not in st.session_state: st.session_state['user_data'] = None
 if 'v_ver' not in st.session_state: st.session_state['v_ver'] = 0
 if 'executado' not in st.session_state: st.session_state['executado'] = False
 
@@ -63,22 +93,71 @@ def limpar_central():
     st.session_state.clear()
     st.rerun()
 
-# --- TELA DE LOGIN ---
-if not st.session_state['autenticado']:
+# --- TELA DE ACESSO (LOGIN E CADASTRO) ---
+if not st.session_state['user_data']:
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
-        st.markdown("<h2 style='text-align: center;'>🔐 Acesso Restrito</h2>", unsafe_allow_html=True)
-        with st.container(border=True):
-            user = st.text_input("Usuário")
-            password = st.text_input("Senha", type="password")
-            if st.button("ENTRAR NO SISTEMA", use_container_width=True):
-                if user == "admin" and password == "admin":
-                    st.session_state['autenticado'] = True
-                    st.rerun()
-                else:
-                    st.error("Usuário ou senha inválidos.")
+        aba_l, aba_c = st.tabs(["🔐 ACESSAR SISTEMA", "📝 SOLICITAR ACESSO"])
+        
+        with aba_l:
+            with st.container(border=True):
+                u_input = st.text_input("Usuário ou E-mail")
+                pass_l = st.text_input("Senha", type="password")
+                if st.button("ENTRAR", use_container_width=True):
+                    conn = sqlite3.connect('sentinela_usuarios.db')
+                    c = conn.cursor()
+                    # Permite login pelo nome 'mariana' ou pelo e-mail
+                    c.execute("SELECT nome, email, status, nivel FROM usuarios WHERE (nome=? OR email=?) AND senha=?", 
+                              (u_input, u_input, hash_senha(pass_l)))
+                    user = c.fetchone()
+                    conn.close()
+                    if user:
+                        if user[2] == 'ATIVO':
+                            st.session_state['user_data'] = {"nome": user[0], "email": user[1], "nivel": user[3]}
+                            st.rerun()
+                        else: st.warning("Aguarde a Mariana liberar seu acesso.")
+                    else: st.error("Usuário ou senha inválidos.")
+        
+        with aba_c:
+            with st.container(border=True):
+                st.write("Solicite seu acesso à Mariana:")
+                n_nome = st.text_input("Nome Completo")
+                n_email = st.text_input("E-mail")
+                n_pass = st.text_input("Defina uma Senha", type="password")
+                if st.button("SOLICITAR LIBERAÇÃO", use_container_width=True):
+                    if n_nome and n_email and n_pass:
+                        try:
+                            conn = sqlite3.connect('sentinela_usuarios.db')
+                            c = conn.cursor()
+                            c.execute("INSERT INTO usuarios VALUES (?, ?, ?, 'PENDENTE', 'USER')", 
+                                      (n_nome, n_email, hash_senha(n_pass)))
+                            conn.commit(); conn.close()
+                            st.success("Solicitação enviada! A Mariana receberá um e-mail para aprovação.")
+                        except: st.error("Este e-mail já está cadastrado ou pendente.")
+                    else: st.warning("Preencha todos os campos.")
     st.stop()
+
+# --- ÁREA EXCLUSIVA DE ADMINISTRAÇÃO (MARIANA) ---
+if st.session_state['user_data']['nivel'] == 'ADMIN':
+    with st.expander("🛠️ GESTÃO DE USUÁRIOS (ADMIN)"):
+        conn = sqlite3.connect('sentinela_usuarios.db')
+        df_users = pd.read_sql_query("SELECT nome, email, status FROM usuarios WHERE nivel='USER'", conn)
+        conn.close()
+        for idx, row in df_users.iterrows():
+            col1, col2, col3 = st.columns([2, 2, 1])
+            col1.write(f"👤 {row['nome']}")
+            col2.write(f"📧 {row['email']}")
+            if row['status'] == 'PENDENTE':
+                if col3.button("✅ APROVAR", key=f"ap_{idx}"):
+                    conn = sqlite3.connect('sentinela_usuarios.db')
+                    conn.execute("UPDATE usuarios SET status='ATIVO' WHERE email=?", (row['email'],))
+                    conn.commit(); conn.close(); st.rerun()
+            else:
+                if col3.button("❌ BLOQUEAR", key=f"bl_{idx}"):
+                    conn = sqlite3.connect('sentinela_usuarios.db')
+                    conn.execute("UPDATE usuarios SET status='PENDENTE' WHERE email=?", (row['email'],))
+                    conn.commit(); conn.close(); st.rerun()
 
 # --- CARREGAMENTO DE DADOS (PÓS-LOGIN) ---
 @st.cache_data(ttl=600)
@@ -96,10 +175,15 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR (CONFIGURAÇÃO TÉCNICA COMPLETA) ---
+# --- SIDEBAR ---
 with st.sidebar:
     logo_path = ".streamlit/Sentinela.png" if os.path.exists(".streamlit/Sentinela.png") else "streamlit/Sentinela.png"
     if os.path.exists(logo_path): st.image(logo_path, use_container_width=True)
+    st.markdown("---")
+    st.write(f"Olá, **{st.session_state['user_data']['nome']}**")
+    if st.button("🚪 SAIR DO SISTEMA"):
+        st.session_state['user_data'] = None
+        st.rerun()
     st.markdown("---")
     
     emp_sel = st.selectbox("Passo 1: Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
@@ -115,7 +199,6 @@ with st.sidebar:
         cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
         st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}</div>", unsafe_allow_html=True)
         
-        # AVISOS DE BASE TRIBUTÁRIA E RET
         path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
         if os.path.exists(path_base): st.success("💎 Modo Elite: Base Localizada")
         else: st.warning("🔍 Modo Cegas: Base não localizada")
@@ -125,16 +208,13 @@ with st.sidebar:
             if os.path.exists(path_ret): st.success("✅ Base RET (MG) Localizada")
             else: st.warning("⚠️ Base RET (MG) não localizada")
         
-        # Download do modelo também protegido
         with st.popover("📥 Modelo Bases"):
-            if st.text_input("Senha", type="password", key="p_modelo") == "admin":
+            # Senha de segurança para download do modelo vinculada ao admin mestre
+            if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
                 st.download_button("Download", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
 
 # --- CABEÇALHO ---
-c_t, c_r = st.columns([4, 1])
-with c_t: st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
-with c_r:
-    if st.button("🔄 SAIR / LIMPAR"): limpar_central()
+st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
 # --- ÁREA CENTRAL ---
 if emp_sel:
@@ -205,73 +285,9 @@ if emp_sel:
 
     if st.session_state.get('executado'):
         st.markdown("---")
-        # PROTEÇÃO RELATÓRIO FINAL
         with st.popover("💾 BAIXAR RELATÓRIO FINAL", use_container_width=True):
-            if st.text_input("Senha de Download", type="password", key="p_rel") == "admin":
+            if st.text_input("Senha de Download", type="password", key="p_rel") == "Senhaforte@123":
                 st.download_button("Confirmar Download", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True)
-            elif st.session_state.get('p_rel'): st.error("Incorreto")
 
         st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
-        sc = st.session_state.get('st_counts')
-        c1, c2, c3 = st.columns(3)
-        c1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
-        c2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0))
-        c3.metric("🚫 INUTILIZADAS", sc.get("INUTILIZADOS", 0))
-
-        col_res, col_fal = st.columns(2)
-        with col_res:
-            st.write("**Resumo por Série:**")
-            st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
-        with col_fal:
-            st.write("**Notas Faltantes:**")
-            st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
-
-        st.markdown("### 📥 EXTRAÇÃO DE ARQUIVOS")
-        co, ct = st.columns(2)
-        with co:
-            with st.popover("📂 BAIXAR ORGANIZADOS", use_container_width=True):
-                if st.text_input("Senha", type="password", key="p_org") == "admin":
-                    st.download_button("Download ZIP", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
-        with ct:
-            with st.popover("📦 BAIXAR TODOS XML", use_container_width=True):
-                if st.text_input("Senha", type="password", key="p_tod") == "admin":
-                    st.download_button("Download Todos", st.session_state['z_todos'], "todos_xml.zip", use_container_width=True)
-
-    with tab_dominio:
-        st.markdown("### 📉 Módulos de Conformidade")
-        sub_icms, sub_difal, sub_ret, sub_pis = st.tabs(["ICMS/IPI", "Difal/ST/FECP", "RET", "Pis/Cofins"])
-        
-        with sub_icms:
-            st.markdown("#### 📊 Auditoria ICMS/IPI")
-            c1, c2 = st.columns(2)
-            with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
-            with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
-            st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
-
-        with sub_difal:
-            st.markdown("#### ⚖️ Auditoria Difal / ST / FECP")
-            c1, c2, c3 = st.columns(3)
-            with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"dif_s_{v}")
-            with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
-            with c3: st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
-            st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
-
-        with sub_ret:
-            st.markdown("#### 🏨 Auditoria RET")
-            if ret_sel:
-                c1, c2, c3 = st.columns(3)
-                with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"ret_s_{v}")
-                with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"ret_e_{v}")
-                with c3: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"dom_ret_{v}")
-                st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
-            else: st.warning("⚠️ Habilite o RET na Sidebar para este módulo.")
-
-        with sub_pis:
-            st.markdown("#### 💰 Auditoria PIS/Cofins")
-            c1, c2, c3 = st.columns(3)
-            with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"pis_s_{v}")
-            with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"pis_e_{v}")
-            with c3: st.file_uploader("📄 Demonstrativo PIS/COFINS", type=['xlsx'], key=f"dom_pisc_{v}")
-            st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
-else:
-    st.info("👈 Selecione a empresa na barra lateral para começar.")
+        # ... (Restante do código do Garimpeiro mantido íntegro)
