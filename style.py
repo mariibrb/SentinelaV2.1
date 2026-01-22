@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* --- 1. SIDEBAR E FUNDO --- */
+        /* --- 1. SIDEBAR E FUNDO MOCHA --- */
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             max-width: 350px !important;
@@ -20,16 +20,17 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #FCF8F4 0%, #E8DCCB 100%) !important; 
         }
 
-        /* --- 2. ABAS MÃE (PASTAS EXTERNAS) --- */
+        /* --- 2. ABAS MESTRE (ETIQUETAS DA PASTA) --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
         
+        /* Lista de abas principais */
         .stTabs [data-baseweb="tab-list"] {
             gap: 20px !important;
-            padding: 40px 0 !important;
+            padding: 40px 0 0 0 !important; /* Colado na pasta abaixo */
             align-items: flex-end;
+            z-index: 2 !important;
         }
 
-        /* Estilo das Mães */
         .stTabs [data-baseweb="tab"] {
             height: 80px !important;
             background: linear-gradient(180deg, #FDFDFD 0%, #D8C7B1 100%) !important;
@@ -42,70 +43,71 @@ def aplicar_estilo_sentinela():
             color: #8B5A2B !important;
         }
 
-        /* Ativas das Mães (Azul e Rosa) */
+        /* Cor da Etiqueta Ativa */
         .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; color: white !important; }
         .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
 
-        /* --- 3. 📦 O CAIXOTÃO BRANCO (ENGLOBA TUDO: SUB-ABAS + CONTEÚDO) --- */
+        /* --- 3. 📦 O CAIXOTÃO GIGANTE (A PASTA ABERTA) --- */
+        /* Esta regra força o painel a subir e "abraçar" as sub-abas */
         [data-testid="stTabPanel"] {
             background: white !important;
-            padding: 40px !important;
-            border-radius: 40px !important;
-            margin-top: -5px !important;
-            min-height: 600px !important;
+            padding: 60px 40px 40px 40px !important;
+            border-radius: 0 60px 60px 60px !important;
+            margin-top: -5px !important; /* Encaixe perfeito com a aba mãe */
+            min-height: 700px !important;
+            position: relative !important;
+            z-index: 1 !important;
         }
 
-        /* BORDINHA SOMBREADA NEON DO CAIXOTÃO (SETORIZADA) */
+        /* --- 4. BORDAS NEON SOMBREADAS (IGUAL À FOTO) --- */
         
-        /* Setor XML: Borda Azul Sombreada */
+        /* Zona XML: Tudo Azul */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 6px solid #00D1FF !important;
-            box-shadow: 0 0 30px rgba(0, 209, 255, 0.4), 0 10px 60px rgba(0, 0, 0, 0.1) !important;
+            box-shadow: 0 0 30px rgba(0, 209, 255, 0.4), 0 20px 80px rgba(0, 0, 0, 0.1) !important;
         }
 
-        /* Setor Conformidade: Borda Rosa Sombreada (Igual à Foto) */
+        /* Zona Conformidade: Tudo Rosa */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 6px solid #FF69B4 !important;
-            box-shadow: 0 0 30px rgba(255, 105, 180, 0.4), 0 10px 60px rgba(0, 0, 0, 0.1) !important;
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.4), 0 20px 80px rgba(0, 0, 0, 0.1) !important;
         }
 
-        /* --- 4. SUB-ABAS DENTRO DO CAIXOTÃO --- */
-        /* Reduzimos o tamanho e encaixamos dentro da moldura neon */
+        /* --- 5. SUB-ABAS (MORANDO DENTRO DA PASTA) --- */
+        /* Localizadas no topo do caixotão branco */
         .stTabs .stTabs [data-baseweb="tab-list"] {
-            padding: 10px 0 30px 0 !important;
+            padding: 0 0 30px 0 !important;
             background: transparent !important;
         }
 
         .stTabs .stTabs [data-baseweb="tab"] {
-            height: 60px !important;
+            height: 55px !important;
             background: #F8F9FA !important;
             border-radius: 15px 40px 0 0 !important;
             font-size: 1.1rem !important;
-            padding: 0 40px !important;
-            margin-right: -10px !important;
+            border: 1px solid #E8DCCB !important;
         }
 
         /* Sub-aba Ativa Azul */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] {
             background: #00BFFF !important;
             color: white !important;
-            transform: translateY(-5px) !important;
+            border-color: #00D1FF !important;
         }
 
         /* Sub-aba Ativa Rosa */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] {
             background: #FF69B4 !important;
             color: white !important;
-            transform: translateY(-5px) !important;
+            border-color: #FF69B4 !important;
         }
 
-        /* --- 5. AREA DE UPLOAD DENTRO DO CAIXOTÃO --- */
+        /* --- 6. CAIXA DE UPLOAD LIMPA --- */
         [data-testid="stFileUploader"] {
-            background: #FFFFFF !important;
+            background: #FDFDFD !important;
             border: 2px dashed #D8C7B1 !important;
-            border-radius: 20px !important;
-            padding: 20px !important;
-            margin-bottom: 20px !important;
+            border-radius: 25px !important;
+            padding: 30px !important;
         }
 
         </style>
