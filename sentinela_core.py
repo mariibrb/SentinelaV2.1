@@ -61,6 +61,8 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
+                
+                # Tags essenciais para Auditorias
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
@@ -99,7 +101,7 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         st.error(f"⚠️ Erro de Importação: {e}")
         return
 
-    # --- 1. PROCESSAMENTO FISCAL (Puro do XML) ---
+    # --- 1. PROCESSAMENTO FISCAL ---
     if not df_xs.empty:
         processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
         try: processar_ipi(df_xs, writer, cod_cliente)
@@ -109,35 +111,11 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         processar_difal(df_xs, writer)
         gerar_resumo_uf(df_xs, writer, df_xe)
 
-    # --- 2. MATCH DO STATUS (Coluna A vs F dos seus Excel) ---
-    def aplicar_status_procv(df_core, lista_excel):
-        if not lista_excel:
-            df_core['Status'] = "⚠️ AUTENTICIDADE NÃO CARREGADA"
-            return df_core
-        referencias = []
-        for excel in lista_excel:
-            try:
-                excel.seek(0)
-                d_ref = pd.read_excel(excel)
-                tmp = d_ref.iloc[:, [0, 5]].copy()
-                tmp.columns = ['CHAVE_ACESSO', 'Status_Excel']
-                tmp['CHAVE_ACESSO'] = tmp['CHAVE_ACESSO'].astype(str).str.replace('NFe', '').str.strip()
-                referencias.append(tmp)
-            except: continue
-        if referencias:
-            base_ref = pd.concat(referencias).drop_duplicates('CHAVE_ACESSO')
-            df_core = pd.merge(df_core, base_ref, on='CHAVE_ACESSO', how='left')
-            df_core['Status'] = df_core['Status_Excel'].fillna("SEM REFERÊNCIA")
-        return df_core
-
-    df_xe = aplicar_status_procv(df_xe, ae)
-    df_xs = aplicar_status_procv(df_xs, as_f)
-
-    # --- 3. ABAS XML ---
+    # --- 2. GERAÇÃO DAS ABAS XML ---
     try: gerar_aba_resumo(writer)
     except: pass
     
-    cols_v = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST", "Status"]
+    cols_v = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST"]
 
     for df_t, nome_aba in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_t.empty:
