@@ -12,6 +12,7 @@ def aplicar_estilo_sentinela():
             background-color: #F3E9DC !important; 
             border-right: 5px solid #FF69B4 !important;
             z-index: 999999 !important;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.1) !important;
         }
 
         /* RESET DO LIXO VISUAL */
@@ -44,7 +45,7 @@ def aplicar_estilo_sentinela():
             align-items: flex-end;
         }
 
-        /* Estilo Inativo: Metal Bronzeado Mocha */
+        /* Aba Inativa: Metal Bronzeado Mocha */
         .stTabs [data-baseweb="tab"] {
             height: 90px !important;
             background: linear-gradient(180deg, #FDFDFD 0%, #D8C7B1 100%) !important;
@@ -79,41 +80,39 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- INTERIOR DA CAIXA (O CAIXOTE QUE VOCÊ AMOU) --- */
+        /* --- 📦 O CAIXOTE BRANCO (INTERIOR) --- */
         .stTabs .stTabs {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
             border-radius: 0 60px 60px 60px !important;
-            border: 4px solid #FF69B4 !important;
+            border: 4px solid #FFB6C1 !important;
             margin-top: -20px !important;
             box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
         }
 
-        /* --- 💗 SUB-ABAS: FORÇANDO ROSA COM PRIORIDADE MÁXIMA --- */
+        /* --- 💗 SUB-ABAS: IDÊNTICAS À MÃE (ROSA PINK NEON) --- */
         
         .stTabs .stTabs [data-baseweb="tab"] {
-            height: 60px !important;
+            height: 65px !important;
             background: #FDFDFD !important;
             border-radius: 20px 55px 0 0 !important;
-            font-size: 1.2rem !important;
+            font-size: 1.3rem !important;
+            font-weight: 700 !important;
             color: #DB7093 !important;
             border: 1px solid #FFD1DC !important;
             margin-right: 5px !important;
+            transition: all 0.3s ease !important;
         }
 
-        /* AQUI ESTÁ A TRAVA: Força o rosa mesmo se o Streamlit tentar pintar de azul */
+        /* SUB-ABA ATIVA: Clone exato da cor e brilho da mãe Conformidade */
         .stTabs .stTabs [aria-selected="true"] {
-            background: linear-gradient(145deg, #FFD1DC 0%, #FF69B4 100%) !important;
-            background-color: #FF69B4 !important; /* Backup de cor sólida */
+            background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important; /* MESMO GRADIENTE DA MÃE */
             color: white !important;
-            transform: translateY(-12px) !important;
-            box-shadow: 0 0 25px #FF69B4, inset 0 2px 5px rgba(255,255,255,0.5) !important;
+            transform: translateY(-15px) !important;
+            /* MESMO BRILHO NEON DA MÃE: */
+            box-shadow: 0 0 20px #FF1493, 0 0 40px rgba(255, 20, 147, 0.6), inset 0 3px 8px rgba(255,255,255,0.6) !important;
+            border-color: #FF1493 !important;
             border-bottom: 5px solid white !important;
-        }
-
-        /* Mata qualquer azul que sobrar nas sub-abas selecionadas */
-        .stTabs .stTabs button[aria-selected="true"] div {
-            color: white !important;
         }
         </style>
     """, unsafe_allow_html=True)
