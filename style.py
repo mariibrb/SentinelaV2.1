@@ -12,27 +12,25 @@ def aplicar_estilo_sentinela():
             background-color: #F3E9DC !important; 
             border-right: 5px solid #FF69B4 !important;
             z-index: 999999 !important;
-            box-shadow: 15px 0 40px rgba(255, 105, 180, 0.2) !important;
         }
 
         /* RESET DO LIXO VISUAL */
         header, [data-testid="stHeader"] { display: none !important; }
 
-        /* FUNDO MOCHA MOUSSE PROFISSIONAL */
+        /* FUNDO MOCHA MOUSSE */
         .stApp { 
             background: radial-gradient(circle at top left, #FCF8F4 0%, #E8DCCB 100%) !important; 
         }
         
         html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
 
-        /* --- TÍTULO DESIGNER: SENTINELA 2.1 --- */
+        /* --- TÍTULO DESIGNER --- */
         .titulo-principal { 
             font-family: 'Montserrat', sans-serif !important;
             color: #5D3A1A; 
             font-size: 3.5rem; 
             font-weight: 800; 
             text-transform: uppercase;
-            line-height: 1;
             text-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
         }
 
@@ -61,11 +59,10 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* --- 💡 FIXAÇÃO DA MÃE (FOCO ETERNO) --- */
+        /* --- 💡 SOLUÇÃO: FORÇAR COR NA ABA MÃE MESMO SEM FOCO --- */
 
-        /* 🔵 PASTA XML MÃE (Sempre que selecionada ou com foco interno) */
-        .stTabs [data-baseweb="tab"]:has(div:contains("XML"))[aria-selected="true"],
-        .stTabs [data-baseweb="tab"]:has(div:contains("XML")):focus-within {
+        /* 🔵 FORÇAR XML AZUL (Quando selecionada) */
+        .stTabs [data-baseweb="tab"]:has(div:contains("XML"))[aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
@@ -74,9 +71,10 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* 💗 PASTA FISCAL MÃE (Sempre que selecionada ou com foco interno) */
+        /* 💗 FORÇAR CONFORMIDADE ROSA (Sempre que o painel interno fiscal estiver aberto) */
+        /* Esta regra olha se a aba de Conformidade está selecionada OU se há sub-abas fiscais visíveis */
         .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE"))[aria-selected="true"],
-        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE")):focus-within {
+        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE")):active {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
@@ -85,17 +83,17 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- O INTERIOR DA CAIXA (Onde as filhas moram) --- */
+        /* --- O INTERIOR DA CAIXA (SUB-ABAS) --- */
         .stTabs .stTabs {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
             border-radius: 0 60px 60px 60px !important;
-            border: 4px solid #FF69B4 !important;
+            border: 4px solid #FF69B4 !important; /* CONECTA COM A MÃE ROSA */
             margin-top: -20px !important;
-            box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
+            box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3) !important;
         }
 
-        /* Filhas menores (Fichas) */
+        /* Filhas menores */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #FDFDFD !important;
@@ -104,10 +102,9 @@ def aplicar_estilo_sentinela():
             color: #DB7093 !important;
             border: 1px solid #FFD1DC !important;
             margin-right: 5px !important;
-            transform: none !important; /* Não deixa a sub-aba herdar o pulo da mãe */
         }
 
-        /* Filha Ativa (O Shine Metalizado que você ama) */
+        /* Filha Ativa (Shine Neon) */
         .stTabs .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFD1DC 0%, #FF69B4 100%) !important;
             color: white !important;
