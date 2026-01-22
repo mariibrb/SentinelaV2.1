@@ -56,7 +56,7 @@ def init_db():
     if not c.fetchone():
         c.execute("""INSERT INTO usuarios 
                      (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
-                     VALUES (?, ?, ?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1, 1)""", 
+                     VALUES (?, ?, ?, ?, 'ATIVO', 'ADMIN', 1, 1, 1, 1, 1)""", 
                   ('Mariana Mendes', 'mariana', email_admin, nova_senha_hash))
     else:
         # Garante integridade do login mestre MAS permite que o nome seja alterado no painel ADM
@@ -158,18 +158,9 @@ st.markdown("""
     .stAppHeader {display: none !important;}
     header {visibility: hidden !important;}
     footer {visibility: hidden !important;}
-    
-    /* Remove os botões flutuantes invisíveis do topo */
     .st-emotion-cache-h5rgaw, .st-emotion-cache-18ni7ap, .st-emotion-cache-12fmjuu {display: none !important;}
-    
-    /* Ajusta o espaçamento para o título SENTINELA não ficar colado no topo */
     .block-container {padding-top: 1rem !important;}
-    
-    /* Garante que o título laranja seja a primeira coisa visual */
-    .titulo-principal {
-        margin-top: 0px !important;
-        padding-top: 0px !important;
-    }
+    .titulo-principal { margin-top: 0px !important; padding-top: 0px !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -204,7 +195,6 @@ if not st.session_state['user_data']:
                 if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                     conn = sqlite3.connect('sentinela_usuarios.db')
                     c = conn.cursor()
-                    # Busca por Usuário Login ou E-mail
                     c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
                                  FROM usuarios 
                                  WHERE (usuario=? OR email=?) AND senha=?""", 
@@ -250,7 +240,7 @@ if not st.session_state['user_data']:
                                          (n_nome, n_user, n_email, hash_senha(n_pass)))
                             conn.commit()
                             conn.close()
-                            st.success("Solicitação enviada! Você será notificado após a análise do sistema.")
+                            st.success("Solicitação enviada!")
                         except Exception:
                             st.error("Este e-mail ou usuário já está cadastrado.")
                     else:
@@ -264,7 +254,6 @@ st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-
 modo_adm = st.session_state.get('show_adm', False)
 
 if st.session_state['user_data']['nivel'] == 'ADMIN':
-    # Botão para alternar entre ADM e Auditoria
     if not modo_adm:
         if st.button("🛠️ ABRIR GESTÃO ADMINISTRATIVA", use_container_width=True):
             st.session_state['show_adm'] = True
@@ -285,7 +274,6 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                 with st.container(border=True):
                     c1, c2, c3, c4 = st.columns([2.5, 1.5, 3, 2])
                     
-                    # Edição de Cadastro
                     edit_nome = c1.text_input("Nome Completo", value=row['nome'], key=f"n_{idx}")
                     edit_user = c1.text_input("Usuário Login", value=row['usuario'], key=f"u_{idx}")
                     edit_mail = c2.text_input("E-mail", value=row['email'], key=f"m_{idx}")
@@ -297,7 +285,6 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
                         conn.commit()
                         st.info("Senha resetada para: 123456")
 
-                    # FLAGS DE PERMISSÃO AUMENTADAS
                     p_x = c3.checkbox("Análise XML", value=bool(row['perm_xml']), key=f"px_{idx}")
                     p_i = c3.checkbox("Audit ICMS", value=bool(row['perm_icms']), key=f"i_{idx}")
                     p_d = c3.checkbox("Audit DIFAL", value=bool(row['perm_difal']), key=f"d_{idx}")
@@ -336,7 +323,7 @@ if st.session_state['user_data']['nivel'] == 'ADMIN':
 # --- CARREGAMENTO DE CLIENTES ---
 @st.cache_data(ttl=600)
 def carregar_clientes():
-    p_lista = ["Clientes Ativos.xlsx", ".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx"]
+    p_lista = ["Clientes Ativos.xlsx", ".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx", "Bases_Tributarias/Clientes Ativos.xlsx"]
     for p in p_lista:
         if os.path.exists(p):
             try:
@@ -350,7 +337,7 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR DINÂMICA (COM RESTAURAÇÃO DOS AVISOS) ---
+# --- SIDEBAR DINÂMICA (COM CORREÇÃO DOS AVISOS GITHUB/RECURSIVO) ---
 emp_sel = ""
 with st.sidebar:
     if os.path.exists(".streamlit/Sentinela.png"):
@@ -375,18 +362,27 @@ with st.sidebar:
             cnpj_limpo = "".join(filter(str.isdigit, str(dados_e['CNPJ'])))
             st.markdown(f"<div class='status-container'>📍 <b>Analisando:</b><br>{dados_e['RAZÃO SOCIAL']}</div>", unsafe_allow_html=True)
             
-            # --- RESTAURAÇÃO DOS DOIS AVISOS NO SIDEBAR ---
-            path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
-            path_ret_status = f"Bases_Tributarias/{cod_c}-RET.xlsx"
+            # --- LÓGICA DE VERIFICAÇÃO DE ARQUIVOS (CORRIGIDA PARA ENXERGAR O GITHUB) ---
+            # Procuramos em múltiplos locais comuns de sincronização
+            locais_busca = ["Bases_Tributarias", ".", ".streamlit", "Bases"]
             
+            path_base_encontrado = False
+            path_ret_encontrado = False
+            
+            for local in locais_busca:
+                p_base = f"{local}/{cod_c}-Bases_Tributarias.xlsx"
+                p_ret = f"{local}/{cod_c}-RET.xlsx"
+                if os.path.exists(p_base): path_base_encontrado = p_base
+                if os.path.exists(p_ret): path_ret_encontrado = p_ret
+
             # Aviso 1: Bases de Impostos
-            if os.path.exists(path_base): 
+            if path_base_encontrado: 
                 st.success("💎 Bases de Impostos Localizada")
             else: 
                 st.warning("🔍 Bases de Impostos não localizada")
                 
-            # Aviso 2: Base RET (O QUE ESTAVA FALTANDO)
-            if os.path.exists(path_ret_status):
+            # Aviso 2: Base RET (RESTAURADO)
+            if path_ret_encontrado:
                 st.success("💎 Base RET Localizada")
             else:
                 st.warning("🔍 Base RET não localizada")
@@ -425,7 +421,8 @@ if emp_sel and not modo_adm:
                             with st.spinner("Auditando..."):
                                 try:
                                     u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
-                                    df_base_emp = pd.read_excel(path_base) if os.path.exists(path_base) else None
+                                    # Usa o path base encontrado na sidebar
+                                    df_base_emp = pd.read_excel(path_base_encontrado) if path_base_encontrado else None
                                     xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
                                     
                                     buf = io.BytesIO()
@@ -443,7 +440,7 @@ if emp_sel and not modo_adm:
                                                 for name in zi.namelist():
                                                     if name.lower().endswith('.xml'):
                                                         xml_d = zi.read(name)
-                                                        res, is_p = identify_xml_info(xml_d, cnpj_limpo, name)
+                                                        res, is_p = identify_xml_info(xml_d, cnpj_Limpo, name)
                                                         if res and res["Chave"] not in p_keys:
                                                             p_keys.add(res["Chave"])
                                                             z_org.writestr(f"{res['Pasta']}/{name}", xml_d)
