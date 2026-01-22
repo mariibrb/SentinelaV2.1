@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- UTILITÁRIOS ---
+# --- UTILITÁRIOS ORIGINAIS ---
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -46,8 +46,14 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
         chave = inf.attrib.get('Id', '')[3:]
 
         for det in root.findall('.//det'):
-            prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
+            prod = det.find('prod'); imp = det.find('imposto')
+            icms_no = det.find('.//ICMS'); ipi_no = det.find('.//IPI')
+            pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
             
+            # Tags de DIFAL/FCP para a coluna 19 e 20
+            v_icms_uf_dest = safe_float(buscar_tag_recursiva('vICMSUFDest', imp))
+            v_fcp_uf_dest = safe_float(buscar_tag_recursiva('vFCPUFDest', imp))
+
             linha = {
                 "TIPO_SISTEMA": tipo_operacao,                 # 1
                 "CHAVE_ACESSO": str(chave).strip(),            # 2
@@ -67,10 +73,10 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "CST-ICMS": (buscar_tag_recursiva('orig', icms_no) + (buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no))), # 16
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)), # 17
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),      # 18
-                "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)), # 19
-                "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)), # 20
+                "VAL-DIFAL": v_icms_uf_dest + v_fcp_uf_dest,    # 19
+                "VAL-FCP-DEST": v_fcp_uf_dest,                  # 20
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),    # 21
-                "Status": "A PROCESSAR" # 22
+                "Status": "AGUARDANDO"                          # 22 (Preenchido no merge)
             }
             dados_lista.append(linha)
     except: pass
@@ -90,9 +96,9 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DO EXCEL FINAL (AQUI QUEBRAMOS O ERRO DE IMPORTAÇÃO) ---
+# --- GERAÇÃO DO EXCEL FINAL (COM IMPORTAÇÃO PROTEGIDA) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
-    # Importação diferida: evita que o IPI tente ler o Core antes dele carregar
+    # Importação diferida para evitar erro de Ciclo/Dependência
     try:
         from audit_resumo import gerar_aba_resumo
         from Auditorias.audit_icms import processar_icms
@@ -109,19 +115,20 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     except: pass
     
     if not df_xs.empty:
-        # CRUZAMENTO COM GARIMPO
-        mapa_status = {}
-        for arquivo_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
+        # CRUZAMENTO COM PLANILHA DE AUTENTICIDADE (GARIMPO)
+        st_map = {}
+        for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
             try:
-                arquivo_auth.seek(0)
-                df_auth = pd.read_excel(arquivo_auth, header=None) if arquivo_auth.name.endswith('.xlsx') else pd.read_csv(arquivo_auth, header=None, sep=None, engine='python')
-                df_auth[0] = df_auth[0].astype(str).str.replace('NFe', '').str.strip()
-                mapa_status.update(df_auth.set_index(0)[5].to_dict())
+                f_auth.seek(0)
+                df_a = pd.read_excel(f_auth, header=None) if f_auth.name.endswith('.xlsx') else pd.read_csv(f_auth, header=None, sep=None, engine='python')
+                df_a[0] = df_a[0].astype(str).str.replace('NFe', '').str.strip()
+                st_map.update(df_a.set_index(0)[5].to_dict())
             except: continue
 
-        df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(mapa_status).fillna('⚠️ N/Encontrada no Garimpo')
+        # Injeta o Status Real na Coluna 22
+        df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada no Garimpo')
         
-        # Inicia Auditorias
+        # Executa as Auditorias (que vão colar as análises DEPOIS do Status)
         processar_icms(df_xs, writer, cod_cliente, df_xe)
         processar_ipi(df_xs, writer, cod_cliente)
         processar_pc(df_xs, writer, cod_cliente, regime)
