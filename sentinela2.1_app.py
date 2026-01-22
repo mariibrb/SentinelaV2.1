@@ -288,73 +288,8 @@ if not st.session_state['user_data']:
 # --- TÍTULO PRINCIPAL ---
 st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
-# --- PAINEL DE ADMINISTRAÇÃO ELITE ---
+# --- CONFIGURAÇÃO INICIAL MODO ADM ---
 modo_adm = st.session_state.get('show_adm', False)
-
-if st.session_state['user_data']['nivel'] == 'ADMIN':
-    if not modo_adm:
-        if st.button("🛠️ ABRIR GESTÃO ADMINISTRATIVA", use_container_width=True):
-            st.session_state['show_adm'] = True
-            st.rerun()
-    else:
-        with st.container(border=True):
-            c_tit, c_sair = st.columns([4, 1])
-            c_tit.subheader("🛠️ PAINEL DE CONTROLE DE USUÁRIOS")
-            if c_sair.button("❌ FECHAR PAINEL ADM", use_container_width=True, type="primary"):
-                st.session_state['show_adm'] = False
-                st.rerun()
-                
-            conn = sqlite3.connect('sentinela_usuarios.db')
-            df_u = pd.read_sql_query("SELECT * FROM usuarios ORDER BY nivel ASC", conn)
-            
-            for idx, row in df_u.iterrows():
-                is_me = (row['email'] == st.session_state['user_data']['email'])
-                with st.container(border=True):
-                    c1, c2, c3, c4 = st.columns([2.5, 1.5, 3, 2])
-                    edit_nome = c1.text_input("Nome Completo", value=row['nome'], key=f"n_{idx}")
-                    edit_mail = c2.text_input("E-mail (Login)", value=row['email'], key=f"m_{idx}")
-                    edit_user = c1.text_input("Usuário Login", value=row['usuario'], key=f"u_{idx}")
-                    
-                    st_txt = "🟢 ATIVO" if row['status'] == 'ATIVO' else "🟡 PENDENTE"
-                    c2.write(f"Status Atual: {st_txt}")
-                    if c2.button("🔄 Reset Senha", key=f"rs_{idx}"):
-                        nova_senha = "123456"
-                        conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha(nova_senha), row['email']))
-                        conn.commit()
-                        enviar_email(row['email'], "SENHA RESETADA", f"Sua nova senha é: {nova_senha}\nPor favor, altere no login.")
-                        st.info("Senha resetada.")
-
-                    # AJUSTE: Permissão de XML no ADM
-                    p_x = c3.checkbox("Audit XML", value=bool(row['perm_xml']), key=f"x_p_{idx}")
-                    p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
-                    p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
-                    p_p = c3.checkbox("Audit PIS/COFINS", value=bool(row['perm_pis']), key=f"p_{idx}")
-                    p_r = c3.checkbox("Audit RET", value=bool(row['perm_ret']), key=f"r_{idx}")
-
-                    if not is_me:
-                        if row['status'] == 'PENDENTE':
-                            if c4.button("✅ LIBERAR", key=f"ok_{idx}", use_container_width=True):
-                                conn.execute("""UPDATE usuarios SET status='ATIVO' WHERE email=?""", (row['email'],))
-                                conn.commit()
-                                enviar_email(row['email'], "ACESSO LIBERADO", "Seu acesso ao Sentinela foi ativado.")
-                                st.rerun()
-                        if c4.button("🗑️ EXCLUIR", key=f"del_{idx}", use_container_width=True):
-                            conn.execute("DELETE FROM usuarios WHERE email=?", (row['email'],))
-                            conn.commit(); st.rerun()
-                            
-                        if c4.button("💾 SALVAR ALTERAÇÕES", key=f"save_{idx}", use_container_width=True, type="primary"):
-                            conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                         (edit_nome, edit_mail, edit_user, int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
-                            conn.commit(); st.success("Salvo!")
-                    else:
-                        c4.write("🛡️ Conta Mestre")
-                        if c4.button("💾 ATUALIZAR PERFIL", key=f"sv_me_{idx}", use_container_width=True, type="primary"):
-                            conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                         (edit_nome, edit_mail, row['usuario'], int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
-                            conn.commit()
-                            st.session_state['user_data'].update({"nome": edit_nome, "usuario": edit_user, "email": edit_mail})
-                            st.success("Atualizado!"); st.rerun()
-            conn.close()
 
 # --- CARREGAMENTO DE CLIENTES ---
 @st.cache_data(ttl=600)
@@ -372,13 +307,25 @@ def carregar_clientes():
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
 
-# --- SIDEBAR DINÂMICA (SOMENTE AJUSTE DO AVISO RET) ---
+# --- SIDEBAR DINÂMICA (AQUI O BOTÃO FOI MOVIDO) ---
 emp_sel = ""
 with st.sidebar:
     if os.path.exists(".streamlit/Sentinela.png"):
         st.image(".streamlit/Sentinela.png", use_container_width=True)
     st.markdown("---")
     st.write(f"👤 Olá, **{st.session_state['user_data']['nome']}**")
+    
+    # --- AJUSTE SOLICITADO: BOTÃO GESTÃO ADMINISTRATIVA NA SIDEBAR ---
+    if st.session_state['user_data']['nivel'] == 'ADMIN':
+        if not modo_adm:
+            if st.button("🛠️ ABRIR GESTÃO ADMINISTRATIVA", use_container_width=True):
+                st.session_state['show_adm'] = True
+                st.rerun()
+        else:
+            if st.button("❌ FECHAR PAINEL ADM", use_container_width=True, type="primary"):
+                st.session_state['show_adm'] = False
+                st.rerun()
+
     if st.button("🚪 SAIR DO SISTEMA", use_container_width=True):
         st.session_state.clear()
         st.rerun()
@@ -417,8 +364,65 @@ with st.sidebar:
     else:
         st.info("⚙️ Modo Administrativo Ativo.")
 
+# --- PAINEL DE ADMINISTRAÇÃO ELITE (DENTRO DA ÁREA CENTRAL) ---
+if modo_adm:
+    with st.container(border=True):
+        st.subheader("🛠️ PAINEL DE CONTROLE DE USUÁRIOS")
+        
+        conn = sqlite3.connect('sentinela_usuarios.db')
+        df_u = pd.read_sql_query("SELECT * FROM usuarios ORDER BY nivel ASC", conn)
+        
+        for idx, row in df_u.iterrows():
+            is_me = (row['email'] == st.session_state['user_data']['email'])
+            with st.container(border=True):
+                c1, c2, c3, c4 = st.columns([2.5, 1.5, 3, 2])
+                edit_nome = c1.text_input("Nome Completo", value=row['nome'], key=f"n_{idx}")
+                edit_mail = c2.text_input("E-mail (Login)", value=row['email'], key=f"m_{idx}")
+                edit_user = c1.text_input("Usuário Login", value=row['usuario'], key=f"u_{idx}")
+                
+                st_txt = "🟢 ATIVO" if row['status'] == 'ATIVO' else "🟡 PENDENTE"
+                c2.write(f"Status Atual: {st_txt}")
+                if c2.button("🔄 Reset Senha", key=f"rs_{idx}"):
+                    nova_senha = "123456"
+                    conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha(nova_senha), row['email']))
+                    conn.commit()
+                    enviar_email(row['email'], "SENHA RESETADA", f"Sua nova senha é: {nova_senha}\nPor favor, altere no login.")
+                    st.info("Senha resetada.")
+
+                # AJUSTE: Permissão de XML no ADM
+                p_x = c3.checkbox("Audit XML", value=bool(row['perm_xml']), key=f"x_p_{idx}")
+                p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
+                p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
+                p_p = c3.checkbox("Audit PIS/COFINS", value=bool(row['perm_pis']), key=f"p_{idx}")
+                p_r = c3.checkbox("Audit RET", value=bool(row['perm_ret']), key=f"r_{idx}")
+
+                if not is_me:
+                    if row['status'] == 'PENDENTE':
+                        if c4.button("✅ LIBERAR", key=f"ok_{idx}", use_container_width=True):
+                            conn.execute("""UPDATE usuarios SET status='ATIVO' WHERE email=?""", (row['email'],))
+                            conn.commit()
+                            enviar_email(row['email'], "ACESSO LIBERADO", "Seu acesso ao Sentinela foi ativado.")
+                            st.rerun()
+                    if c4.button("🗑️ EXCLUIR", key=f"del_{idx}", use_container_width=True):
+                        conn.execute("DELETE FROM usuarios WHERE email=?", (row['email'],))
+                        conn.commit(); st.rerun()
+                        
+                    if c4.button("💾 SALVAR ALTERAÇÕES", key=f"save_{idx}", use_container_width=True, type="primary"):
+                        conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                     (edit_nome, edit_mail, edit_user, int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                        conn.commit(); st.success("Salvo!")
+                else:
+                    c4.write("🛡️ Conta Mestre")
+                    if c4.button("💾 ATUALIZAR PERFIL", key=f"sv_me_{idx}", use_container_width=True, type="primary"):
+                        conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                                     (edit_nome, edit_mail, row['usuario'], int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
+                        conn.commit()
+                        st.session_state['user_data'].update({"nome": edit_nome, "usuario": edit_user, "email": edit_mail})
+                        st.success("Atualizado!"); st.rerun()
+        conn.close()
+
 # --- ÁREA CENTRAL ---
-if emp_sel and not modo_adm:
+elif emp_sel and not modo_adm:
     perms = st.session_state['user_data']['perms']
     abas_v = []
     
