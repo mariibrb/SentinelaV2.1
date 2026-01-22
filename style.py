@@ -59,10 +59,8 @@ def aplicar_estilo_sentinela():
             box-shadow: 10px 0 20px rgba(0,0,0,0.15), inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* --- 💡 FIXAÇÃO DA MÃE: FORÇANDO ROSA PINK NA CONFORMIDADE --- */
-
-        /* 🔵 ABA 1 (XML): AZUL NEON QUANDO ATIVA */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
+        /* --- 🔵 FAMÍLIA XML: AZUL NEON --- */
+        .stTabs [data-baseweb="tab"]:has(div:contains("XML"))[aria-selected="true"] {
             background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
@@ -71,9 +69,12 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* 💗 ABA 2 (CONFORMIDADE): ROSA PINK NEON QUANDO ATIVA */
-        /* Usei o seletor direto da ordem para não ter erro com o nome do texto */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
+        /* --- 💗 FAMÍLIA FISCAL: ROSA PINK NEON (CONFORMIDADE + ICMS + PIS + RET + DIFAL) --- */
+        .stTabs [data-baseweb="tab"]:has(div:contains("CONFORMIDADE"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("ICMS"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("PIS"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("RET"))[aria-selected="true"],
+        .stTabs [data-baseweb="tab"]:has(div:contains("DIFAL"))[aria-selected="true"] {
             background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
             color: white !important;
             transform: translateY(-25px) scale(1.08) !important;
@@ -82,14 +83,32 @@ def aplicar_estilo_sentinela():
             z-index: 100 !important;
         }
 
-        /* --- INTERIOR DA CAIXA (SUB-ABAS) --- */
-        .stTabs .stTabs {
+        /* --- 📦 INTERIOR DA CAIXA (CAIXOTES) --- */
+
+        /* Caixote para XML (Contorno Azul) */
+        .stTabs:has(button[aria-selected="true"] div:contains("XML")) [data-testid="stTabPanel"] {
             background: rgba(255, 255, 255, 0.85) !important;
             padding: 40px !important;
             border-radius: 0 60px 60px 60px !important;
-            border: 4px solid #FF69B4 !important; /* CONEXÃO COM A MÃE ROSA */
+            border: 4px solid #00D1FF !important;
+            border-top: 8px solid #00BFFF !important;
             margin-top: -20px !important;
-            box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3), inset 0 20px 40px rgba(0,0,0,0.05) !important;
+            box-shadow: 0 10px 60px rgba(0, 209, 255, 0.3) !important;
+        }
+
+        /* Caixote para FISCAL (Contorno Rosa) */
+        .stTabs:has(button[aria-selected="true"] div:contains("CONFORMIDADE")) [data-testid="stTabPanel"],
+        .stTabs:has(button[aria-selected="true"] div:contains("ICMS")) [data-testid="stTabPanel"],
+        .stTabs:has(button[aria-selected="true"] div:contains("PIS")) [data-testid="stTabPanel"],
+        .stTabs:has(button[aria-selected="true"] div:contains("RET")) [data-testid="stTabPanel"],
+        .stTabs:has(button[aria-selected="true"] div:contains("DIFAL")) [data-testid="stTabPanel"] {
+            background: rgba(255, 255, 255, 0.85) !important;
+            padding: 40px !important;
+            border-radius: 0 60px 60px 60px !important;
+            border: 4px solid #FFB6C1 !important;
+            border-top: 8px solid #FF69B4 !important;
+            margin-top: -20px !important;
+            box-shadow: 0 10px 60px rgba(255, 105, 180, 0.3) !important;
         }
 
         /* Sub-abas menores */
@@ -101,16 +120,13 @@ def aplicar_estilo_sentinela():
             color: #DB7093 !important;
             border: 1px solid #FFD1DC !important;
             margin-right: 5px !important;
-            transform: none !important;
         }
 
-        /* Sub-aba Ativa (Glow Neon igual à mãe) */
         .stTabs .stTabs [aria-selected="true"] {
             background: linear-gradient(145deg, #FFD1DC 0%, #FF69B4 100%) !important;
             color: white !important;
             transform: translateY(-12px) !important;
             box-shadow: 0 0 25px #FF69B4, inset 0 2px 5px rgba(255,255,255,0.5) !important;
-            border-bottom: 5px solid white !important;
         }
         </style>
     """, unsafe_allow_html=True)
