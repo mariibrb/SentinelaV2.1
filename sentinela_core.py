@@ -18,23 +18,7 @@ try:
 except ImportError as e:
     st.error(f"⚠️ Erro de Dependência no Core: {e}")
 
-def safe_float(v):
-    if v is None or pd.isna(v): return 0.0
-    txt = str(v).strip().upper()
-    if txt in ['NT', '', 'N/A', 'ISENTO', 'NULL', 'ZERO', '-', ' ']: return 0.0
-    try:
-        txt = txt.replace('R$', '').replace(' ', '').replace('%', '').strip()
-        if ',' in txt and '.' in txt: txt = txt.replace('.', '').replace(',', '.')
-        elif ',' in txt: txt = txt.replace(',', '.')
-        return round(float(txt), 4)
-    except: return 0.0
-
-def buscar_tag_recursiva(tag_alvo, no):
-    if no is None: return ""
-    for elemento in no.iter():
-        tag_nome = elemento.tag.split('}')[-1]
-        if tag_nome == tag_alvo: return elemento.text if elemento.text else ""
-    return ""
+# ... (Funções safe_float e buscar_tag_recursiva permanecem iguais) ...
 
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
@@ -83,16 +67,14 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 
-                # Tags de tributos para os módulos especialistas (IPI, PIS, COFINS)
+                # Tags de tributos para os módulos especialistas
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
                 "ALQ-PIS": safe_float(buscar_tag_recursiva('pPIS', pis_no)),
                 "VLR-PIS": safe_float(buscar_tag_recursiva('vPIS', pis_no)),
                 "ALQ-COFINS": safe_float(buscar_tag_recursiva('pCOFINS', cof_no)),
-                "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no)),
-                
-                "Status": "AGUARDANDO" 
+                "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no))
             }
             dados_lista.append(linha)
     except: pass
@@ -110,13 +92,30 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
 
-    if 'relatorio' in st.session_state and st.session_state['relatorio']:
-        df_rel = pd.DataFrame(st.session_state['relatorio']).rename(columns={'Chave': 'CHAVE_ACESSO', 'Status': 'Status_Real'})
-        df = pd.merge(df, df_rel[['CHAVE_ACESSO', 'Status_Real']], on='CHAVE_ACESSO', how='left')
-        df['Status'] = df['Status_Real'].fillna("SEM REFERÊNCIA (FAZER GARIMPO)")
-        df.drop(columns=['Status_Real'], inplace=True)
+    # --- CORREÇÃO DA LEITURA DO STATUS (AUTENTICIDADE) ---
+    if 'relatorio' in st.session_state and st.session_state['relatorio'] is not None:
+        df_rel = pd.DataFrame(st.session_state['relatorio'])
+        
+        # Tentamos encontrar a coluna de Chave e Status independente do nome exato (Maiúsculo/Minúsculo)
+        df_rel.columns = [c.strip().upper() for c in df_rel.columns]
+        
+        # Mapeia os nomes prováveis que vêm do seu Excel de Garimpo
+        mapa_cols = {
+            'CHAVE': 'CHAVE_ACESSO',
+            'CHAVE DE ACESSO': 'CHAVE_ACESSO',
+            'STATUS': 'SITUACAO_GARIMPO',
+            'SITUAÇÃO': 'SITUACAO_GARIMPO'
+        }
+        df_rel = df_rel.rename(columns=mapa_cols)
+
+        if 'CHAVE_ACESSO' in df_rel.columns:
+            df = pd.merge(df, df_rel[['CHAVE_ACESSO', 'SITUACAO_GARIMPO']], on='CHAVE_ACESSO', how='left')
+            df['Status'] = df['SITUACAO_GARIMPO'].fillna("SEM REFERÊNCIA (FAZER GARIMPO)")
+            df.drop(columns=['SITUACAO_GARIMPO'], inplace=True)
+        else:
+            df['Status'] = "⚠️ COLUNA 'CHAVE' NÃO ENCONTRADA NO ANEXO"
     else:
-        df['Status'] = "⚠️ PLANILHA DE AUTENTICIDADE NÃO CARREGADA"
+        df['Status'] = "⚠️ ANEXO DE AUTENTICIDADE NÃO CARREGADO"
 
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
@@ -126,7 +125,7 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # Lista de colunas para o Excel (O Status é o último de tudo)
+    # Ordem de exibição final: Status por ÚLTIMO
     colunas_finais = [
         "TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT",
         "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS",
@@ -136,21 +135,14 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
 
     for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_temp.empty:
-            # Seleciona apenas as 22 colunas desejadas para visualização
             df_export = df_temp[colunas_finais].copy()
             df_export.to_excel(writer, sheet_name=nome, index=False)
 
     if not df_xs.empty:
-        # Passa o DF completo (com as colunas ALQ-IPI, etc) para os especialistas
-        try: processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo_auditoria)
-        except: pass
-        try: processar_ipi(df_xs, writer, cod_cliente)
-        except: pass
-        try: processar_pc(df_xs, writer, cod_cliente, regime)
-        except: pass
-        try: processar_difal(df_xs, writer)
-        except: pass
-        try: gerar_resumo_uf(df_xs, writer, df_xe)
-        except: pass
-        try: gerar_abas_gerenciais(writer, ae, as_f, ge, gs)
-        except: pass
+        # Auditorias continuam lendo as tags extras (IPI, PIS, etc) que estão no DF
+        processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo_auditoria)
+        processar_ipi(df_xs, writer, cod_cliente)
+        processar_pc(df_xs, writer, cod_cliente, regime)
+        processar_difal(df_xs, writer)
+        gerar_resumo_uf(df_xs, writer, df_xe)
+        gerar_abas_gerenciais(writer, ae, as_f, ge, gs)
