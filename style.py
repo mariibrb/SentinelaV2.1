@@ -36,23 +36,25 @@ def aplicar_estilo_sentinela():
             margin-bottom: 30px; 
         }
 
-        /* ABAS METALIZADAS - CARAMELO MOCHA COM BRILHO */
+        /* ABAS METALIZADAS - CARAMELO MOCHA */
         .stTabs [data-baseweb="tab"] {
             height: 70px !important;
-            background: #E6D5C3 !important; /* Tom Mousse de Caramelo */
+            background: #E6D5C3 !important; 
             border-radius: 15px 15px 0px 0px !important;
             padding: 10px 40px !important;
             font-size: 20px !important; 
             font-weight: 600 !important;
-            color: #5D3A1A !important;
+            color: #5D3A1A !important; /* Texto Marrom padrão */
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            border: 1px solid transparent !important;
         }
 
-        /* BRILHO PINK NO HOVER (TOQUE MARIANA) */
+        /* CORREÇÃO DE LEGIBILIDADE NO HOVER (BRILHO PINK + TEXTO ESCURO) */
         .stTabs [data-baseweb="tab"]:hover {
-            filter: brightness(1.1) !important;
+            filter: brightness(1.05) !important;
             transform: translateY(-3px) !important;
             background: #F0E2D3 !important;
+            color: #3E2511 !important; /* TEXTO ESCURECE NO HOVER PARA DAR LEITURA */
             box-shadow: 0 10px 20px rgba(255, 105, 180, 0.2) !important;
             border-top: 2px solid #FF69B4 !important;
         }
@@ -60,7 +62,7 @@ def aplicar_estilo_sentinela():
         /* ABA ATIVA - MOCHA CARAMELO COM ILUMINAÇÃO PINK */
         .stTabs [aria-selected="true"] {
             background: linear-gradient(180deg, #A67B5B 0%, #5D3A1A 50%, #3E2511 100%) !important;
-            color: #FFFFFF !important;
+            color: #FFFFFF !important; /* Texto Branco para contraste total no Marrom */
             font-weight: 800 !important;
             box-shadow: 0 -5px 20px rgba(255, 105, 180, 0.3) !important;
             border-top: 3px solid #FF69B4 !important;
