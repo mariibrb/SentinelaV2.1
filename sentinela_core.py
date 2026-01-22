@@ -53,42 +53,32 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
 
         for det in root.findall('.//det'):
             prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
-            # Tags que faltavam para IPI, PIS e COFINS
+            # Tags de IPI/PIS/COFINS mantidas estáticas para os módulos especialistas
             ipi_no = det.find('.//IPI')
             pis_no = det.find('.//PIS')
             cof_no = det.find('.//COFINS')
 
-            v_prod = safe_float(buscar_tag_recursiva('vProd', prod))
-            ncm = buscar_tag_recursiva('NCM', prod)
-            
-            origem = buscar_tag_recursiva('orig', icms_no)
-            cst_parcial = buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no)
-            cst_full = origem + cst_parcial if cst_parcial else origem
-
             linha = {
-                "TIPO_SISTEMA": tipo_operacao, 
-                "CHAVE_ACESSO": str(chave).strip(),
+                "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
                 "NUM_NF": buscar_tag_recursiva('nNF', ide), 
                 "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
-                "CNPJ_EMIT": cnpj_emit, 
-                "UF_EMIT": buscar_tag_recursiva('UF', emit),
+                "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
                 "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), 
                 "IE_DEST": buscar_tag_recursiva('IE', dest),
                 "UF_DEST": buscar_tag_recursiva('UF', dest), 
                 "CFOP": buscar_tag_recursiva('CFOP', prod),
-                "NCM": ncm, 
-                "VPROD": v_prod, 
+                "NCM": buscar_tag_recursiva('NCM', prod), "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)), 
                 "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)), 
                 "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)), 
                 "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)),
-                "CST-ICMS": cst_full,
+                "CST-ICMS": (buscar_tag_recursiva('orig', icms_no) + (buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no))),
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
                 "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
                 "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
                 
-                # Colunas de apoio para Auditorias (IPI/PIS/COFINS)
+                # Tags de apoio estáticas (Não alteradas)
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
@@ -111,20 +101,24 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
 
-    # --- LÓGICA DE CRUZAMENTO COM PLANILHA DE AUTENTICIDADE ---
-    if 'relatorio' in st.session_state and st.session_state['relatorio']:
-        df_rel = pd.DataFrame(st.session_state['relatorio'])
-        # Normaliza nomes de colunas do Garimpo
-        df_rel.columns = [str(c).strip().title() for c in df_rel.columns]
-        df_rel = df_rel.rename(columns={'Chave': 'CHAVE_ACESSO', 'Status': 'Situação Nota'})
-        
-        if 'CHAVE_ACESSO' in df_rel.columns:
-            df = pd.merge(df, df_rel[['CHAVE_ACESSO', 'Situação Nota']], on='CHAVE_ACESSO', how='left')
-            df['Situação Nota'] = df['Situação Nota'].fillna("SEM REFERÊNCIA (FAZER GARIMPO)")
-        else:
-            df['Situação Nota'] = "⚠️ COLUNA 'CHAVE' NÃO ENCONTRADA NO GARIMPO"
+    # --- LÓGICA DE STATUS: MATCH COLUNA B (XML) COM COLUNA A (GARIMPO) -> RETORNA COLUNA F ---
+    if 'relatorio' in st.session_state and st.session_state['relatorio'] is not None:
+        try:
+            df_rel = pd.DataFrame(st.session_state['relatorio'])
+            # Mapeia Chave (Coluna A - index 0) e Status (Coluna F - index 5)
+            df_comparativo = df_rel.iloc[:, [0, 5]].copy()
+            df_comparativo.columns = ['CHAVE_ACESSO', 'Status']
+            
+            # Limpeza básica de strings para garantir o match
+            df_comparativo['CHAVE_ACESSO'] = df_comparativo['CHAVE_ACESSO'].astype(str).str.replace('NFe', '').str.strip()
+            
+            # Merge (PROCV)
+            df = pd.merge(df, df_comparativo, on='CHAVE_ACESSO', how='left')
+            df['Status'] = df['Status'].fillna("SEM REFERÊNCIA (FAZER GARIMPO)")
+        except Exception:
+            df['Status'] = "⚠️ ERRO AO LER COLUNAS DO GARIMPO"
     else:
-        df['Situação Nota'] = "⚠️ PLANILHA DE AUTENTICIDADE NÃO CARREGADA"
+        df['Status'] = "⚠️ PLANILHA DE AUTENTICIDADE NÃO CARREGADA"
 
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
@@ -134,22 +128,22 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # Ordem das colunas para o Excel (Dump XML)
+    # Lista de colunas para o dump XML (Status por último)
     cols_exibicao = [
         "TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT",
         "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS",
         "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST",
-        "VAL-FCP-ST", "Situação Nota"
+        "VAL-FCP-ST", "Status"
     ]
 
     for df_temp, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_temp.empty:
-            # Filtra apenas as colunas desejadas para as abas de dump
-            df_final = df_temp[cols_exibicao]
-            df_final.to_excel(writer, sheet_name=nome, index=False)
+            # Garante que as colunas de apoio (IPI/PIS) não "sujem" o dump, mas o Status saia no fim
+            df_export = df_temp[cols_exibicao].copy()
+            df_export.to_excel(writer, sheet_name=nome, index=False)
 
     if not df_xs.empty:
-        # Chama Auditorias (O DF leva as colunas ALQ-IPI etc ocultas no dump)
+        # Auditorias continuam recebendo o DF com as tags ocultas (IPI/PIS)
         processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
         try: processar_ipi(df_xs, writer, cod_cliente)
         except: pass
