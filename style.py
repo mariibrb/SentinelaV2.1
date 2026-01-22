@@ -14,7 +14,7 @@ def aplicar_estilo_sentinela():
             visibility: hidden !important;
         }
         
-        /* FUNDO AREIA QUENTE (SAI O CINZA, ENTRA O LUXO) */
+        /* FUNDO AREIA QUENTE */
         .stApp {
             background: radial-gradient(circle at top left, #FCF8F4 0%, #F3E9DC 100%) !important;
         }
@@ -38,7 +38,7 @@ def aplicar_estilo_sentinela():
             -webkit-text-fill-color: transparent;
         }
 
-        /* BARRA PINK (MARCA REGISTRADA MARIANA) */
+        /* BARRA PINK MARIANA */
         .barra-marsala { 
             width: 100px; 
             height: 10px; 
@@ -56,10 +56,10 @@ def aplicar_estilo_sentinela():
             padding: 10px 0px !important;
         }
 
-        /* ABAS PÍLULA - COR CARAMELO MOCA (MAIS VIVA) */
+        /* ABAS PÍLULA FLUTUANTES */
         .stTabs [data-baseweb="tab"] {
             height: 55px !important;
-            background: rgba(212, 163, 115, 0.2) !important; /* Caramelo Transparente */
+            background: rgba(212, 163, 115, 0.2) !important;
             border-radius: 30px !important; 
             padding: 0px 35px !important;
             font-size: 16px !important; 
@@ -72,40 +72,42 @@ def aplicar_estilo_sentinela():
         .stTabs [data-baseweb="tab"]:hover {
             transform: translateY(-5px) !important;
             background: white !important;
-            color: #FF69B4 !important; /* Brilha Pink no Hover */
+            color: #FF69B4 !important;
             box-shadow: 0 15px 30px rgba(255, 105, 180, 0.2) !important;
         }
 
         .stTabs [aria-selected="true"] {
-            background: #5D3A1A !important; /* Caramelo Profundo */
+            background: #5D3A1A !important;
             color: white !important;
             box-shadow: 0 15px 35px rgba(93, 58, 26, 0.3) !important;
         }
 
-        /* --- BOTÃO ADMINISTRATIVO PINK DA MARIANA --- */
-        div.stButton > button:has(div:contains("GESTÃO ADMINISTRATIVA")) {
+        /* --- BOTÃO ADMINISTRATIVO EXCLUSIVO (PINK & LETRAS MARROM) --- */
+        div.stButton > button:has(div:contains("ABRIR GESTÃO ADMINISTRATIVA")) {
             background: linear-gradient(145deg, #FF69B4, #FF1493) !important;
-            color: #5D3A1A !important; 
-            border: 2px solid #5D3A1A !important;
+            color: #3D2B1F !important; /* Marrom Profundo nas letras */
+            border: 2px solid #FF1493 !important;
             box-shadow: 0 10px 25px rgba(255, 20, 147, 0.4) !important;
+            font-weight: 800 !important;
         }
 
-        /* --- BOTÕES PADRÃO (CARAMELO MOCHA) --- */
+        /* --- BOTÕES PADRÃO (MANTIDOS NO CARAMELO MOCHA) --- */
         .stButton > button, .stDownloadButton > button {
             width: 100%;
-            background: linear-gradient(145deg, #C2936E, #8B5A2B) !important; /* CARAMELO QUENTE */
+            background: linear-gradient(145deg, #C2936E, #8B5A2B) !important;
             color: #FFFFFF !important;
             border-radius: 40px !important;
             padding: 18px 30px !important;
             font-weight: 700 !important;
-            border: 2px solid rgba(255, 105, 180, 0.2) !important; 
+            border: 2px solid rgba(255, 105, 180, 0.1) !important; 
             box-shadow: 8px 8px 20px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.2) !important;
             transition: all 0.3s ease-in-out !important;
+            text-transform: uppercase;
         }
 
         .stButton > button:hover, .stDownloadButton > button:hover {
-            transform: scale(1.03) !important;
-            box-shadow: 0 20px 40px rgba(255, 105, 180, 0.4) !important; 
+            transform: scale(1.02) !important;
+            box-shadow: 0 15px 30px rgba(255, 105, 180, 0.3) !important; 
         }
 
         /* CONTAINER DE STATUS */
