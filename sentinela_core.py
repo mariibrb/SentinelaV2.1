@@ -29,7 +29,7 @@ def tratar_ncm_texto(ncm):
     if pd.isna(ncm) or ncm == "": return ""
     return re.sub(r'\D', '', str(ncm)).strip()
 
-# --- MOTOR DE PROCESSAMENTO XML (ORDEM EXATA DAS 22 COLUNAS) ---
+# --- MOTOR DE PROCESSAMENTO XML (22 COLUNAS) ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -70,7 +70,7 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)), # 19
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)), # 20
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),    # 21
-                "Status": "AGUARDANDO" # 22
+                "Status": "A PROCESSAR" # 22
             }
             dados_lista.append(linha)
     except: pass
@@ -90,44 +90,58 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DO EXCEL FINAL (NOME ORIGINAL DO APP) ---
+# --- GERAÇÃO DO EXCEL FINAL ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None):
-    # Importação interna para evitar erros de ciclo
-    try:
-        from audit_resumo import gerar_aba_resumo
-        from Auditorias.audit_icms import processar_icms
-        from Auditorias.audit_ipi import processar_ipi
-        from Auditorias.audit_pis_cofins import processar_pc
-        from Auditorias.audit_difal import processar_difal
-        from Apuracoes.apuracao_difal import gerar_resumo_uf
-        from Gerenciais.audit_gerencial import gerar_abas_gerenciais
-    except ImportError as e:
-        st.error(f"⚠️ Erro ao carregar módulos: {e}")
-        return
-
-    try: gerar_aba_resumo(writer)
-    except: pass
-    try: gerar_abas_gerenciais(writer, ge, gs)
-    except: pass
-
+    
     if not df_xs.empty:
-        # MAPEAR STATUS REAL DA AUTENTICIDADE
-        st_map = {}
-        for f_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
+        # CRUZAMENTO COM GARIMPO
+        mapa_status = {}
+        for arquivo_auth in ([ae] if ae else []) + ([as_f] if as_f else []):
             try:
-                f_auth.seek(0)
-                if f_auth.name.endswith('.xlsx'): df_a = pd.read_excel(f_auth, header=None)
-                else: df_a = pd.read_csv(f_auth, header=None, sep=None, engine='python')
-                df_a[0] = df_a[0].astype(str).str.replace('NFe', '').str.strip()
-                st_map.update(df_a.set_index(0)[5].to_dict())
+                arquivo_auth.seek(0)
+                if arquivo_auth.name.endswith('.xlsx'):
+                    df_auth = pd.read_excel(arquivo_auth, header=None)
+                else:
+                    df_auth = pd.read_csv(arquivo_auth, header=None, sep=None, engine='python')
+                
+                df_auth[0] = df_auth[0].astype(str).str.replace('NFe', '').str.strip()
+                mapa_status.update(df_auth.set_index(0)[5].to_dict())
             except: continue
+
+        df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(mapa_status).fillna('⚠️ N/Encontrada no Garimpo')
         
-        df_xs['Status'] = df_xs['CHAVE_ACESSO'].map(st_map).fillna('⚠️ N/Encontrada no Garimpo')
-        
-        # Chama as auditorias passando o DF com o Status correto
-        processar_icms(df_xs, writer, cod_cliente, df_xe)
-        processar_ipi(df_xs, writer, cod_cliente)
-        processar_pc(df_xs, writer, cod_cliente, regime)
-        processar_difal(df_xs, writer)
-        try: gerar_resumo_uf(df_xs, writer, df_xe)
+        # --- BLOCO DE AUDITORIAS COM IMPORTAÇÃO DINÂMICA ---
+        try:
+            from audit_resumo import gerar_aba_resumo
+            gerar_aba_resumo(writer)
+        except: pass
+
+        try:
+            from Auditorias.audit_icms import processar_icms
+            processar_icms(df_xs, writer, cod_cliente, df_xe)
+        except Exception as e: st.error(f"Erro ICMS: {e}")
+
+        try:
+            from Auditorias.audit_ipi import processar_ipi
+            processar_ipi(df_xs, writer, cod_cliente)
+        except Exception as e: st.error(f"Erro IPI: {e} (Verifique se a função 'processar_ipi' existe no arquivo)")
+
+        try:
+            from Auditorias.audit_pis_cofins import processar_pc
+            processar_pc(df_xs, writer, cod_cliente, regime)
+        except Exception as e: st.error(f"Erro PIS/COFINS: {e}")
+
+        try:
+            from Auditorias.audit_difal import processar_difal
+            processar_difal(df_xs, writer)
+        except Exception as e: st.error(f"Erro DIFAL: {e}")
+
+        try:
+            from Apuracoes.apuracao_difal import gerar_resumo_uf
+            gerar_resumo_uf(df_xs, writer, df_xe)
+        except: pass
+
+        try:
+            from Gerenciais.audit_gerencial import gerar_abas_gerenciais
+            gerar_abas_gerenciais(writer, ge, gs)
         except: pass
