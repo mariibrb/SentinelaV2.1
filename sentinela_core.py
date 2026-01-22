@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS (MANTIDOS ÍNTEGROS) ---
+# --- IMPORTAÇÃO DOS MÓDULOS ESPECIALISTAS ---
 try:
     from audit_resumo import gerar_aba_resumo             
     from Auditorias.audit_icms import processar_icms       
@@ -55,11 +55,6 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
             prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
             ipi_no = det.find('.//IPI'); pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
             
-            # Captura de valores para a linha (As 22 Colunas + Apoio)
-            v_prod = safe_float(buscar_tag_recursiva('vProd', prod))
-            ncm = buscar_tag_recursiva('NCM', prod)
-            
-            # Lógica de CST-ICMS
             origem = buscar_tag_recursiva('orig', icms_no)
             cst_parcial = buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no)
             cst_full = origem + cst_parcial if cst_parcial else origem
@@ -72,11 +67,11 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "CNPJ_EMIT": cnpj_emit,                        # 5
                 "UF_EMIT": buscar_tag_recursiva('UF', emit),   # 6
                 "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), # 7
-                "IE_DEST": buscar_tag_recursiva('IE', dest),   # 8 (COLUNA INCLUÍDA)
+                "IE_DEST": buscar_tag_recursiva('IE', dest),   # 8
                 "UF_DEST": buscar_tag_recursiva('UF', dest),   # 9
                 "CFOP": buscar_tag_recursiva('CFOP', prod),    # 10
-                "NCM": ncm,                                    # 11
-                "VPROD": v_prod,                               # 12
+                "NCM": buscar_tag_recursiva('NCM', prod),      # 11
+                "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)), # 12
                 "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)), # 13
                 "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)), # 14
                 "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)), # 15
@@ -86,10 +81,10 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
                 "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)), # 19
                 "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)), # 20
                 "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),    # 21
-                "Status": "AGUARDANDO"                          # 22 (Preenchido abaixo)
+                "Status": "A PROCESSAR"                         # 22
             }
             
-            # --- TAGS DE APOIO PARA IPI/PIS/COFINS (Não saem no dump, mas alimentam os módulos) ---
+            # Tags de Apoio (Invisíveis no dump, mas essenciais para as auditorias)
             linha["ALQ-IPI"] = safe_float(buscar_tag_recursiva('pIPI', ipi_no))
             linha["VLR-IPI"] = safe_float(buscar_tag_recursiva('vIPI', ipi_no))
             linha["CST-IPI"] = buscar_tag_recursiva('CST', ipi_no)
@@ -112,10 +107,9 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     df = pd.DataFrame(dados)
     if df.empty: return pd.DataFrame(), pd.DataFrame()
 
-    # --- LÓGICA DE CRUZAMENTO COM PLANILHA DE AUTENTICIDADE ---
+    # LÓGICA DE CRUZAMENTO COM PLANILHA DE AUTENTICIDADE
     if 'relatorio' in st.session_state and st.session_state['relatorio']:
         df_rel = pd.DataFrame(st.session_state['relatorio'])
-        # Mapeia Chave e Status do Garimpo
         df_rel = df_rel.rename(columns={'Chave': 'CHAVE_ACESSO', 'Status': 'Status_Real'})
         df = pd.merge(df, df_rel[['CHAVE_ACESSO', 'Status_Real']], on='CHAVE_ACESSO', how='left')
         df['Status'] = df['Status_Real'].fillna("SEM REFERÊNCIA (FAZER GARIMPO)")
@@ -128,10 +122,11 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, ge=None, gs=None, df_base_emp=None, modo_auditoria=None):
     if df_xs.empty and df_xe.empty: return
     
+    # 1. ABA RESUMO
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # Ordem das colunas para o Dump XML (As 22 colunas)
+    # 2. ABAS DE DADOS XML (22 Colunas)
     ordem_xml = [
         "TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT",
         "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS",
@@ -144,17 +139,28 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
             df_final = df_temp[ordem_xml].copy()
             df_final.to_excel(writer, sheet_name=nome, index=False)
 
-    # Chamada das Auditorias com as colunas de apoio preservadas no DF
+    # 3. CHAMADA DAS AUDITORIAS (Sem travar o código)
     if not df_xs.empty:
+        # ICMS
         try: processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo_auditoria)
-        except: pass
+        except Exception as e: st.error(f"Erro na aba ICMS: {e}")
+        
+        # IPI
         try: processar_ipi(df_xs, writer, cod_cliente)
-        except: pass
+        except Exception as e: st.error(f"Erro na aba IPI: {e}")
+        
+        # PIS/COFINS
         try: processar_pc(df_xs, writer, cod_cliente, regime)
-        except: pass
+        except Exception as e: st.error(f"Erro na aba PIS/COFINS: {e}")
+        
+        # DIFAL
         try: processar_difal(df_xs, writer)
-        except: pass
+        except Exception as e: st.error(f"Erro na aba DIFAL: {e}")
+        
+        # RESUMO UF (APURAÇÃO)
         try: gerar_resumo_uf(df_xs, writer, df_xe)
-        except: pass
+        except Exception as e: st.error(f"Erro na aba Resumo UF: {e}")
+        
+        # GERENCIAIS
         try: gerar_abas_gerenciais(writer, ae, as_f, ge, gs)
-        except: pass
+        except Exception as e: st.error(f"Erro nas abas Gerenciais: {e}")
