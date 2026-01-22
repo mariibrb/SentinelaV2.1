@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* --- 1. SIDEBAR E FUNDO --- */
+        /* --- 1. SIDEBAR E FUNDO MOCHA --- */
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             max-width: 350px !important;
@@ -20,84 +20,84 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #FCF8F4 0%, #E8DCCB 100%) !important; 
         }
 
-        /* --- 2. ABAS MESTRE (EFEITO GLOSS METALIZADO) --- */
+        /* --- 2. ABAS MESTRE (AS ETIQUETAS) --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
-        .stTabs [data-baseweb="tab-list"] { gap: 20px !important; padding: 40px 0 !important; }
+        
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 20px !important;
+            padding: 40px 0 0 0 !important;
+            align-items: flex-end;
+        }
 
         .stTabs [data-baseweb="tab"] {
-            height: 80px !important;
+            height: 85px !important;
             background: linear-gradient(180deg, #FDFDFD 0%, #D8C7B1 100%) !important;
-            border-radius: 30px 80px 0 0 !important; 
+            border-radius: 30px 90px 0 0 !important; 
             margin-right: -25px !important;
-            padding: 0px 60px !important;
+            padding: 0px 65px !important;
             border: 2px solid #A67B5B !important;
-            font-size: 1.5rem !important;
+            font-size: 1.6rem !important;
             font-weight: 800 !important;
             color: #8B5A2B !important;
-            /* SHINE INTERNO */
             box-shadow: inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        /* 🔵 SHINE AZUL ATIVO */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
-            background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
-            box-shadow: 0 0 40px #00D1FF, inset 0 5px 15px rgba(255,255,255,0.8) !important;
-            color: white !important;
-        }
-
-        /* 💗 SHINE ROSA ATIVO */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
-            background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
-            box-shadow: 0 0 40px #FF69B4, inset 0 5px 15px rgba(255,255,255,0.8) !important;
-            color: white !important;
-        }
-
-        /* --- 3. 📦 O CAIXOTÃO BRANCO (NEON BLOOM + GLOSS) --- */
+        /* --- 3. 📦 O CAIXOTE BRANCO GIGANTE (A PASTA ABERTA) --- */
         [data-testid="stTabPanel"] {
-            background: rgba(255, 255, 255, 0.95) !important;
-            padding: 40px !important;
-            border-radius: 40px !important;
+            background: white !important;
+            padding: 50px !important;
+            border-radius: 0 60px 60px 60px !important;
             margin-top: -5px !important;
-            min-height: 600px !important;
+            min-height: 700px !important;
             border: 6px solid transparent !important;
-            /* EFEITO GLITTER/SHINE NO FUNDO */
-            box-shadow: inset 0 20px 40px rgba(0,0,0,0.02) !important;
         }
 
-        /* 🔵 NEON SHINE AZUL (Setor XML) */
+        /* 🔵 NEON LETREIRO GAMER AZUL (Setor XML) */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 6px solid #00D1FF !important;
-            /* BLOOM EXPLOSIVO + SHINE BRANCO */
-            box-shadow: 0 0 20px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.4), inset 0 3px 15px rgba(255,255,255,0.9) !important;
+            /* Efeito Letreiro: Sombra interna e externa explosiva */
+            box-shadow: 
+                0 0 10px #00D1FF, 
+                0 0 30px #00D1FF, 
+                0 0 60px rgba(0, 209, 255, 0.4), 
+                inset 0 0 15px rgba(0, 209, 255, 0.2) !important;
         }
 
-        /* 💗 NEON SHINE ROSA (Setor Conformidade) */
+        /* 💗 NEON LETREIRO GAMER ROSA (Setor Conformidade) */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 6px solid #FF69B4 !important;
-            /* BLOOM EXPLOSIVO + SHINE BRANCO */
-            box-shadow: 0 0 20px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4), inset 0 3px 15px rgba(255,255,255,0.9) !important;
+            /* Efeito Letreiro: Sombra interna e externa explosiva */
+            box-shadow: 
+                0 0 10px #FF69B4, 
+                0 0 30px #FF69B4, 
+                0 0 60px rgba(255, 105, 180, 0.4), 
+                inset 0 0 15px rgba(255, 105, 180, 0.2) !important;
         }
 
-        /* --- 4. SUB-ABAS (MINI-SHINE) --- */
+        /* --- 4. SUB-ABAS (LIMPANDO O NEON, MANTENDO O FOCO NO CAIXOTE) --- */
+        .stTabs .stTabs [data-baseweb="tab-list"] {
+            padding: 10px 0 30px 0 !important;
+            background: transparent !important;
+        }
+
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #F8F9FA !important;
-            border-radius: 15px 40px 0 0 !important;
+            border-radius: 15px 45px 0 0 !important;
             font-size: 1.1rem !important;
-            /* SHINE NAS FILHAS */
-            box-shadow: inset 0 2px 4px rgba(255,255,255,0.5) !important;
+            border: 1px solid #E8DCCB !important;
         }
 
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { 
-            background: #00BFFF !important; 
-            box-shadow: 0 0 15px #00D1FF, inset 0 2px 8px rgba(255,255,255,0.6) !important;
-            color: white !important; 
-        }
-        
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { 
-            background: #FF69B4 !important; 
-            box-shadow: 0 0 15px #FF69B4, inset 0 2px 8px rgba(255,255,255,0.6) !important;
-            color: white !important; 
+        /* Ativas Sólidas */
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
+
+        /* --- 5. AREA DE UPLOAD --- */
+        [data-testid="stFileUploader"] {
+            background: #FDFDFD !important;
+            border: 2px dashed #D8C7B1 !important;
+            border-radius: 20px !important;
+            padding: 25px !important;
         }
 
         </style>
