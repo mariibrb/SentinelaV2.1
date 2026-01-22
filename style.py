@@ -5,11 +5,12 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* RESET TOTAL */
+        /* RESET TOTAL E REMOÇÃO DO BOTÃO DE FECHAR SIDEBAR */
         header, .st-emotion-cache-18ni7ap, .st-emotion-cache-zq59db, 
         #keyboard_double, .st-emotion-cache-10oheav, 
         span[data-testid="stHeaderActionElements"],
-        button[title="View keyboard shortcuts"] {
+        button[title="View keyboard shortcuts"],
+        [data-testid="sidebar-close-button"] { /* REMOVE O BOTÃO DE FECHAR */
             display: none !important;
             visibility: hidden !important;
         }
@@ -36,55 +37,41 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 0 15px rgba(255, 105, 180, 0.6);
         }
 
-        /* --- SIDEBAR BOUTIQUE DE LUXO --- */
+        /* --- SIDEBAR BOUTIQUE (FIXO E SEM BOTÃO) --- */
         [data-testid="stSidebar"] {
-            background-color: #F3E9DC !important; /* Mocha Mousse Caramelo Suave */
+            background-color: #F3E9DC !important;
             border-right: 1px solid rgba(166, 123, 91, 0.2) !important;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.02) !important;
-        }
-
-        /* Texto da Sidebar */
-        [data-testid="stSidebar"] .stText, [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {
-            color: #5D3A1A !important;
-            font-weight: 600 !important;
-        }
-
-        /* Campos de Seleção (Selectbox) na Sidebar */
-        [data-testid="stSidebar"] div[data-baseweb="select"] > div {
-            background-color: white !important;
-            border-radius: 15px !important;
-            border: 1px solid rgba(166, 123, 91, 0.3) !important;
-            color: #5D3A1A !important;
-        }
-
-        /* Botão Sair do Sistema (Pink Boutique) */
-        [data-testid="stSidebar"] button {
-            background: linear-gradient(145deg, #FF69B4, #FF1493) !important;
-            color: #3D2B1F !important;
-            border-radius: 20px !important;
-            border: none !important;
-            font-weight: 700 !important;
-            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3) !important;
-            transition: all 0.3s ease !important;
         }
         
-        [data-testid="stSidebar"] button:hover {
-            transform: scale(1.03) !important;
-            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.5) !important;
+        /* Força a largura e impede o colapso visual */
+        [data-testid="stSidebar"][aria-expanded="true"] {
+            min-width: 350px !important;
+            max-width: 350px !important;
         }
 
-        /* Estilização dos Avisos de Status na Sidebar (Pink Glow) */
-        [data-testid="stSidebar"] .stAlert {
-            background-color: rgba(255, 255, 255, 0.5) !important;
-            border-radius: 20px !important;
-            border: 1px solid rgba(255, 105, 180, 0.2) !important;
-            backdrop-filter: blur(5px);
-        }
-
-        /* --- ABAS PÍLULA --- */
+        /* --- HIERARQUIA DE ABAS (O SEGREDO DA CONEXÃO) --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
-        .stTabs [data-baseweb="tab-list"] { gap: 12px !important; background-color: transparent !important; }
+        
+        /* Abas Pai (Nível 1) - Maiores e imponentes */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 12px !important;
+            background-color: transparent !important;
+            margin-bottom: 20px !important;
+        }
 
+        /* Abas Filhas (Nível 2 - Dentro de Conformidade) */
+        /* Aplicamos um recuo e uma escala menor para parecerem "dentro" */
+        [data-testid="stVerticalBlock"] [data-testid="stVerticalBlock"] .stTabs [data-baseweb="tab"] {
+            height: 40px !important;
+            font-size: 13px !important;
+            padding: 0px 20px !important;
+            background: rgba(255, 255, 255, 0.5) !important;
+            border-radius: 15px !important;
+            margin-top: 10px !important;
+            border: 1px dashed #BC8F8F !important; /* Linha tracejada para indicar conexão */
+        }
+
+        /* Efeito de Pílulas Flutuantes Gerais */
         .stTabs [data-baseweb="tab"] {
             height: 48px !important;
             background: rgba(166, 123, 91, 0.15) !important;
@@ -93,7 +80,6 @@ def aplicar_estilo_sentinela():
             font-size: 15px !important; 
             font-weight: 400 !important;
             color: #5D3A1A !important;
-            border: 1px solid rgba(255, 255, 255, 0.8) !important;
             transition: all 0.4s ease !important;
         }
 
@@ -108,9 +94,10 @@ def aplicar_estilo_sentinela():
             background: #5D3A1A !important;
             color: white !important;
             font-weight: 600 !important;
+            box-shadow: 0 8px 20px rgba(93, 58, 26, 0.2) !important;
         }
 
-        /* --- BOTÃO ADM (PINK & MARROM) --- */
+        /* --- BOTÃO ADMINISTRATIVO PINK & MARROM --- */
         div.stButton > button:has(div:contains("ABRIR GESTÃO ADMINISTRATIVA")) {
             background: linear-gradient(145deg, #FF69B4, #FF1493) !important;
             color: #5D3A1A !important; 
