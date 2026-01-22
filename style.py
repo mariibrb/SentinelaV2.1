@@ -20,14 +20,9 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #FCF8F4 0%, #E8DCCB 100%) !important; 
         }
 
-        /* --- 2. ABAS MESTRE --- */
+        /* --- 2. ABAS MESTRE (EFEITO GLOSS METALIZADO) --- */
         .stTabs [data-baseweb="tab-border"] { display: none !important; }
-        
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 20px !important;
-            padding: 40px 0 !important;
-            align-items: flex-end;
-        }
+        .stTabs [data-baseweb="tab-list"] { gap: 20px !important; padding: 40px 0 !important; }
 
         .stTabs [data-baseweb="tab"] {
             height: 80px !important;
@@ -39,58 +34,71 @@ def aplicar_estilo_sentinela():
             font-size: 1.5rem !important;
             font-weight: 800 !important;
             color: #8B5A2B !important;
+            /* SHINE INTERNO */
+            box-shadow: inset 0 2px 5px rgba(255,255,255,0.8) !important;
         }
 
-        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; color: white !important; }
-        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
+        /* 🔵 SHINE AZUL ATIVO */
+        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
+            background: linear-gradient(145deg, #A7E9FF 0%, #00BFFF 100%) !important;
+            box-shadow: 0 0 40px #00D1FF, inset 0 5px 15px rgba(255,255,255,0.8) !important;
+            color: white !important;
+        }
 
-        /* --- 3. 📦 O CAIXOTÃO BRANCO (COM NEON TURBINADO) --- */
+        /* 💗 SHINE ROSA ATIVO */
+        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
+            background: linear-gradient(145deg, #FFB6C1 0%, #FF69B4 100%) !important;
+            box-shadow: 0 0 40px #FF69B4, inset 0 5px 15px rgba(255,255,255,0.8) !important;
+            color: white !important;
+        }
+
+        /* --- 3. 📦 O CAIXOTÃO BRANCO (NEON BLOOM + GLOSS) --- */
         [data-testid="stTabPanel"] {
-            background: white !important;
+            background: rgba(255, 255, 255, 0.95) !important;
             padding: 40px !important;
             border-radius: 40px !important;
             margin-top: -5px !important;
             min-height: 600px !important;
             border: 6px solid transparent !important;
+            /* EFEITO GLITTER/SHINE NO FUNDO */
+            box-shadow: inset 0 20px 40px rgba(0,0,0,0.02) !important;
         }
 
-        /* 🔵 NEON AZUL EXPLOSIVO (Setor XML) */
+        /* 🔵 NEON SHINE AZUL (Setor XML) */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 6px solid #00D1FF !important;
-            /* Aumentei de 30px para 80px de brilho */
-            box-shadow: 0 0 20px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.6), 0 10px 100px rgba(0, 0, 0, 0.1) !important;
+            /* BLOOM EXPLOSIVO + SHINE BRANCO */
+            box-shadow: 0 0 20px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.4), inset 0 3px 15px rgba(255,255,255,0.9) !important;
         }
 
-        /* 💗 NEON ROSA EXPLOSIVO (Setor Conformidade) */
+        /* 💗 NEON SHINE ROSA (Setor Conformidade) */
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
             border: 6px solid #FF69B4 !important;
-            /* Aumentei de 30px para 80px de brilho */
-            box-shadow: 0 0 20px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.6), 0 10px 100px rgba(0, 0, 0, 0.1) !important;
+            /* BLOOM EXPLOSIVO + SHINE BRANCO */
+            box-shadow: 0 0 20px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4), inset 0 3px 15px rgba(255,255,255,0.9) !important;
         }
 
-        /* --- 4. SUB-ABAS INTERNAS --- */
-        .stTabs .stTabs [data-baseweb="tab-list"] {
-            padding: 10px 0 30px 0 !important;
-            background: transparent !important;
-        }
-
+        /* --- 4. SUB-ABAS (MINI-SHINE) --- */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #F8F9FA !important;
             border-radius: 15px 40px 0 0 !important;
             font-size: 1.1rem !important;
-            padding: 0 40px !important;
+            /* SHINE NAS FILHAS */
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.5) !important;
         }
 
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
-
-        /* --- 5. AREA DE UPLOAD --- */
-        [data-testid="stFileUploader"] {
-            background: #FFFFFF !important;
-            border: 2px dashed #D8C7B1 !important;
-            border-radius: 20px !important;
-            padding: 20px !important;
+        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { 
+            background: #00BFFF !important; 
+            box-shadow: 0 0 15px #00D1FF, inset 0 2px 8px rgba(255,255,255,0.6) !important;
+            color: white !important; 
         }
+        
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { 
+            background: #FF69B4 !important; 
+            box-shadow: 0 0 15px #FF69B4, inset 0 2px 8px rgba(255,255,255,0.6) !important;
+            color: white !important; 
+        }
+
         </style>
     """, unsafe_allow_html=True)
