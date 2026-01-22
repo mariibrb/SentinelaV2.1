@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 
-# --- FUNÇÕES DE APOIO ---
+# --- FUNÇÕES DE LIMPEZA E TRATAMENTO ---
 def safe_float(v):
     if v is None or pd.isna(v): return 0.0
     txt = str(v).strip().upper()
@@ -25,7 +25,7 @@ def buscar_tag_recursiva(tag_alvo, no):
         if tag_nome == tag_alvo: return elemento.text if elemento.text else ""
     return ""
 
-# --- EXTRAÇÃO DE DADOS DOS XMLs ---
+# --- MOTOR DE EXTRAÇÃO XML (MAPEAMENTO INTEGRAL DE TAGS) ---
 def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
     try:
         xml_str = content.decode('utf-8', errors='replace')
@@ -42,38 +42,47 @@ def processar_conteudo_xml(content, dados_lista, cnpj_empresa_auditada):
         chave = inf.attrib.get('Id', '')[3:]
 
         for det in root.findall('.//det'):
-            prod = det.find('prod'); imp = det.find('imposto'); icms_no = det.find('.//ICMS')
-            ipi_no = det.find('.//IPI'); pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
+            prod = det.find('prod'); imp = det.find('imposto')
+            icms_no = det.find('.//ICMS'); ipi_no = det.find('.//IPI')
+            pis_no = det.find('.//PIS'); cof_no = det.find('.//COFINS')
 
             linha = {
-                "TIPO_SISTEMA": tipo_operacao, "CHAVE_ACESSO": str(chave).strip(),
+                "TIPO_SISTEMA": tipo_operacao,
+                "CHAVE_ACESSO": str(chave).strip(),
                 "NUM_NF": buscar_tag_recursiva('nNF', ide), 
                 "DATA_EMISSAO": buscar_tag_recursiva('dhEmi', ide) or buscar_tag_recursiva('dEmi', ide),
-                "CNPJ_EMIT": cnpj_emit, "UF_EMIT": buscar_tag_recursiva('UF', emit),
+                "CNPJ_EMIT": cnpj_emit, 
+                "UF_EMIT": buscar_tag_recursiva('UF', emit),
                 "CNPJ_DEST": re.sub(r'\D', '', buscar_tag_recursiva('CNPJ', dest)), 
-                "IE_DEST": buscar_tag_recursiva('IE', dest), "UF_DEST": buscar_tag_recursiva('UF', dest), 
-                "CFOP": buscar_tag_recursiva('CFOP', prod), "NCM": buscar_tag_recursiva('NCM', prod), 
-                "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)), 
+                "UF_DEST": buscar_tag_recursiva('UF', dest),
+                "INDIEDEST": buscar_tag_recursiva('indIEDest', dest),
+                "CFOP": buscar_tag_recursiva('CFOP', prod),
+                "NCM": buscar_tag_recursiva('NCM', prod),
+                "VPROD": safe_float(buscar_tag_recursiva('vProd', prod)),
+                
+                # Grupo ICMS
                 "BC-ICMS": safe_float(buscar_tag_recursiva('vBC', icms_no)), 
                 "ALQ-ICMS": safe_float(buscar_tag_recursiva('pICMS', icms_no)), 
                 "VLR-ICMS": safe_float(buscar_tag_recursiva('vICMS', icms_no)),
                 "CST-ICMS": (buscar_tag_recursiva('orig', icms_no) + (buscar_tag_recursiva('CST', icms_no) or buscar_tag_recursiva('CSOSN', icms_no))),
                 "VAL-ICMS-ST": safe_float(buscar_tag_recursiva('vICMSST', icms_no)),
-                "IE_SUBST": str(buscar_tag_recursiva('IEST', icms_no)).strip(),
-                "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
-                "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
-                "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no)),
+                "IE_SUBST": buscar_tag_recursiva('IEST', icms_no),
                 
-                # Tags essenciais para Auditorias (IPI/PIS/COFINS)
+                # Grupo IPI
                 "ALQ-IPI": safe_float(buscar_tag_recursiva('pIPI', ipi_no)),
                 "VLR-IPI": safe_float(buscar_tag_recursiva('vIPI', ipi_no)),
                 "CST-IPI": buscar_tag_recursiva('CST', ipi_no),
-                "ALQ-PIS": safe_float(buscar_tag_recursiva('pPIS', pis_no)),
-                "VLR-PIS": safe_float(buscar_tag_recursiva('vPIS', pis_no)),
+
+                # Grupo PIS/COFINS
                 "CST-PIS": buscar_tag_recursiva('CST', pis_no),
-                "ALQ-COFINS": safe_float(buscar_tag_recursiva('pCOFINS', cof_no)),
+                "VLR-PIS": safe_float(buscar_tag_recursiva('vPIS', pis_no)),
+                "CST-COFINS": buscar_tag_recursiva('CST', cof_no),
                 "VLR-COFINS": safe_float(buscar_tag_recursiva('vCOFINS', cof_no)),
-                "CST-COFINS": buscar_tag_recursiva('CST', cof_no)
+                
+                # Grupo DIFAL/FCP
+                "VAL-DIFAL": safe_float(buscar_tag_recursiva('vICMSUFDest', imp)) + safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
+                "VAL-FCP-DEST": safe_float(buscar_tag_recursiva('vFCPUFDest', imp)),
+                "VAL-FCP-ST": safe_float(buscar_tag_recursiva('vFCPST', icms_no))
             }
             dados_lista.append(linha)
     except: pass
@@ -91,9 +100,9 @@ def extrair_dados_xml_recursivo(files, cnpj_auditado):
     if df.empty: return pd.DataFrame(), pd.DataFrame()
     return df[df['TIPO_SISTEMA'] == "ENTRADA"].copy(), df[df['TIPO_SISTEMA'] == "SAIDA"].copy()
 
-# --- GERAÇÃO DO EXCEL COM TODOS OS MÓDULOS ---
+# --- GERADOR DO EXCEL FINAL (O MAESTRO) ---
 def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None, as_f=None, df_base_emp=None, modo=None):
-    # Lazy Imports para evitar Erro Circular
+    # Importação local para evitar erros de dependência circular no GitHub/Streamlit
     try:
         from audit_resumo import gerar_aba_resumo             
         from Auditorias.audit_icms import processar_icms       
@@ -102,35 +111,27 @@ def gerar_excel_final(df_xe, df_xs, cod_cliente, writer, regime, is_ret, ae=None
         from Auditorias.audit_difal import processar_difal      
         from Apuracoes.apuracao_difal import gerar_resumo_uf
     except ImportError as e:
-        st.error(f"⚠️ Erro ao carregar módulos de auditoria: {e}")
+        st.error(f"⚠️ Falha ao carregar módulos especialistas: {e}")
         return
 
-    # 1. EXECUÇÃO DA SEQUÊNCIA DE AUDITORIAS
+    # Execução das Auditorias (Apenas se houver Saídas)
     if not df_xs.empty:
-        # Auditoria de ICMS
-        processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo)
-        
-        # Auditoria de IPI
-        try: processar_ipi(df_xs, writer, cod_cliente)
-        except Exception as e: st.warning(f"Erro no IPI: {e}")
-        
-        # Auditoria de PIS/COFINS
-        try: processar_pc(df_xs, writer, cod_cliente, regime)
-        except Exception as e: st.warning(f"Erro no PIS/COFINS: {e}")
-        
-        # Auditoria de DIFAL (ST/FECP)
-        processar_difal(df_xs, writer)
-        
-        # --- ABA DE APURAÇÃO DO DIFAL ---
-        gerar_resumo_uf(df_xs, writer, df_xe)
+        processar_icms(df_xs, writer, cod_cliente, df_xe, df_base_emp, modo) # Aba 1
+        try: processar_ipi(df_xs, writer, cod_cliente)                      # Aba 2
+        except: pass
+        try: processar_pc(df_xs, writer, cod_cliente, regime)               # Aba 3
+        except: pass
+        try: processar_difal(df_xs, writer)                                 # Aba 4
+        except: pass
+        try: gerar_resumo_uf(df_xs, writer, df_xe)                          # Aba 5
+        except: pass
 
-    # 2. ABA RESUMO GERAL
+    # Aba 6: Resumo Executivo
     try: gerar_aba_resumo(writer)
     except: pass
     
-    # 3. ABAS DE CONFERÊNCIA XML
-    cols_xml = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "DATA_EMISSAO", "CNPJ_EMIT", "UF_EMIT", "CNPJ_DEST", "IE_DEST", "UF_DEST", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL", "VAL-FCP-DEST", "VAL-FCP-ST"]
-
-    for df_t, nome_aba in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
+    # Abas de Conferência (Dumps XML)
+    cols_dump = ["TIPO_SISTEMA", "CHAVE_ACESSO", "NUM_NF", "CFOP", "NCM", "VPROD", "BC-ICMS", "ALQ-ICMS", "VLR-ICMS", "CST-ICMS", "VAL-ICMS-ST", "IE_SUBST", "VAL-DIFAL"]
+    for df_t, nome in [(df_xe, 'ENTRADAS_XML'), (df_xs, 'SAIDAS_XML')]:
         if not df_t.empty:
-            df_t[cols_xml].to_excel(writer, sheet_name=nome_aba, index=False)
+            df_t[cols_dump].to_excel(writer, sheet_name=nome, index=False)
