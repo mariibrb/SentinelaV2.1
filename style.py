@@ -18,7 +18,7 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #F8F9FA 0%, #CED4DA 100%) !important; 
         }
 
-        /* --- 2. 🚫 REMOÇÃO TOTAL DA CAIXA BRANCA DO TÍTULO --- */
+        /* --- 2. TÍTULO LIMPO --- */
         div[data-testid="stVerticalBlock"] > div:has(.titulo-principal),
         div[data-testid="stVerticalBlock"] > div:first-child,
         .element-container:has(.titulo-principal) {
@@ -57,32 +57,38 @@ def aplicar_estilo_sentinela():
             font-size: 1.6rem !important;
             font-weight: 800 !important;
             color: #495057 !important;
-            transition: all 0.3s ease-in-out !important;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            position: relative !important;
+            overflow: hidden !important;
         }
 
-        /* ✨ O BRILHO METALIZADO APROVADO (HOVER) ✨ */
+        /* ✨ O BRILHO METALIZADO DIAMANTE (HOVER) ✨ */
         .stTabs [data-baseweb="tab"]:hover {
-            background: linear-gradient(45deg, 
-                rgba(255,255,255,0) 0%, 
-                rgba(255,255,255,0.8) 50%, 
-                rgba(255,255,255,0) 100%), 
-                linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
+            background: linear-gradient(
+                70deg, 
+                #DEE2E6 30%, 
+                #FFFFFF 50%, 
+                #DEE2E6 70%
+            ) !important;
             background-size: 200% 100% !important;
-            animation: reflexoMetalico 1.5s infinite !important;
-            transform: translateY(-5px) !important;
-            color: #000 !important;
-            border-color: #FFF !important;
+            animation: brilhoMetalico 1.2s infinite linear !important;
+            transform: translateY(-8px) scale(1.02) !important;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+            color: #000000 !important;
+            border-color: #FFFFFF !important;
+            cursor: pointer !important;
         }
 
-        @keyframes reflexoMetalico {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+        @keyframes brilhoMetalico {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
         /* Elevação das Mães Selecionadas */
         .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] { 
             transform: translateY(-30px) !important; 
-            color: white !important; 
+            color: white !important;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)) !important;
         }
 
         /* DNA das Mães - CORES FIXAS */
@@ -90,7 +96,7 @@ def aplicar_estilo_sentinela():
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(2)[aria-selected="true"] { background: #FF69B4 !important; }
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(3)[aria-selected="true"] { background: #2ECC71 !important; }
 
-        /* --- 4. 📦 O CAIXOTÃO (PASTA MÃE) --- */
+        /* --- 4. O CAIXOTÃO --- */
         [data-testid="stTabPanel"] {
             background: #FFFFFF !important;
             padding: 50px !important;
@@ -106,28 +112,27 @@ def aplicar_estilo_sentinela():
         .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
         .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
 
-        /* --- 5. SUB-ABAS SETORIZADAS (HERANÇA GENÉTICA BLINDADA) --- */
+        /* --- 5. SUB-ABAS (HERANÇA GENÉTICA BLINDADA) --- */
         .stTabs .stTabs [data-baseweb="tab-list"] { padding: 0 0 30px 0 !important; }
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #F1F3F5 !important;
             border-radius: 15px 45px 0 0 !important;
         }
+        
+        /* Brilho Metalizado também nas Sub-abas */
+        .stTabs .stTabs [data-baseweb="tab"]:hover {
+            background: linear-gradient(70deg, #F1F3F5 30%, #FFFFFF 50%, #F1F3F5 70%) !important;
+            background-size: 200% 100% !important;
+            animation: brilhoMetalico 1s infinite linear !important;
+        }
 
         .stTabs .stTabs button[aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
         
-        /* HERANÇA DO GRUPO 1 (AZUL) */
+        /* HERANÇAS POR BLOCO MÃE */
         .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #00BFFF !important; }
-        
-        /* 🛡️ BLINDAGEM ROSA (GRUPO 2): O ROSA MANDA EM TODAS AS FILHAS AQUI */
-        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs button[aria-selected="true"] { 
-            background-color: #FF69B4 !important; 
-        }
-
-        /* 🛡️ BLINDAGEM VERDE (GRUPO 3): O VERDE SÓ EXISTE AQUI */
-        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs button[aria-selected="true"] { 
-            background-color: #2ECC71 !important; 
-        }
+        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #FF69B4 !important; }
+        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #2ECC71 !important; }
 
         /* --- 6. ✉️ ENVELOPE COM ÍCONE 📄 --- */
         [data-testid="stFileUploader"] {
