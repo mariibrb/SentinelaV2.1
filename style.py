@@ -70,10 +70,10 @@ def aplicar_estilo_sentinela():
         }
         @keyframes brilhoMetalico { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* Ativas das Mães - MODELO RIHANNA */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; transform: translateY(-30px) !important; color: white !important; }
-        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; transform: translateY(-30px) !important; color: white !important; }
-        .stTabs [data-baseweb="tab-list"] button:nth-child(3)[aria-selected="true"] { background: #2ECC71 !important; transform: translateY(-30px) !important; color: white !important; }
+        /* Ativas das Mães - MODELO RIHANNA (Blindado com > div) */
+        .stTabs > div [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; transform: translateY(-30px) !important; color: white !important; }
+        .stTabs > div [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; transform: translateY(-30px) !important; color: white !important; }
+        .stTabs > div [data-baseweb="tab-list"] button:nth-child(3)[aria-selected="true"] { background: #2ECC71 !important; transform: translateY(-30px) !important; color: white !important; }
 
         /* --- 4. 📦 O CAIXOTÃO (PASTA MÃE) --- */
         [data-testid="stTabPanel"] {
@@ -87,9 +87,9 @@ def aplicar_estilo_sentinela():
         }
 
         /* Neon Setorizado Reativo */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.4) !important; }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4) !important; }
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71, 0 0 80px rgba(46, 204, 113, 0.4) !important; }
+        .stTabs:has(> div [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.4) !important; }
+        .stTabs:has(> div [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4) !important; }
+        .stTabs:has(> div [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71, 0 0 80px rgba(46, 204, 113, 0.4) !important; }
 
         /* --- 5. SUB-ABAS SETORIZADAS (HERANÇA GENÉTICA BLINDADA) --- */
         .stTabs .stTabs [data-baseweb="tab-list"] { padding: 0 0 30px 0 !important; }
@@ -101,21 +101,10 @@ def aplicar_estilo_sentinela():
 
         .stTabs .stTabs [aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
         
-        /* 🛡️ LÓGICA DE TERRITÓRIO (FIM DO VÍCIO VERDE) 🛡️ */
-        /* Se a Mãe 1 (AZUL) estiver ativa -> Todas as filhas AZUIS */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { 
-            background-color: #00BFFF !important; 
-        }
-        
-        /* Se a Mãe 2 (ROSA) estiver ativa -> TODAS as filhas ROSAS (Incluindo o RET na 3ª posição) */
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { 
-            background-color: #FF69B4 !important; 
-        }
-        
-        /* Se a Mãe 3 (VERDE) estiver ativa -> TODAS as filhas VERDES */
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) .stTabs [aria-selected="true"] { 
-            background-color: #2ECC71 !important; 
-        }
+        /* 🛡️ LEI DO TERRITÓRIO (O RET É ROSA AQUI) 🛡️ */
+        .stTabs:has(> div [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background-color: #00BFFF !important; }
+        .stTabs:has(> div [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background-color: #FF69B4 !important; }
+        .stTabs:has(> div [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) .stTabs [aria-selected="true"] { background-color: #2ECC71 !important; }
 
         /* --- 6. ✉️ ENVELOPE COM ÍCONE 📄 --- */
         [data-testid="stFileUploader"] {
@@ -126,12 +115,12 @@ def aplicar_estilo_sentinela():
             margin: 25px 0 !important;
             position: relative !important;
         }
-
         [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 99; }
 
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
+        /* Cor dos Envelopes por Território */
+        .stTabs:has(> div [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
+        .stTabs:has(> div [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
+        .stTabs:has(> div [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
 
         /* --- 7. BOTÃO DE DOWNLOAD --- */
         div.stDownloadButton > button {
@@ -146,9 +135,9 @@ def aplicar_estilo_sentinela():
             transition: 0.3s ease !important;
         }
 
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #00BFFF !important; border-color: #00BFFF !important; }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #FF69B4 !important; border-color: #FF69B4 !important; }
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #2ECC71 !important; border-color: #2ECC71 !important; }
+        .stTabs:has(> div [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #00BFFF !important; border-color: #00BFFF !important; }
+        .stTabs:has(> div [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #FF69B4 !important; border-color: #FF69B4 !important; }
+        .stTabs:has(> div [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #2ECC71 !important; border-color: #2ECC71 !important; }
 
         </style>
     """, unsafe_allow_html=True)
