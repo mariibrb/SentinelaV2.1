@@ -25,12 +25,12 @@ def aplicar_estilo_sentinela():
             font-size: 3.5rem; 
             font-weight: 800; 
             text-transform: uppercase;
-            padding: 20px 0 !important;
             background: transparent !important;
+            padding: 20px 0 !important;
             text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.8) !important;
         }
 
-        /* --- 3. ABAS MESTRE DIAMANTE (ELEVAÇÃO AO SELECIONAR) --- */
+        /* --- 3. ABAS MESTRE DIAMANTE (ELEVAÇÃO TOTAL) --- */
         .stTabs [data-baseweb="tab-list"] {
             gap: 15px !important; 
             padding: 60px 0 0 20px !important; 
@@ -59,39 +59,51 @@ def aplicar_estilo_sentinela():
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(2)[aria-selected="true"] { background: #FF69B4 !important; }
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(3)[aria-selected="true"] { background: #2ECC71 !important; }
 
-        /* --- 4. O CAIXOTÃO --- */
+        /* --- 4. O CAIXOTÃO (PASTA MÃE) --- */
         [data-testid="stTabPanel"] {
             background: #FFFFFF !important;
             padding: 40px !important;
-            border-radius: 0 40px 40px 40px !important;
+            border-radius: 0 60px 60px 60px !important;
             border: 6px solid transparent !important;
         }
 
-        /* Neon por Bloco */
+        /* Neon Setorizado */
         .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
         .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
         .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
 
-        /* --- 5. SUB-ABAS (HERANÇA GENÉTICA E ELEVAÇÃO) --- */
+        /* --- 5. SUB-ABAS (HERANÇA GENÉTICA BLINDADA) --- */
+        
+        /* Formato Geral das Filhas */
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             border-radius: 15px 45px 0 0 !important;
-            font-size: 1rem !important;
-            padding: 0 30px !important;
+            background: #F1F3F5 !important;
+            color: #495057 !important;
         }
 
-        /* Elevação das Filhas */
-        .stTabs .stTabs [aria-selected="true"] { 
+        /* Elevação das Filhas ao Selecionar */
+        .stTabs .stTabs button[aria-selected="true"] { 
             transform: translateY(-12px) !important; 
             color: white !important; 
         }
-        
-        /* Herança Genética das Filhas baseada na Mãe */
-        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background-color: #00BFFF !important; }
-        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background-color: #FF69B4 !important; }
-        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs [aria-selected="true"] { background-color: #2ECC71 !important; }
 
-        /* --- 6. ENVELOPES (FORMATO MESTRE) --- */
+        /* DNA AZUL: Todas as filhas do Bloco 1 */
+        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) .stTabs button[aria-selected="true"] { 
+            background-color: #00BFFF !important; 
+        }
+
+        /* DNA ROSA: Todas as filhas do Bloco 2 (ICMS, DIFAL, RET, PIS, IBS) */
+        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs button[aria-selected="true"] { 
+            background-color: #FF69B4 !important; 
+        }
+
+        /* DNA VERDE: Todas as filhas do Bloco 3 */
+        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs button[aria-selected="true"] { 
+            background-color: #2ECC71 !important; 
+        }
+
+        /* --- 6. ENVELOPES (MODELO MESTRE) --- */
         [data-testid="stFileUploader"] {
             padding: 50px 45px 45px 45px !important;
             border-radius: 10px 10px 45px 45px !important;
@@ -105,7 +117,7 @@ def aplicar_estilo_sentinela():
             content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 99;
         }
 
-        /* Cor dos Envelopes por Setor */
+        /* Cores dos Envelopes por DNA */
         .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
         .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
         .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
@@ -120,6 +132,5 @@ def aplicar_estilo_sentinela():
             height: 55px !important;
             text-transform: uppercase !important;
         }
-
         </style>
     """, unsafe_allow_html=True)
