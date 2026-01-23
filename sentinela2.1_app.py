@@ -161,7 +161,7 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
 
 # --- CONFIGURAÇÃO DA PÁGINA E CSS ---
 st.set_page_config(
-    page_title="Sentinela 2.3.3 | Auditoria Fiscal", 
+    page_title="Sentinela 2.3.4 | Auditoria Fiscal", 
     page_icon="🧡", 
     layout="wide"
 )
@@ -311,7 +311,7 @@ if not st.session_state['user_data']:
     st.stop()
 
 # --- TÍTULO PRINCIPAL ---
-st.markdown("<div class='titulo-principal'>SENTINELA 2.3.3</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
+st.markdown("<div class='titulo-principal'>SENTINELA 2.3.4</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
 # --- CONFIGURAÇÃO INICIAL MODO ADM ---
 modo_adm = st.session_state.get('show_adm', False)
@@ -464,7 +464,7 @@ elif emp_sel and not modo_adm:
                     st.markdown("### 📥 Central de Importação e Garimpo")
                     c1, c2, c3 = st.columns(3)
                     with c1: 
-                        u_xml = st.file_uploader("📁 XML (ZIP)", accept_multiple_files=True, key=f"x_{v}")
+                        u_xml = st.file_uploader("📁 ZIP XML", accept_multiple_files=True, key=f"x_{v}")
                         if u_xml:
                             if st.button("🗑️ Excluir Tudo (XML)", use_container_width=True, key="clr_xml"):
                                 st.session_state['v_ver'] += 1; st.rerun()
@@ -517,13 +517,12 @@ elif emp_sel and not modo_adm:
                                 except Exception as e: st.error(f"Erro no Processamento: {e}")
 
                 elif nome_tab_p == "🏢 CONFORMIDADE DOMÍNIO":
-                    sub_v = ["📊 ICMS/IPI", "⚖️ DIFAL/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
-                    if ret_sel:
-                        sub_v.insert(2, "🏨 RET")
+                    sub_rosa = ["📊 ICMS/IPI", "⚖️ DIFAL/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
+                    if ret_sel: sub_rosa.insert(2, "🏨 RET")
                     
-                    tabs_filho = st.tabs(sub_v)
-                    for j, nome_sub in enumerate(sub_v):
-                        with tabs_filho[j]:
+                    tabs_rosa = st.tabs(sub_rosa)
+                    for j, nome_sub in enumerate(sub_rosa):
+                        with tabs_rosa[j]:
                             if "ICMS/IPI" in nome_sub:
                                 st.markdown("#### Auditoria ICMS/IPI")
                                 c1, c2 = st.columns(2)
@@ -539,34 +538,36 @@ elif emp_sel and not modo_adm:
                                 st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
                             elif "RET" in nome_sub:
                                 st.markdown("#### Auditoria RET")
-                                # ENVELOPES RESTAURADOS NA CONFORMIDADE
                                 c1, c2 = st.columns(2)
                                 with c1: st.file_uploader("📑 Gerencial RET", type=['xlsx'], key=f"ret_conf_g_{v}")
                                 with c2: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"ret_conf_d_{v}")
                                 st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
                             elif "PIS/COFINS" in nome_sub:
                                 st.markdown("#### Auditoria PIS/Cofins")
+                                c1, c2, c3 = st.columns(3)
+                                with c1: st.file_uploader("📑 Gerencial Saídas PIS", type=['xlsx'], key=f"p_s_{v}")
+                                with c2: st.file_uploader("📑 Gerencial Entradas PIS", type=['xlsx'], key=f"p_e_{v}")
+                                with c3: st.file_uploader("📄 Resumo PIS", type=['xlsx'], key=f"p_r_{v}")
                                 st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
                             elif "IBS / CBS" in nome_sub:
                                 st.markdown("#### Planejamento Reforma Tributária")
+                                c1, c2 = st.columns(2)
+                                with c1: st.file_uploader("📑 Gerencial IBS/CBS", type=['xlsx'], key=f"ibs_g_{v}")
+                                with c2: st.file_uploader("📄 Projeção IBS/CBS", type=['xlsx'], key=f"ibs_p_{v}")
                                 st.button("⚖️ ANALISAR IMPACTO", use_container_width=True, key="btn_ibscbs")
 
                 elif nome_tab_p == "✅ APURAÇÃO DOMÍNIO":
-                    sub_tributos = ["ICMS/ IPI", "Difal/ST", "PIS/COFINS", "IBS/CBS"]
-                    if ret_sel:
-                        sub_tributos.insert(2, "RET")
+                    sub_verde = ["📊 ICMS/ IPI", "⚖️ Difal/ST", "💰 PIS/COFINS", "💎 IBS/CBS"]
+                    if ret_sel: sub_verde.insert(2, "RET")
                         
-                    tabs_verde = st.tabs(sub_tributos)
-                    for k, nome_trib in enumerate(sub_tributos):
+                    tabs_verde = st.tabs(sub_verde)
+                    for k, nome_trib in enumerate(sub_verde):
                         with tabs_verde[k]:
                             st.markdown(f"### 🟢 Conferência: {nome_trib}")
                             st.info(f"Área destinada à validação final entre Sistema e Apuração de {nome_trib}.")
                             c1, c2 = st.columns(2)
-                            # ENVELOPES PRESENTES EM TODAS AS SUBPASTAS DA ÁREA VERDE (INCLUINDO RET)
-                            with c1:
-                                st.file_uploader(f"📑 Relatório Apuração {nome_trib}", type=['xlsx', 'pdf'], key=f"ap_rel_{k}_{v}")
-                            with c2:
-                                st.file_uploader(f"📄 Resumo Impostos {nome_trib}", type=['xlsx', 'pdf'], key=f"ap_res_{k}_{v}")
+                            with c1: st.file_uploader(f"📑 Relatório Apuração {nome_trib}", type=['xlsx', 'pdf'], key=f"ap_rel_{k}_{v}")
+                            with c2: st.file_uploader(f"📄 Resumo Impostos {nome_trib}", type=['xlsx', 'pdf'], key=f"ap_res_{k}_{v}")
                             st.button(f"⚙️ PROCESSAR CONFERÊNCIA {nome_trib}", use_container_width=True, key=f"btn_ap_verf_{k}")
 
         # --- ÁREA DE DOWNLOADS (TRAVA DE SENHA REMOVIDA) ---
