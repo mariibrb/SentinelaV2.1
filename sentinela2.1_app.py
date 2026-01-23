@@ -402,6 +402,7 @@ with st.sidebar:
 
 # PAINEL ADM E ÁREA CENTRAL (MANTIDOS INTEGRALMENTE)
 if modo_adm:
+    # ... (CÓDIGO ADM MANTIDO IDÊNTICO AO ORIGINAL) ...
     with st.container(border=True):
         st.subheader("🛠️ PAINEL DE CONTROLE DE USUÁRIOS")
         conn = sqlite3.connect('sentinela_usuarios.db')
@@ -450,140 +451,166 @@ if modo_adm:
 
 elif emp_sel and not modo_adm:
     perms = st.session_state['user_data']['perms']
-    # --- ÁREAS MESTRE DO SISTEMA ---
-    abas_v = []
-    if perms.get('xml'): abas_v.append("📂 ANÁLISE XML")
-    abas_v.append("🏢 CONFORMIDADE DOMÍNIO")
-    abas_v.append("✅ APURAÇÃO DOMÍNIO")
     
-    if abas_v:
-        tabs_pai = st.tabs(abas_v)
-        for i, nome_tab_p in enumerate(abas_v):
-            with tabs_pai[i]:
-                if nome_tab_p == "📂 ANÁLISE XML":
-                    st.markdown("### 📥 Central de Importação e Garimpo")
-                    c1, c2, c3 = st.columns(3)
-                    with c1: 
-                        u_xml = st.file_uploader("📁 ZIP XML", accept_multiple_files=True, key=f"x_{v}")
-                        if u_xml:
-                            if st.button("🗑️ Excluir Tudo (XML)", use_container_width=True, key="clr_xml"):
-                                st.session_state['v_ver'] += 1; st.rerun()
-                    with c2: 
-                        u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
-                        if u_ae:
-                            if st.button("🗑️ Excluir Tudo (Entradas)", use_container_width=True, key="clr_ae"):
-                                st.session_state['v_ver'] += 1; st.rerun()
-                    with c3: 
-                        u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
-                        if u_as:
-                            if st.button("🗑️ Excluir Tudo (Saídas)", use_container_width=True, key="clr_as"):
-                                st.session_state['v_ver'] += 1; st.rerun()
-
-                    if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True):
-                        if u_xml:
-                            with st.spinner("Auditando..."):
-                                try:
-                                    u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
-                                    xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
-                                    buf = io.BytesIO()
-                                    with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
-                                        gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, "CEGAS")
-                                    st.session_state['relat_buf'] = buf.getvalue()
-                                    p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
-                                    b_org, b_todos = io.BytesIO(), io.BytesIO()
-                                    with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
-                                        for zf in u_validos:
-                                            zf.seek(0)
-                                            with zipfile.ZipFile(zf) as zi:
-                                                for name in zi.namelist():
-                                                    if name.lower().endswith('.xml'):
-                                                        xml_d = zi.read(name)
-                                                        res, is_p = identify_xml_info(xml_d, cnpj_limpo, name)
-                                                        if res and res["Chave"] not in p_keys:
-                                                            p_keys.add(res["Chave"])
-                                                            z_org.writestr(f"{res['Pasta']}/{name}", xml_d); z_todos.writestr(name, xml_d)
-                                                            rel_list.append(res)
-                                                            if is_p:
-                                                                if res["Status"] in st_counts: st_counts[res["Status"]] += 1
-                                                                sk = (res["Tipo"], res["Série"])
-                                                                if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
-                                                                seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
-                                    res_f, fal_f = [], []
-                                    for (t, s), d in seq_map.items():
-                                        ns = d["nums"]; res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
-                                        for b in sorted(list(set(range(min(ns), max(ns) + 1)) - ns)): fal_f.append({"Série": s, "Nº Faltante": b})
-                                    st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'relatorio': rel_list, 'executado': True})
-                                    st.rerun()
-                                except Exception as e: st.error(f"Erro no Processamento: {e}")
-
-                elif nome_tab_p == "🏢 CONFORMIDADE DOMÍNIO":
-                    sub_rosa = ["📊 ICMS/IPI", "⚖️ DIFAL/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
-                    if ret_sel: sub_rosa.insert(2, "🏨 RET")
-                    
-                    tabs_rosa = st.tabs(sub_rosa)
-                    for j, nome_sub in enumerate(sub_rosa):
-                        with tabs_rosa[j]:
-                            if "ICMS/IPI" in nome_sub:
-                                st.markdown("#### Auditoria ICMS/IPI")
-                                c1, c2 = st.columns(2)
-                                with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
-                                with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
-                                st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
-                            elif "DIFAL/ST" in nome_sub:
-                                st.markdown("#### Auditoria Difal / ST / FECP")
-                                c1, c2, c3 = st.columns(3)
-                                with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"dif_s_{v}")
-                                with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
-                                with c3: st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
-                                st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
-                            elif "RET" in nome_sub:
-                                st.markdown("#### Auditoria RET")
-                                c1, c2 = st.columns(2)
-                                with c1: st.file_uploader("📑 Gerencial RET", type=['xlsx'], key=f"ret_conf_g_{v}")
-                                with c2: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"ret_conf_d_{v}")
-                                st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
-                            elif "PIS/COFINS" in nome_sub:
-                                st.markdown("#### Auditoria PIS/Cofins")
-                                c1, c2, c3 = st.columns(3)
-                                with c1: st.file_uploader("📑 Gerencial Saídas PIS", type=['xlsx'], key=f"p_s_{v}")
-                                with c2: st.file_uploader("📑 Gerencial Entradas PIS", type=['xlsx'], key=f"p_e_{v}")
-                                with c3: st.file_uploader("📄 Resumo PIS", type=['xlsx'], key=f"p_r_{v}")
-                                st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
-                            elif "IBS / CBS" in nome_sub:
-                                st.markdown("#### Planejamento Reforma Tributária")
-                                c1, c2 = st.columns(2)
-                                with c1: st.file_uploader("📑 Gerencial IBS/CBS", type=['xlsx'], key=f"ibs_g_{v}")
-                                with c2: st.file_uploader("📄 Projeção IBS/CBS", type=['xlsx'], key=f"ibs_p_{v}")
-                                st.button("⚖️ ANALISAR IMPACTO", use_container_width=True, key="btn_ibscbs")
-
-                elif nome_tab_p == "✅ APURAÇÃO DOMÍNIO":
-                    sub_verde = ["📊 ICMS/ IPI", "⚖️ Difal/ST", "💰 PIS/COFINS", "💎 IBS/CBS"]
-                    if ret_sel: sub_verde.insert(2, "RET")
-                        
-                    tabs_verde = st.tabs(sub_verde)
-                    for k, nome_trib in enumerate(sub_verde):
-                        with tabs_verde[k]:
-                            st.markdown(f"### 🟢 Conferência: {nome_trib}")
-                            st.info(f"Área destinada à validação final entre Sistema e Apuração de {nome_trib}.")
-                            c1, c2 = st.columns(2)
-                            with c1: st.file_uploader(f"📑 Relatório Apuração {nome_trib}", type=['xlsx', 'pdf'], key=f"ap_rel_{k}_{v}")
-                            with c2: st.file_uploader(f"📄 Resumo Impostos {nome_trib}", type=['xlsx', 'pdf'], key=f"ap_res_{k}_{v}")
-                            st.button(f"⚙️ PROCESSAR CONFERÊNCIA {nome_trib}", use_container_width=True, key=f"btn_ap_verf_{k}")
-
-        # --- ÁREA DE DOWNLOADS (TRAVA DE SENHA REMOVIDA) ---
-        if st.session_state.get('executado'):
-            st.markdown("---")
-            st.write("### 📥 Área de Downloads")
+    # ==============================================================================
+    # 🔄 LÓGICA DE NAVEGAÇÃO POR MÓDULOS (A GRANDE MUDANÇA)
+    # ==============================================================================
+    
+    # 1. Definir quais módulos o usuário pode ver
+    modulos_disponiveis = []
+    if perms.get('xml'): modulos_disponiveis.append("📂 ANÁLISE XML")
+    modulos_disponiveis.append("🏢 CONFORMIDADE DOMÍNIO")
+    modulos_disponiveis.append("✅ APURAÇÃO DOMÍNIO")
+    
+    if modulos_disponiveis:
+        # 2. Criar o Seletor de Módulo na Barra Lateral
+        st.sidebar.markdown("### 🗂️ Navegação Mestre")
+        modulo_atual = st.sidebar.radio("Selecione o Módulo:", modulos_disponiveis, label_visibility="collapsed")
+        
+        # ----------------------------------------------------------------------
+        # MÓDULO AZUL: ANÁLISE XML
+        # ----------------------------------------------------------------------
+        if modulo_atual == "📂 ANÁLISE XML":
+            # 🚀 ETIQUETA DE COR: AZUL
+            st.markdown('<div id="modulo-xml"></div>', unsafe_allow_html=True)
+            
+            st.markdown("### 📥 Central de Importação e Garimpo")
             c1, c2, c3 = st.columns(3)
-            with c1: st.download_button("💾 BAIXAR RELATÓRIO EXCEL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, type="primary")
-            with c2: st.download_button("📂 BAIXAR ZIP ORGANIZADO", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
-            with c3: st.download_button("📦 BAIXAR TODOS XMLS", st.session_state['z_todos'], "todos_xmls.zip", use_container_width=True)
+            with c1: 
+                u_xml = st.file_uploader("📁 ZIP XML", accept_multiple_files=True, key=f"x_{v}")
+                if u_xml:
+                    if st.button("🗑️ Excluir Tudo (XML)", use_container_width=True, key="clr_xml"):
+                        st.session_state['v_ver'] += 1; st.rerun()
+            with c2: 
+                u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
+                if u_ae:
+                    if st.button("🗑️ Excluir Tudo (Entradas)", use_container_width=True, key="clr_ae"):
+                        st.session_state['v_ver'] += 1; st.rerun()
+            with c3: 
+                u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
+                if u_as:
+                    if st.button("🗑️ Excluir Tudo (Saídas)", use_container_width=True, key="clr_as"):
+                        st.session_state['v_ver'] += 1; st.rerun()
 
-            st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
-            sc = st.session_state.get('st_counts'); d1, d2, d3 = st.columns(3)
-            d1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', []))); d2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); d3.metric("🚫 INUTILIZADOS", sc.get("INUTILIZADOS", 0))
-            cr, cf = st.columns(2)
-            with cr: st.write("**Resumo por Série:**"); st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
-            with cf: st.write("**Notas Faltantes:**"); st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
+            if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True):
+                if u_xml:
+                    with st.spinner("Auditando..."):
+                        try:
+                            u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
+                            xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
+                            buf = io.BytesIO()
+                            with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
+                                gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, "CEGAS")
+                            st.session_state['relat_buf'] = buf.getvalue()
+                            p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
+                            b_org, b_todos = io.BytesIO(), io.BytesIO()
+                            with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
+                                for zf in u_validos:
+                                    zf.seek(0)
+                                    with zipfile.ZipFile(zf) as zi:
+                                        for name in zi.namelist():
+                                            if name.lower().endswith('.xml'):
+                                                xml_d = zi.read(name)
+                                                res, is_p = identify_xml_info(xml_d, cnpj_limpo, name)
+                                                if res and res["Chave"] not in p_keys:
+                                                    p_keys.add(res["Chave"])
+                                                    z_org.writestr(f"{res['Pasta']}/{name}", xml_d); z_todos.writestr(name, xml_d)
+                                                    rel_list.append(res)
+                                                    if is_p:
+                                                        if res["Status"] in st_counts: st_counts[res["Status"]] += 1
+                                                        sk = (res["Tipo"], res["Série"])
+                                                        if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
+                                                        seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
+                            res_f, fal_f = [], []
+                            for (t, s), d in seq_map.items():
+                                ns = d["nums"]; res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
+                                for b in sorted(list(set(range(min(ns), max(ns) + 1)) - ns)): fal_f.append({"Série": s, "Nº Faltante": b})
+                            st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'relatorio': rel_list, 'executado': True})
+                            st.rerun()
+                        except Exception as e: st.error(f"Erro no Processamento: {e}")
+
+            # DOWNLOADS DO MÓDULO XML
+            if st.session_state.get('executado'):
+                st.markdown("---")
+                st.write("### 📥 Área de Downloads")
+                c1, c2, c3 = st.columns(3)
+                with c1: st.download_button("💾 BAIXAR RELATÓRIO EXCEL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, type="primary")
+                with c2: st.download_button("📂 BAIXAR ZIP ORGANIZADO", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
+                with c3: st.download_button("📦 BAIXAR TODOS XMLS", st.session_state['z_todos'], "todos_xmls.zip", use_container_width=True)
+
+                st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
+                sc = st.session_state.get('st_counts'); d1, d2, d3 = st.columns(3)
+                d1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', []))); d2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); d3.metric("🚫 INUTILIZADOS", sc.get("INUTILIZADOS", 0))
+                cr, cf = st.columns(2)
+                with cr: st.write("**Resumo por Série:**"); st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
+                with cf: st.write("**Notas Faltantes:**"); st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
+
+        # ----------------------------------------------------------------------
+        # MÓDULO ROSA: CONFORMIDADE
+        # ----------------------------------------------------------------------
+        elif modulo_atual == "🏢 CONFORMIDADE DOMÍNIO":
+            # 🚀 ETIQUETA DE COR: ROSA
+            st.markdown('<div id="modulo-conformidade"></div>', unsafe_allow_html=True)
+            
+            sub_rosa = ["📊 ICMS/IPI", "⚖️ DIFAL/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
+            if ret_sel: sub_rosa.insert(2, "🏨 RET")
+            
+            # ABAS FILHAS (ICMS, PIS, ETC)
+            tabs_rosa = st.tabs(sub_rosa)
+            for j, nome_sub in enumerate(sub_rosa):
+                with tabs_rosa[j]:
+                    if "ICMS/IPI" in nome_sub:
+                        st.markdown("#### Auditoria ICMS/IPI")
+                        c1, c2 = st.columns(2)
+                        with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
+                        with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
+                        st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
+                    elif "DIFAL/ST" in nome_sub:
+                        st.markdown("#### Auditoria Difal / ST / FECP")
+                        c1, c2, c3 = st.columns(3)
+                        with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"dif_s_{v}")
+                        with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
+                        with c3: st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
+                        st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
+                    elif "RET" in nome_sub:
+                        st.markdown("#### Auditoria RET")
+                        c1, c2 = st.columns(2)
+                        with c1: st.file_uploader("📑 Gerencial RET", type=['xlsx'], key=f"ret_conf_g_{v}")
+                        with c2: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"ret_conf_d_{v}")
+                        st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
+                    elif "PIS/COFINS" in nome_sub:
+                        st.markdown("#### Auditoria PIS/Cofins")
+                        c1, c2, c3 = st.columns(3)
+                        with c1: st.file_uploader("📑 Gerencial Saídas PIS", type=['xlsx'], key=f"p_s_{v}")
+                        with c2: st.file_uploader("📑 Gerencial Entradas PIS", type=['xlsx'], key=f"p_e_{v}")
+                        with c3: st.file_uploader("📄 Resumo PIS", type=['xlsx'], key=f"p_r_{v}")
+                        st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
+                    elif "IBS / CBS" in nome_sub:
+                        st.markdown("#### Planejamento Reforma Tributária")
+                        c1, c2 = st.columns(2)
+                        with c1: st.file_uploader("📑 Gerencial IBS/CBS", type=['xlsx'], key=f"ibs_g_{v}")
+                        with c2: st.file_uploader("📄 Projeção IBS/CBS", type=['xlsx'], key=f"ibs_p_{v}")
+                        st.button("⚖️ ANALISAR IMPACTO", use_container_width=True, key="btn_ibscbs")
+
+        # ----------------------------------------------------------------------
+        # MÓDULO VERDE: APURAÇÃO
+        # ----------------------------------------------------------------------
+        elif modulo_atual == "✅ APURAÇÃO DOMÍNIO":
+            # 🚀 ETIQUETA DE COR: VERDE
+            st.markdown('<div id="modulo-apuracao"></div>', unsafe_allow_html=True)
+            
+            sub_verde = ["📊 ICMS/ IPI", "⚖️ Difal/ST", "💰 PIS/COFINS", "💎 IBS/CBS"]
+            if ret_sel: sub_verde.insert(2, "RET")
+                
+            tabs_verde = st.tabs(sub_verde)
+            for k, nome_trib in enumerate(sub_verde):
+                with tabs_verde[k]:
+                    st.markdown(f"### 🟢 Conferência: {nome_trib}")
+                    st.info(f"Área destinada à validação final entre Sistema e Apuração de {nome_trib}.")
+                    c1, c2 = st.columns(2)
+                    with c1: st.file_uploader(f"📑 Relatório Apuração {nome_trib}", type=['xlsx', 'pdf'], key=f"ap_rel_{k}_{v}")
+                    with c2: st.file_uploader(f"📄 Resumo Impostos {nome_trib}", type=['xlsx', 'pdf'], key=f"ap_res_{k}_{v}")
+                    st.button(f"⚙️ PROCESSAR CONFERÊNCIA {nome_trib}", use_container_width=True, key=f"btn_ap_verf_{k}")
+
     else: st.warning("⚠️ Você não possui permissões de auditoria ativa.")
 elif not modo_adm: st.info("👈 Selecione a empresa na barra lateral para começar a auditoria.")
