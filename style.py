@@ -5,14 +5,10 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;800&family=Plus+Jakarta+Sans:wght@400;700&display=swap');
 
-        /* 1. FUNDO CHUMBO CLARO (ACINZENTADO CHIQUE) */
+        /* 1. FUNDAÇÃO CHUMBO CLARO RIHANNA */
         [data-testid="stSidebar"] { background-color: #E9ECEF !important; border-right: 5px solid #ADB5BD !important; }
         header, [data-testid="stHeader"] { display: none !important; }
-        
-        .stApp { 
-            background: radial-gradient(circle at top left, #F8F9FA 0%, #DEE2E6 100%) !important; 
-            color: #495057 !important;
-        }
+        .stApp { background: radial-gradient(circle at top left, #F8F9FA 0%, #DEE2E6 100%) !important; }
         
         .titulo-principal { 
             font-family: 'Montserrat', sans-serif !important; 
@@ -25,11 +21,19 @@ def aplicar_estilo_sentinela():
         }
 
         /* =================================================================================
-           2. MENU MASTER - ABAS COLORIDAS E BRILHANTES (O FEEDBACK QUE VOCÊ QUER)
+           2. MENU MASTER - ELEVAÇÃO E COR INTEGRAL
         ================================================================================= */
-        [role="radiogroup"] { display: flex; justify-content: center; gap: 15px; padding-top: 30px !important; }
+        [role="radiogroup"] { 
+            display: flex; 
+            justify-content: center; 
+            gap: 15px; 
+            padding-top: 35px !important; /* Espaço para a aba subir sem cortar */
+            overflow: visible !important;
+        }
+        
         [role="radiogroup"] label > div:first-child { display: none !important; }
 
+        /* Estilo da Aba Inativa (Cinza Chique) */
         [role="radiogroup"] label {
             background: linear-gradient(180deg, #FFFFFF 0%, #CED4DA 100%) !important;
             border: 1px solid #ADB5BD !important;
@@ -40,12 +44,12 @@ def aplicar_estilo_sentinela():
             font-weight: 800;
             color: #6C757D !important;
             cursor: pointer !important;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             text-align: center;
         }
 
-        /* ✨ EFEITO GLITTER DIAMANTE NO HOVER ✨ */
+        /* ✨ BRILHO DIAMANTE NO HOVER ✨ */
         [role="radiogroup"] label:hover {
             transform: translateY(-8px) !important;
             background: linear-gradient(45deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 80%), 
@@ -55,30 +59,30 @@ def aplicar_estilo_sentinela():
         }
         @keyframes brilhoDiamond { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* 🟦 AZUL NEON INTEIRO (XML) */
+        /* 🟦 AZUL (XML) SELECIONADO - ELEVA E PINTA */
         div:has(#modulo-xml) [role="radiogroup"] label[data-checked="true"] {
             background: linear-gradient(135deg, #00BFFF 0%, #0072FF 100%) !important;
             color: white !important;
             border: none !important;
-            transform: translateY(-15px) !important;
+            transform: translateY(-20px) !important; /* PULO GARANTIDO */
             box-shadow: 0 10px 25px rgba(0, 191, 255, 0.5) !important;
         }
 
-        /* 🟥 ROSA NEON INTEIRO (CONFORMIDADE) */
+        /* 🟥 ROSA (CONFORMIDADE) SELECIONADO - ELEVA E PINTA */
         div:has(#modulo-conformidade) [role="radiogroup"] label[data-checked="true"] {
             background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%) !important;
             color: white !important;
             border: none !important;
-            transform: translateY(-15px) !important;
+            transform: translateY(-20px) !important; /* PULO GARANTIDO */
             box-shadow: 0 10px 25px rgba(255, 20, 147, 0.5) !important;
         }
 
-        /* 🟩 VERDE NEON INTEIRO (APURAÇÃO) */
+        /* 🟩 VERDE (APURAÇÃO) SELECIONADO - ELEVA E PINTA */
         div:has(#modulo-apuracao) [role="radiogroup"] label[data-checked="true"] {
             background: linear-gradient(135deg, #2ECC71 0%, #27AE60 100%) !important;
             color: white !important;
             border: none !important;
-            transform: translateY(-15px) !important;
+            transform: translateY(-20px) !important; /* PULO GARANTIDO */
             box-shadow: 0 10px 25px rgba(46, 204, 113, 0.5) !important;
         }
 
@@ -86,21 +90,23 @@ def aplicar_estilo_sentinela():
            3. ABAS INTERNAS (PASTINHAS MIÚDAS)
         ================================================================================= */
         .stTabs [data-baseweb="tab"] {
-            height: 50px !important;
+            height: 48px !important;
             background: #F1F3F5 !important;
             border-radius: 8px 25px 0 0 !important;
             padding: 0 25px !important;
             font-weight: 700;
             margin-right: 5px;
             color: #6C757D !important;
+            transition: 0.3s ease;
         }
         
-        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; border: none !important; }
-        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; border: none !important; }
-        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; border: none !important; }
+        /* Elevação das pastinhas de dentro também */
+        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; transform: translateY(-5px); border: none !important; }
+        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; transform: translateY(-5px); border: none !important; }
+        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; transform: translateY(-5px); border: none !important; }
 
         /* =================================================================================
-           4. O ENVELOPE LINDINHO 📄 (AQUELE QUE VOCÊ AMOU)
+           4. ENVELOPES LINDINHOS 📄
         ================================================================================= */
         [data-testid="stFileUploader"] {
             padding: 50px 30px 30px 30px !important;
@@ -113,12 +119,11 @@ def aplicar_estilo_sentinela():
         }
         [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 35px; z-index: 99; }
 
-        /* Cores Pastéis nos Envelopes */
         div:has(#modulo-xml) [data-testid="stFileUploader"] { background: linear-gradient(180deg, #EBF9FF 0%, #FFFFFF 100%) !important; border-color: #00BFFF !important; }
         div:has(#modulo-conformidade) [data-testid="stFileUploader"] { background: linear-gradient(180deg, #FFF0F5 0%, #FFFFFF 100%) !important; border-color: #FF69B4 !important; }
         div:has(#modulo-apuracao) [data-testid="stFileUploader"] { background: linear-gradient(180deg, #F1FFF7 0%, #FFFFFF 100%) !important; border-color: #2ECC71 !important; }
 
-        /* 5. PAINEL E BOTÕES */
+        /* 5. PAINEL */
         [data-testid="stTabPanel"] {
             background: #FFFFFF !important;
             border-radius: 0 20px 20px 20px !important;
@@ -129,15 +134,6 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-xml) [data-testid="stTabPanel"] { border-top-color: #00BFFF !important; }
         div:has(#modulo-conformidade) [data-testid="stTabPanel"] { border-top-color: #FF69B4 !important; }
         div:has(#modulo-apuracao) [data-testid="stTabPanel"] { border-top-color: #2ECC71 !important; }
-
-        div.stButton > button, div.stDownloadButton > button {
-            background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
-            color: #495057 !important;
-            border: 1px solid #ADB5BD !important;
-            border-radius: 12px !important;
-            font-weight: 800 !important;
-            text-transform: uppercase;
-        }
 
         </style>
     """, unsafe_allow_html=True)
