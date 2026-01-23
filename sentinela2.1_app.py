@@ -402,7 +402,6 @@ with st.sidebar:
 
 # PAINEL ADM E ÁREA CENTRAL (MANTIDOS INTEGRALMENTE)
 if modo_adm:
-    # ... (CÓDIGO ADM MANTIDO IDÊNTICO AO ORIGINAL) ...
     with st.container(border=True):
         st.subheader("🛠️ PAINEL DE CONTROLE DE USUÁRIOS")
         conn = sqlite3.connect('sentinela_usuarios.db')
@@ -452,10 +451,6 @@ if modo_adm:
 elif emp_sel and not modo_adm:
     perms = st.session_state['user_data']['perms']
     
-    # ==============================================================================
-    # 🔄 LÓGICA DE NAVEGAÇÃO POR MÓDULOS (A GRANDE MUDANÇA)
-    # ==============================================================================
-    
     # 1. Definir quais módulos o usuário pode ver
     modulos_disponiveis = []
     if perms.get('xml'): modulos_disponiveis.append("📂 ANÁLISE XML")
@@ -463,10 +458,14 @@ elif emp_sel and not modo_adm:
     modulos_disponiveis.append("✅ APURAÇÃO DOMÍNIO")
     
     if modulos_disponiveis:
-        # 2. Criar o Seletor de Módulo na Barra Lateral
-        st.sidebar.markdown("### 🗂️ Navegação Mestre")
-        modulo_atual = st.sidebar.radio("Selecione o Módulo:", modulos_disponiveis, label_visibility="collapsed")
+        # 2. Criar o Seletor de Módulo (AGORA NO TOPO, NÃO NA SIDEBAR)
+        st.markdown('<div class="menu-flutuante-container">', unsafe_allow_html=True)
+        # st.radio horizontal funciona como um menu de abas
+        modulo_atual = st.radio("Selecione o Módulo:", modulos_disponiveis, horizontal=True, label_visibility="collapsed")
+        st.markdown('</div>', unsafe_allow_html=True)
         
+        st.markdown("---") # Separação visual elegante
+
         # ----------------------------------------------------------------------
         # MÓDULO AZUL: ANÁLISE XML
         # ----------------------------------------------------------------------
