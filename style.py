@@ -18,7 +18,7 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #F8F9FA 0%, #CED4DA 100%) !important; 
         }
 
-        /* --- 2. TÍTULO LIMPO --- */
+        /* --- 2. 🚫 TÍTULO LIMPO --- */
         div[data-testid="stVerticalBlock"] > div:has(.titulo-principal),
         div[data-testid="stVerticalBlock"] > div:first-child,
         .element-container:has(.titulo-principal) {
@@ -57,7 +57,7 @@ def aplicar_estilo_sentinela():
             font-size: 1.6rem !important;
             font-weight: 800 !important;
             color: #495057 !important;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            transition: all 0.3s ease !important;
             position: relative !important;
             overflow: hidden !important;
         }
@@ -66,17 +66,16 @@ def aplicar_estilo_sentinela():
         .stTabs [data-baseweb="tab"]:hover {
             background: linear-gradient(
                 70deg, 
-                #DEE2E6 30%, 
-                #FFFFFF 50%, 
-                #DEE2E6 70%
-            ) !important;
+                rgba(255,255,255,0) 30%, 
+                rgba(255,255,255,0.8) 50%, 
+                rgba(255,255,255,0) 70%
+            ), linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
             background-size: 200% 100% !important;
             animation: brilhoMetalico 1.2s infinite linear !important;
             transform: translateY(-8px) scale(1.02) !important;
             box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
             color: #000000 !important;
             border-color: #FFFFFF !important;
-            cursor: pointer !important;
         }
 
         @keyframes brilhoMetalico {
@@ -87,8 +86,7 @@ def aplicar_estilo_sentinela():
         /* Elevação das Mães Selecionadas */
         .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] { 
             transform: translateY(-30px) !important; 
-            color: white !important;
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)) !important;
+            color: white !important; 
         }
 
         /* DNA das Mães - CORES FIXAS */
@@ -96,7 +94,7 @@ def aplicar_estilo_sentinela():
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(2)[aria-selected="true"] { background: #FF69B4 !important; }
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(3)[aria-selected="true"] { background: #2ECC71 !important; }
 
-        /* --- 4. O CAIXOTÃO --- */
+        /* --- 4. 📦 O CAIXOTÃO (PASTA MÃE) --- */
         [data-testid="stTabPanel"] {
             background: #FFFFFF !important;
             padding: 50px !important;
@@ -107,32 +105,30 @@ def aplicar_estilo_sentinela():
             overflow: visible !important;
         }
 
-        /* Neon Setorizado Reativo */
+        /* Neon Setorizado Reativo ao DNA */
         .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
         .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
         .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
 
-        /* --- 5. SUB-ABAS (HERANÇA GENÉTICA BLINDADA) --- */
+        /* --- 5. SUB-ABAS (A LÓGICA DE ONTEM QUE FUNCIONA) --- */
         .stTabs .stTabs [data-baseweb="tab-list"] { padding: 0 0 30px 0 !important; }
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #F1F3F5 !important;
             border-radius: 15px 45px 0 0 !important;
         }
-        
-        /* Brilho Metalizado também nas Sub-abas */
-        .stTabs .stTabs [data-baseweb="tab"]:hover {
-            background: linear-gradient(70deg, #F1F3F5 30%, #FFFFFF 50%, #F1F3F5 70%) !important;
-            background-size: 200% 100% !important;
-            animation: brilhoMetalico 1s infinite linear !important;
-        }
 
         .stTabs .stTabs button[aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
         
-        /* HERANÇAS POR BLOCO MÃE */
-        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #00BFFF !important; }
-        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #FF69B4 !important; }
-        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #2ECC71 !important; }
+        /* HERANÇA POR BLOCO MÃE (DNA PURO) */
+        /* Se a Mãe 1 estiver ativa -> Filha Azul */
+        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background-color: #00BFFF !important; }
+        
+        /* Se a Mãe 2 estiver ativa -> Filha Rosa (TUDO, inclusive o RET) */
+        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background-color: #FF69B4 !important; }
+        
+        /* Se a Mãe 3 estiver ativa -> Filha Verde */
+        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs [aria-selected="true"] { background-color: #2ECC71 !important; }
 
         /* --- 6. ✉️ ENVELOPE COM ÍCONE 📄 --- */
         [data-testid="stFileUploader"] {
