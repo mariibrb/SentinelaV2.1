@@ -161,7 +161,7 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
 
 # --- CONFIGURAÇÃO DA PÁGINA E CSS ---
 st.set_page_config(
-    page_title="Sentinela 2.1 | Auditoria Fiscal", 
+    page_title="Sentinela 2.2 | Auditoria Fiscal", 
     page_icon="🧡", 
     layout="wide"
 )
@@ -311,7 +311,7 @@ if not st.session_state['user_data']:
     st.stop()
 
 # --- TÍTULO PRINCIPAL ---
-st.markdown("<div class='titulo-principal'>SENTINELA 2.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
+st.markdown("<div class='titulo-principal'>SENTINELA 2.2</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
 # --- CONFIGURAÇÃO INICIAL MODO ADM ---
 modo_adm = st.session_state.get('show_adm', False)
@@ -516,6 +516,8 @@ elif emp_sel and not modo_adm:
                     if perms.get('difal'): sub_v.append("⚖️ DIFAL/ST")
                     if perms.get('ret'): sub_v.append("🏨 RET")
                     if perms.get('pis'): sub_v.append("💰 PIS/COFINS")
+                    sub_v.append("💎 IBS / CBS") # NOVA SUB-ABA ADICIONADA AQUI
+                    
                     if sub_v:
                         tabs_filho = st.tabs(sub_v)
                         for j, nome_sub in enumerate(sub_v):
@@ -593,6 +595,10 @@ elif emp_sel and not modo_adm:
                                             if st.button("🗑️ Excluir Demonstrativo", use_container_width=True, key="clr_pis_d"):
                                                 st.session_state['v_ver'] += 1; st.rerun()
                                     st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
+                                elif nome_sub == "💎 IBS / CBS": # Lógica da Nova Sub-Aba
+                                    st.markdown("#### Planejamento e Auditoria Reforma Tributária (IBS / CBS)")
+                                    st.info("Módulo em fase de implementação estrutural.")
+                                    st.button("⚖️ ANALISAR IMPACTO REFORMA", use_container_width=True, key="btn_ibscbs")
         
         # --- ÁREA DE DOWNLOADS (TRAVA DE SENHA REMOVIDA) ---
         if st.session_state.get('executado'):
