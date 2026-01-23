@@ -3,124 +3,175 @@ import streamlit as st
 def aplicar_estilo_sentinela():
     st.markdown("""
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;800&family=Plus+Jakarta+Sans:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Plus+Jakarta+Sans:wght@300;700&display=swap');
 
-        /* 1. FUNDAÇÃO */
-        [data-testid="stSidebar"] { min-width: 350px !important; background-color: #E9ECEF !important; border-right: 5px solid #ADB5BD !important; }
+        /* 1. FUNDO SPACE GAMER */
+        [data-testid="stSidebar"] { 
+            background-color: #050A0E !important; 
+            border-right: 2px solid #1E262E !important; 
+        }
         header, [data-testid="stHeader"] { display: none !important; }
-        .stApp { background: radial-gradient(circle at top left, #FFFFFF 0%, #DEE2E6 100%) !important; }
-        .titulo-principal { font-family: 'Montserrat', sans-serif !important; color: #6C757D !important; font-size: 1rem !important; font-weight: 800; text-transform: uppercase; padding: 5px 0 !important; letter-spacing: 2px; }
-
-        /* =================================================================================
-           2. MENU MASTER - PINTANDO AS ABAS PRINCIPAIS (O CORAÇÃO DO SISTEMA)
-        ================================================================================= */
-        [role="radiogroup"] { display: flex; justify-content: center; gap: 12px; padding-top: 25px !important; overflow: visible !important; }
-        [role="radiogroup"] label > div:first-child { display: none !important; }
-
-        /* Estilo Base das Abas Mestras (Inativas) */
-        [role="radiogroup"] label {
-            background: linear-gradient(180deg, #FFFFFF 0%, #E9ECEF 100%) !important;
-            border: 1px solid #ADB5BD !important;
-            border-radius: 12px 35px 0 0 !important; 
-            padding: 10px 25px !important;
-            min-width: 180px; 
-            font-family: 'Montserrat', sans-serif !important;
-            font-weight: 800;
-            color: #6C757D !important;
-            cursor: pointer !important;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            text-align: center;
+        
+        .stApp { 
+            background: radial-gradient(circle at center, #0D1117 0%, #010409 100%) !important; 
+            color: #E6EDF3 !important;
         }
 
-        /* ✨ EFEITO GLITTER NO HOVER ✨ */
-        [role="radiogroup"] label:hover {
-            transform: translateY(-8px) !important;
-            background: linear-gradient(45deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 80%), linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
-            background-size: 200% 100% !important;
-            animation: brilhoDiamond 1.5s infinite linear !important;
-        }
-
-        /* 🟦 PINTURA XML (AZUL) */
-        div:has(#modulo-xml) [role="radiogroup"] label[data-checked="true"] {
-            background: #00BFFF !important; /* COR INTEIRA */
-            color: white !important;
-            border: none !important;
-            transform: translateY(-12px) !important;
-            box-shadow: 0 8px 20px rgba(0, 191, 255, 0.5) !important;
-        }
-
-        /* 🟥 PINTURA CONFORMIDADE (ROSA) */
-        div:has(#modulo-conformidade) [role="radiogroup"] label[data-checked="true"] {
-            background: #FF69B4 !important; /* COR INTEIRA */
-            color: white !important;
-            border: none !important;
-            transform: translateY(-12px) !important;
-            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.5) !important;
-        }
-
-        /* 🟩 PINTURA APURAÇÃO (VERDE) */
-        div:has(#modulo-apuracao) [role="radiogroup"] label[data-checked="true"] {
-            background: #2ECC71 !important; /* COR INTEIRA */
-            color: white !important;
-            border: none !important;
-            transform: translateY(-12px) !important;
-            box-shadow: 0 8px 20px rgba(46, 204, 113, 0.5) !important;
+        /* TÍTULO CYBERPUNK MIÚDO */
+        .titulo-principal { 
+            font-family: 'Orbitron', sans-serif !important; 
+            color: #00D1FF !important; 
+            font-size: 1rem !important; 
+            font-weight: 900; 
+            text-transform: uppercase; 
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px #00D1FF;
+            padding: 10px 0 !important;
         }
 
         /* =================================================================================
-           3. ABAS FILHAS (AS PASTINHAS DE DENTRO)
+           2. MENU MASTER - BOTÕES GAMER RGB
         ================================================================================= */
-        .stTabs [data-baseweb="tab"] {
-            height: 48px !important;
-            background: #F8F9FA !important;
-            border-radius: 8px 25px 0 0 !important;
-            padding: 0 20px !important;
-            font-weight: 700;
-            margin-right: 5px;
-            font-size: 0.9rem !important;
+        [role="radiogroup"] { 
+            display: flex; 
+            justify-content: center; 
+            gap: 20px; 
+            padding-top: 30px !important; 
         }
         
-        /* Pintura das pastinhas internas quando selecionadas */
-        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
-        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
-        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; }
+        [role="radiogroup"] label > div:first-child { display: none !important; }
 
-        /* =================================================================================
-           4. ENVELOPES E PAINEL (RESTANTE DO VISUAL RIHANNA)
-        ================================================================================= */
-        [data-testid="stFileUploader"] {
-            padding: 45px 25px 25px 25px !important;
-            border-radius: 12px !important;
-            border: 2px dashed #ADB5BD !important;
-            background-color: #FFFFFF !important;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
-            position: relative !important;
-            margin: 20px 0 !important;
-        }
-        [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 32px; z-index: 99; }
-
-        div:has(#modulo-xml) [data-testid="stFileUploader"] { background: linear-gradient(180deg, #EBF9FF 0%, #FFFFFF 100%) !important; border-color: #00BFFF !important; }
-        div:has(#modulo-conformidade) [data-testid="stFileUploader"] { background: linear-gradient(180deg, #FFF0F5 0%, #FFFFFF 100%) !important; border-color: #FF69B4 !important; }
-        div:has(#modulo-apuracao) [data-testid="stFileUploader"] { background: linear-gradient(180deg, #F1FFF7 0%, #FFFFFF 100%) !important; border-color: #2ECC71 !important; }
-
-        [data-testid="stTabPanel"] {
-            background: #FFFFFF !important;
-            border-radius: 0 15px 15px 15px !important;
-            padding: 30px !important;
-            border: 1px solid #DEE2E6;
-            border-top: 6px solid #DEE2E6;
-        }
-        div:has(#modulo-xml) [data-testid="stTabPanel"] { border-top-color: #00BFFF !important; }
-        div:has(#modulo-conformidade) [data-testid="stTabPanel"] { border-top-color: #FF69B4 !important; }
-        div:has(#modulo-apuracao) [data-testid="stTabPanel"] { border-top-color: #2ECC71 !important; }
-
-        @keyframes brilhoDiamond { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-        div.stButton > button, div.stDownloadButton > button {
-            background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
-            font-weight: 800 !important;
+        /* Botão Estado "Standby" (Inativo) */
+        [role="radiogroup"] label {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 5px 25px 5px 25px !important; /* Corte Angular Gamer */
+            padding: 12px 30px !important;
+            min-width: 220px; 
+            font-family: 'Orbitron', sans-serif !important;
+            font-weight: 700;
+            color: #484F58 !important;
+            cursor: pointer !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            backdrop-filter: blur(10px);
             text-transform: uppercase;
         }
+
+        /* Hover com Glow */
+        [role="radiogroup"] label:hover {
+            border-color: rgba(255, 255, 255, 0.5) !important;
+            color: white !important;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        /* 🟦 MÓDULO XML - BLUE NEON */
+        div:has(#modulo-xml) [role="radiogroup"] label[data-checked="true"] {
+            background: linear-gradient(135deg, #00D1FF 0%, #004DFF 100%) !important;
+            color: white !important;
+            border: none !important;
+            box-shadow: 0 0 30px rgba(0, 209, 255, 0.6), inset 0 0 10px rgba(255,255,255,0.5) !important;
+            transform: translateY(-10px) scale(1.05);
+        }
+
+        /* 🟥 MÓDULO CONFORMIDADE - PINK NEON */
+        div:has(#modulo-conformidade) [role="radiogroup"] label[data-checked="true"] {
+            background: linear-gradient(135deg, #FF00E5 0%, #7000FF 100%) !important;
+            color: white !important;
+            border: none !important;
+            box-shadow: 0 0 30px rgba(255, 0, 229, 0.6), inset 0 0 10px rgba(255,255,255,0.5) !important;
+            transform: translateY(-10px) scale(1.05);
+        }
+
+        /* 🟩 MÓDULO APURAÇÃO - GREEN NEON */
+        div:has(#modulo-apuracao) [role="radiogroup"] label[data-checked="true"] {
+            background: linear-gradient(135deg, #00FF94 0%, #008F53 100%) !important;
+            color: white !important;
+            border: none !important;
+            box-shadow: 0 0 30px rgba(0, 255, 148, 0.6), inset 0 0 10px rgba(255,255,255,0.5) !important;
+            transform: translateY(-10px) scale(1.05);
+        }
+
+        /* =================================================================================
+           3. ABAS FILHAS - PASTINHAS SCI-FI
+        ================================================================================= */
+        .stTabs [data-baseweb="tab-list"] { background: transparent !important; gap: 10px; }
+        
+        .stTabs [data-baseweb="tab"] {
+            height: 50px !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 10px 10px 0 0 !important;
+            color: #8B949E !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            font-weight: 700;
+        }
+
+        /* Aba Interna Ativa - Brilhando conforme o módulo */
+        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00D1FF !important; color: white !important; box-shadow: 0 -5px 15px rgba(0, 209, 255, 0.3); border: none !important; }
+        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF00E5 !important; color: white !important; box-shadow: 0 -5px 15px rgba(255, 0, 229, 0.3); border: none !important; }
+        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #00FF94 !important; color: white !important; box-shadow: 0 -5px 15px rgba(0, 255, 148, 0.3); border: none !important; }
+
+        /* =================================================================================
+           4. O ENVELOPE DE UPLOAD - DESIGN DE HARDWARE 🦾
+        ================================================================================= */
+        [data-testid="stFileUploader"] {
+            background: rgba(13, 17, 23, 0.8) !important;
+            border: 2px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 20px !important;
+            padding: 50px !important;
+            position: relative !important;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* Holograma do Ícone */
+        [data-testid="stFileUploader"]::before {
+            content: "💿"; 
+            position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+            font-size: 40px; z-index: 99;
+            filter: drop-shadow(0 0 10px rgba(0, 209, 255, 0.8));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float { 0% { transform: translate(-50%, 0px); } 50% { transform: translate(-50%, -10px); } 100% { transform: translate(-50%, 0px); } }
+
+        /* Cores Neon nos Envelopes */
+        div:has(#modulo-xml) [data-testid="stFileUploader"] { border-color: #00D1FF !important; box-shadow: 0 0 20px rgba(0, 209, 255, 0.15); }
+        div:has(#modulo-conformidade) [data-testid="stFileUploader"] { border-color: #FF00E5 !important; box-shadow: 0 0 20px rgba(255, 0, 229, 0.15); }
+        div:has(#modulo-apuracao) [data-testid="stFileUploader"] { border-color: #00FF94 !important; box-shadow: 0 0 20px rgba(0, 255, 148, 0.15); }
+
+        /* =================================================================================
+           5. CAIXOTÃO E BOTÕES
+        ================================================================================= */
+        [data-testid="stTabPanel"] {
+            background: rgba(13, 17, 23, 0.6) !important;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 20px 20px 20px !important;
+            padding: 40px !important;
+            border-top: 5px solid rgba(255,255,255,0.1);
+        }
+
+        div:has(#modulo-xml) [data-testid="stTabPanel"] { border-top-color: #00D1FF !important; }
+        div:has(#modulo-conformidade) [data-testid="stTabPanel"] { border-top-color: #FF00E5 !important; }
+        div:has(#modulo-apuracao) [data-testid="stTabPanel"] { border-top-color: #00FF94 !important; }
+
+        /* Botões Gamer */
+        div.stButton > button, div.stDownloadButton > button {
+            background: #161B22 !important;
+            color: white !important;
+            border: 1px solid #30363D !important;
+            border-radius: 8px !important;
+            font-family: 'Orbitron', sans-serif !important;
+            font-weight: 800 !important;
+            height: 50px;
+            transition: 0.2s;
+        }
+        div.stButton > button:hover {
+            background: #21262D !important;
+            border-color: #8B949E !important;
+            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+        }
+
         </style>
     """, unsafe_allow_html=True)
