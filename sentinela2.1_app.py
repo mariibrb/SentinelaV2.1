@@ -161,7 +161,7 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
 
 # --- CONFIGURAÇÃO DA PÁGINA E CSS ---
 st.set_page_config(
-    page_title="Sentinela 2.3.1 | Auditoria Fiscal", 
+    page_title="Sentinela 2.3.2 | Auditoria Fiscal", 
     page_icon="🧡", 
     layout="wide"
 )
@@ -251,6 +251,7 @@ if not st.session_state['user_data']:
                     if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                         conn = sqlite3.connect('sentinela_usuarios.db')
                         c = conn.cursor()
+                        # AJUSTE NO LOGIN: Busca por usuário OU e-mail para permitir 'mariana'
                         c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
                                      FROM usuarios 
                                      WHERE (usuario=? OR email=?) AND senha=?""", 
@@ -284,6 +285,7 @@ if not st.session_state['user_data']:
                     if n_nome and n_email and n_pass:
                         try:
                             conn = sqlite3.connect('sentinela_usuarios.db')
+                            # AJUSTE: O e-mail agora é automaticamente o usuário
                             conn.execute("""INSERT INTO usuarios 
                                             (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
                                             VALUES (?, ?, ?, ?, 'PENDENTE', 'USER', 1, 0, 0, 0, 0)""", 
@@ -309,7 +311,7 @@ if not st.session_state['user_data']:
     st.stop()
 
 # --- TÍTULO PRINCIPAL ---
-st.markdown("<div class='titulo-principal'>SENTINELA 2.3.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
+st.markdown("<div class='titulo-principal'>SENTINELA 2.3.2</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
 # --- CONFIGURAÇÃO INICIAL MODO ADM ---
 modo_adm = st.session_state.get('show_adm', False)
@@ -366,6 +368,7 @@ with st.sidebar:
             seg_sel = st.selectbox("Passo 3: Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
             ret_sel = st.toggle("Passo 4: Habilitar MG (RET)", key="f_ret")
             
+            # --- CAIXA DE ANÁLISE EMPRESA - MARIANA ---
             cod_c = emp_sel.split(" - ")[0].strip()
             dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
             cnpj_limpo = dados_e['CNPJ']
@@ -451,7 +454,7 @@ elif emp_sel and not modo_adm:
     abas_v = []
     if perms.get('xml'): abas_v.append("📂 ANÁLISE XML")
     abas_v.append("🏢 CONFORMIDADE DOMÍNIO")
-    abas_v.append("✅ APURAÇÃO DOMÍNIO") # ÁREA VERDE
+    abas_v.append("✅ APURAÇÃO DOMÍNIO")
     
     if abas_v:
         tabs_pai = st.tabs(abas_v)
@@ -514,46 +517,45 @@ elif emp_sel and not modo_adm:
                                 except Exception as e: st.error(f"Erro no Processamento: {e}")
 
                 elif nome_tab_p == "🏢 CONFORMIDADE DOMÍNIO":
-                    sub_v = []
-                    if perms.get('icms'): sub_v.append("📊 ICMS/IPI")
-                    if perms.get('difal'): sub_v.append("⚖️ DIFAL/ST")
-                    if perms.get('ret'): sub_v.append("🏨 RET")
-                    if perms.get('pis'): sub_v.append("💰 PIS/COFINS")
-                    sub_v.append("💎 IBS / CBS")
+                    # AJUSTE: Lista de sub-abas agora depende do botão lateral 'ret_sel'
+                    sub_v = ["📊 ICMS/IPI", "⚖️ DIFAL/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
+                    if ret_sel:
+                        sub_v.insert(2, "🏨 RET")
                     
-                    if sub_v:
-                        tabs_filho = st.tabs(sub_v)
-                        for j, nome_sub in enumerate(sub_v):
-                            with tabs_filho[j]:
-                                if nome_sub == "📊 ICMS/IPI":
-                                    st.markdown("#### Auditoria ICMS/IPI")
-                                    c1, c2 = st.columns(2)
-                                    with c1: up1 = st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
-                                    with c2: up2 = st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
-                                    st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
-                                elif nome_sub == "⚖️ DIFAL/ST":
-                                    st.markdown("#### Auditoria Difal / ST / FECP")
-                                    c1, c2, c3 = st.columns(3)
-                                    with c1: up1 = st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"dif_s_{v}")
-                                    with c2: up2 = st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
-                                    with c3: up3 = st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
-                                    st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
-                                elif nome_sub == "🏨 RET":
-                                    st.markdown("#### Auditoria RET")
-                                    st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
-                                elif nome_sub == "💰 PIS/COFINS":
-                                    st.markdown("#### Auditoria PIS/Cofins")
-                                    st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
-                                elif nome_sub == "💎 IBS / CBS":
-                                    st.markdown("#### Planejamento Reforma Tributária")
-                                    st.info("Módulo em fase de implementação estrutural.")
-                                    st.button("⚖️ ANALISAR IMPACTO", use_container_width=True, key="btn_ibscbs")
+                    tabs_filho = st.tabs(sub_v)
+                    for j, nome_sub in enumerate(sub_v):
+                        with tabs_filho[j]:
+                            if "ICMS/IPI" in nome_sub:
+                                st.markdown("#### Auditoria ICMS/IPI")
+                                c1, c2 = st.columns(2)
+                                with c1: up1 = st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
+                                with c2: up2 = st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
+                                st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
+                            elif "DIFAL/ST" in nome_sub:
+                                st.markdown("#### Auditoria Difal / ST / FECP")
+                                c1, c2, c3 = st.columns(3)
+                                with c1: up1 = st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"dif_s_{v}")
+                                with c2: up2 = st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
+                                with c3: up3 = st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
+                                st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
+                            elif "RET" in nome_sub:
+                                st.markdown("#### Auditoria RET")
+                                st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
+                            elif "PIS/COFINS" in nome_sub:
+                                st.markdown("#### Auditoria PIS/Cofins")
+                                st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
+                            elif "IBS / CBS" in nome_sub:
+                                st.markdown("#### Planejamento Reforma Tributária")
+                                st.info("Módulo em fase de implementação estrutural.")
+                                st.button("⚖️ ANALISAR IMPACTO", use_container_width=True, key="btn_ibscbs")
 
                 elif nome_tab_p == "✅ APURAÇÃO DOMÍNIO":
-                    # --- CRIAÇÃO DAS 5 SUB-ABAS COM ENVELOPES ---
-                    sub_tributos = ["ICMS/ IPI", "Difal/ST", "RET", "PIS/COFINS", "IBS/CBS"]
+                    # AJUSTE: Lista de sub-abas agora depende do botão lateral 'ret_sel'
+                    sub_tributos = ["ICMS/ IPI", "Difal/ST", "PIS/COFINS", "IBS/CBS"]
+                    if ret_sel:
+                        sub_tributos.insert(2, "RET")
+                        
                     tabs_verde = st.tabs(sub_tributos)
-                    
                     for k, nome_trib in enumerate(sub_tributos):
                         with tabs_verde[k]:
                             st.markdown(f"### 🟢 Conferência: {nome_trib}")
