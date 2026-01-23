@@ -10,27 +10,27 @@ def aplicar_estilo_sentinela():
         header, [data-testid="stHeader"] { display: none !important; }
         .stApp { background: radial-gradient(circle at top left, #FFFFFF 0%, #DEE2E6 100%) !important; }
         
+        /* TÍTULO E VERSÃO BEM PEQUENOS E DISCRETOS */
         .titulo-principal { 
             font-family: 'Montserrat', sans-serif !important; 
-            color: #495057 !important; 
-            font-size: 3.5rem; 
+            color: #6C757D !important; 
+            font-size: 1.2rem !important; /* MIÚDO COMO VOCÊ PEDIU */
             font-weight: 800; 
             text-transform: uppercase; 
-            padding-bottom: 20px !important;
-            text-shadow: 0 0 15px rgba(255, 255, 255, 1), 2px 2px 5px rgba(0,0,0,0.1) !important; 
+            padding: 5px 0 !important;
+            margin: 0 !important;
+            letter-spacing: 2px;
         }
 
         /* =================================================================================
            2. MENU MASTER (PASTAS GIGANTES COM RESPIRO)
         ================================================================================= */
-        
-        /* Container do Menu - Adicionado padding para as abas não cortarem ao subir */
         [role="radiogroup"] { 
             display: flex; 
             justify-content: center; 
             gap: 20px; 
-            margin-bottom: 40px; 
-            padding-top: 30px !important; /* ESPAÇO PARA O PULO NÃO CORTAR */
+            margin-bottom: 30px; 
+            padding-top: 20px !important; 
             overflow: visible !important;
         }
         
@@ -40,8 +40,8 @@ def aplicar_estilo_sentinela():
             background: linear-gradient(135deg, #FFFFFF 0%, #E9ECEF 50%, #CFD4D9 100%) !important;
             border: 2px solid #ADB5BD !important;
             border-radius: 15px 50px 0 0 !important; 
-            padding: 18px 45px !important; /* AUMENTADO PARA CABER O TEXTO */
-            min-width: 280px; /* LARGURA SEGURA PARA NOMES LONGOS */
+            padding: 18px 45px !important; 
+            min-width: 280px; 
             font-family: 'Montserrat', sans-serif !important;
             font-weight: 800;
             color: #6C757D !important;
@@ -49,7 +49,6 @@ def aplicar_estilo_sentinela():
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             text-align: center;
-            overflow: visible !important;
         }
 
         /* ✨ EFEITO GLITTER / SHINE BRIGHT NO HOVER ✨ */
@@ -59,13 +58,9 @@ def aplicar_estilo_sentinela():
                         linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
             background-size: 200% 100% !important;
             animation: brilhoDiamond 1.5s infinite linear !important;
-            color: #212529 !important;
         }
 
-        @keyframes brilhoDiamond { 
-            0% { background-position: 200% 0; } 
-            100% { background-position: -200% 0; } 
-        }
+        @keyframes brilhoDiamond { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
         /* 🟦 SELEÇÃO AZUL NEON */
         div:has(#modulo-xml) [role="radiogroup"] label[data-checked="true"] {
@@ -95,12 +90,10 @@ def aplicar_estilo_sentinela():
         }
 
         /* =================================================================================
-           3. ABAS INTERNAS (MAIORES E MAIS ESPAÇADAS)
+           3. ABAS INTERNAS (COLORIDAS E ELEVADAS)
         ================================================================================= */
-        .stTabs [data-baseweb="tab-list"] { padding-top: 10px !important; }
-        
         .stTabs [data-baseweb="tab"] {
-            height: 65px !important;
+            height: 60px !important;
             background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
             border-radius: 12px 45px 0 0 !important;
             padding: 0 40px !important;
@@ -109,13 +102,12 @@ def aplicar_estilo_sentinela():
             margin-right: 10px;
         }
 
-        /* ABA ATIVA INTERNA */
         div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; transform: translateY(-8px); }
         div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; transform: translateY(-8px); }
         div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; transform: translateY(-8px); }
 
         /* =================================================================================
-           4. O ENVELOPE MÁGICO (PASTA FÍSICA) 📄
+           4. O ENVELOPE MÁGICO 📄
         ================================================================================= */
         [data-testid="stFileUploader"] {
             padding: 60px 40px 40px 40px !important;
@@ -124,7 +116,7 @@ def aplicar_estilo_sentinela():
             background: #FFFFFF !important;
             box-shadow: 0 15px 40px rgba(0,0,0,0.08) !important;
             position: relative !important;
-            margin: 35px 0 !important;
+            margin: 30px 0 !important;
         }
 
         [data-testid="stFileUploader"]::before {
@@ -147,7 +139,6 @@ def aplicar_estilo_sentinela():
             padding: 45px !important;
             border: 1px solid #DEE2E6;
             border-top: 12px solid #DEE2E6;
-            margin-top: -5px;
         }
 
         div:has(#modulo-xml) [data-testid="stTabPanel"] { border-top-color: #00BFFF !important; }
