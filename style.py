@@ -5,49 +5,14 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
 
-        /* --- 1. ESTRUTURA E FUNDO --- */
-        [data-testid="stSidebar"] {
-            min-width: 350px !important;
-            background-color: #E9ECEF !important; 
-            border-right: 5px solid #FF69B4 !important;
-        }
-
+        /* 1. ESTRUTURA GERAL */
+        [data-testid="stSidebar"] { min-width: 350px !important; background-color: #E9ECEF !important; border-right: 5px solid #FF69B4 !important; }
         header, [data-testid="stHeader"] { display: none !important; }
+        .stApp { background: radial-gradient(circle at top left, #F8F9FA 0%, #CED4DA 100%) !important; }
+        .titulo-principal { font-family: 'Montserrat', sans-serif !important; color: #495057 !important; font-size: 3.5rem; font-weight: 800; text-transform: uppercase; padding: 20px 0 !important; text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.8) !important; }
+        div[data-testid="stVerticalBlock"] > div:has(.titulo-principal) { background: transparent !important; box-shadow: none !important; border: none !important; }
 
-        .stApp { 
-            background: radial-gradient(circle at top left, #F8F9FA 0%, #CED4DA 100%) !important; 
-        }
-
-        /* --- 2. 🚫 REMOÇÃO TOTAL DA CAIXA BRANCA DO TÍTULO --- */
-        div[data-testid="stVerticalBlock"] > div:has(.titulo-principal),
-        div[data-testid="stVerticalBlock"] > div:first-child,
-        .element-container:has(.titulo-principal) {
-            background-color: transparent !important;
-            background: transparent !important;
-            box-shadow: none !important;
-            border: none !important;
-        }
-
-        .titulo-principal { 
-            font-family: 'Montserrat', sans-serif !important;
-            color: #495057 !important; 
-            font-size: 3.5rem; 
-            font-weight: 800; 
-            text-transform: uppercase;
-            background: transparent !important;
-            padding: 20px 0 !important;
-            text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.8) !important;
-        }
-
-        /* --- 3. ABAS MESTRE DIAMANTE (PRATA) --- */
-        .stTabs { overflow: visible !important; }
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 15px !important; 
-            padding: 60px 0 0 20px !important; 
-            overflow: visible !important;
-            background: transparent !important;
-        }
-
+        /* 2. DESIGN DAS ABAS (Formato) */
         .stTabs [data-baseweb="tab"] {
             height: 85px !important;
             background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
@@ -57,116 +22,86 @@ def aplicar_estilo_sentinela():
             font-size: 1.6rem !important;
             font-weight: 800 !important;
             color: #495057 !important;
-        }
-
-        /* Ativas das Mães (ADICIONEI A 3ª AQUI) */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; transform: translateY(-30px) !important; color: white !important; }
-        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; transform: translateY(-30px) !important; color: white !important; }
-        .stTabs [data-baseweb="tab-list"] button:nth-child(3)[aria-selected="true"] { background: #2ECC71 !important; transform: translateY(-30px) !important; color: white !important; }
-
-        /* --- 4. 📦 O CAIXOTÃO (PASTA MÃE) --- */
-        [data-testid="stTabPanel"] {
-            background: #FFFFFF !important;
-            padding: 50px !important;
-            border-radius: 0 60px 60px 60px !important;
-            margin-top: -5px !important;
-            border: 6px solid transparent !important;
-            min-height: 800px !important;
-            overflow: visible !important;
-        }
-
-        /* Neon Setorizado (ADICIONEI O VERDE AQUI) */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border-color: #00D1FF !important;
-            box-shadow: 0 0 30px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.4) !important;
-        }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border-color: #FF69B4 !important;
-            box-shadow: 0 0 30px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4) !important;
-        }
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border-color: #2ECC71 !important;
-            box-shadow: 0 0 30px #2ECC71, 0 0 80px rgba(46, 204, 113, 0.4) !important;
-        }
-
-        /* --- 5. SUB-ABAS SETORIZADAS --- */
-        .stTabs .stTabs [data-baseweb="tab-list"] { padding: 0 0 30px 0 !important; }
-        .stTabs .stTabs [data-baseweb="tab"] {
-            height: 60px !important;
-            background: #F1F3F5 !important;
-            border-radius: 15px 45px 0 0 !important;
-        }
-
-        .stTabs .stTabs [aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
-        
-        /* AQUI É O PULO DO GATO: Cada bloco cuida dos seus filhos */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #FF69B4 !important; }
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #2ECC71 !important; }
-
-        /* --- 6. ✉️ ENVELOPE COM ÍCONE 📄 --- */
-        [data-testid="stFileUploader"] {
-            padding: 50px 45px 45px 45px !important;
-            border-radius: 10px 10px 45px 45px !important;
-            border-top: 18px solid #FDFDFD !important;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.1) !important;
-            margin: 25px 0 !important;
-            position: relative !important;
-        }
-
-        [data-testid="stFileUploader"]::before {
-            content: "📄"; 
-            position: absolute;
-            top: -32px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 30px;
-            z-index: 99;
-        }
-
-        /* Envelopes do Verde Adicionados */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
-
-        /* --- 7. 📄 ÁREA DE AUDITORIA --- */
-        div.stExpander, div.element-container:has(h1, h2, h3), .stDataFrame {
-            background-color: white !important;
-            padding: 30px !important;
-            border-radius: 20px !important;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.03) !important;
-            border: 1px solid #E9ECEF !important;
-        }
-
-        /* --- 8. 🎯 AJUSTE BOTÃO DE DOWNLOAD --- */
-        div.stDownloadButton > button {
-            background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
-            color: #495057 !important;
-            border: 2px solid #ADB5BD !important;
-            border-radius: 15px !important;
-            font-weight: 800 !important;
-            height: 55px !important;
-            width: 100% !important;
-            text-transform: uppercase !important;
-            box-shadow: none !important;
             transition: 0.3s ease !important;
         }
+        .stTabs [data-baseweb="tab"]:hover {
+            transform: translateY(-8px) !important;
+            background: linear-gradient(45deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 70%), linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
+            background-size: 200% 100% !important;
+            animation: brilhoMetalico 1.5s infinite linear !important;
+        }
+        @keyframes brilhoMetalico { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* Botão do Verde Adicionado */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) div.stDownloadButton > button:hover {
-            box-shadow: 0 0 20px #00BFFF !important;
-            border-color: #00BFFF !important;
+        /* MÃES ATIVAS (Elevação) */
+        .stTabs > div > [data-baseweb="tab-list"] > button[aria-selected="true"] {
+            transform: translateY(-30px) !important; color: white !important;
         }
 
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) div.stDownloadButton > button:hover {
-            box-shadow: 0 0 20px #FF69B4 !important;
-            border-color: #FF69B4 !important;
+        /* 3. REGRAS EXCLUSIVAS PARA AS MÃES (AS GENERIAS) */
+        /* O SEGREDO: :not([data-testid="stTabPanel"] .stTabs)
+           Isso diz: "Aplique isso SÓ se você NÃO for uma sub-aba" */
+
+        /* MÃE 1: AZUL */
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) 
+        > div > [data-baseweb="tab-list"] > button:nth-child(1) { 
+            background: #00BFFF !important; 
         }
 
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) div.stDownloadButton > button:hover {
-            box-shadow: 0 0 20px #2ECC71 !important;
-            border-color: #2ECC71 !important;
+        /* MÃE 2: ROSA */
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) 
+        > div > [data-baseweb="tab-list"] > button:nth-child(2) { 
+            background: #FF69B4 !important; 
         }
 
+        /* MÃE 3: VERDE */
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) 
+        > div > [data-baseweb="tab-list"] > button:nth-child(3) { 
+            background: #2ECC71 !important; 
+        }
+
+        /* 4. HERANÇA PARA AS FILHAS (A LEI DA CASA) */
+        /* Aqui pintamos as filhas baseadas na MÃE que está ativa lá no topo */
+
+        /* Reset para filhas */
+        [data-testid="stTabPanel"] .stTabs [data-baseweb="tab"] { height: 60px !important; background: #F1F3F5 !important; border-radius: 15px 45px 0 0 !important; }
+
+        /* SE A MÃE É AZUL -> TUDO DENTRO É AZUL */
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) 
+        [data-testid="stTabPanel"] button[aria-selected="true"] { 
+            background-color: #00BFFF !important; color: white !important; 
+        }
+        /* Neon/Envelope Azul */
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
+
+        /* SE A MÃE É ROSA -> TUDO DENTRO É ROSA */
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) 
+        [data-testid="stTabPanel"] button[aria-selected="true"] { 
+            background-color: #FF69B4 !important; color: white !important; 
+        }
+        /* Neon/Envelope Rosa */
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
+
+        /* SE A MÃE É VERDE -> TUDO DENTRO É VERDE */
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) 
+        [data-testid="stTabPanel"] button[aria-selected="true"] { 
+            background-color: #2ECC71 !important; color: white !important; 
+        }
+        /* Neon/Envelope Verde */
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
+
+        /* 5. ACABAMENTOS */
+        [data-testid="stTabPanel"] { background: white !important; padding: 50px !important; border-radius: 0 60px 60px 60px !important; border: 6px solid transparent !important; }
+        [data-testid="stFileUploader"] { padding: 50px 45px 45px 45px !important; border-radius: 10px 10px 45px 45px !important; margin: 25px 0 !important; position: relative !important; }
+        [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 99; }
+        div.stDownloadButton > button { background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important; color: #495057 !important; border: 2px solid #ADB5BD !important; border-radius: 15px !important; font-weight: 800 !important; height: 55px !important; width: 100% !important; text-transform: uppercase !important; }
+        
+        /* Botão Hover reativo */
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #00BFFF !important; border-color: #00BFFF !important; }
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #FF69B4 !important; border-color: #FF69B4 !important; }
+        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #2ECC71 !important; border-color: #2ECC71 !important; }
+        
         </style>
     """, unsafe_allow_html=True)
