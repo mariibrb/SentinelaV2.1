@@ -30,7 +30,7 @@ def aplicar_estilo_sentinela():
             text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.8) !important;
         }
 
-        /* --- 3. ABAS MESTRE DIAMANTE (MODELO RIHANNA) --- */
+        /* --- 3. ABAS MESTRE DIAMANTE (MODELO RIHANNA - ELEVAÇÃO) --- */
         .stTabs [data-baseweb="tab-list"] { gap: 15px !important; padding: 60px 0 0 20px !important; }
         .stTabs [data-baseweb="tab"] {
             height: 85px !important;
@@ -43,10 +43,10 @@ def aplicar_estilo_sentinela():
             transition: all 0.3s ease !important;
         }
 
-        /* Elevação das Mães */
+        /* Elevação das Mães Selecionadas */
         .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] { transform: translateY(-30px) !important; color: white !important; }
 
-        /* DNA das Mães (Cores Fixas) */
+        /* DNA das Mães (Azul, Rosa e Verde) */
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(1)[aria-selected="true"] { background: #00BFFF !important; }
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(2)[aria-selected="true"] { background: #FF69B4 !important; }
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(3)[aria-selected="true"] { background: #2ECC71 !important; }
@@ -54,27 +54,25 @@ def aplicar_estilo_sentinela():
         /* --- 4. O CAIXOTÃO --- */
         [data-testid="stTabPanel"] { background: #FFFFFF !important; padding: 40px !important; border-radius: 0 40px 40px 40px !important; border: 6px solid transparent !important; }
 
-        /* Neon Setorizado */
+        /* Neon Setorizado Reativo */
         .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
         .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
         .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
 
-        /* --- 5. SUB-ABAS (HERANÇA GENÉTICA REAL) --- */
+        /* --- 5. SUB-ABAS (HERANÇA GENÉTICA E ELEVAÇÃO) --- */
         .stTabs .stTabs [data-baseweb="tab"] { height: 60px !important; border-radius: 15px 45px 0 0 !important; background: #F1F3F5 !important; }
-        
-        /* Elevação das Filhas */
         .stTabs .stTabs button[aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
 
-        /* DNA AZUL: Herda da Mãe 1 */
+        /* DNA AZUL - Filhas e Seleção do Bloco 1 */
         .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #00BFFF !important; }
-
-        /* DNA ROSA: Herda da Mãe 2 (TODAS as 5 subpastas ficam ROSAS) */
+        
+        /* DNA ROSA - Filhas e Seleção do Bloco 2 */
         .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #FF69B4 !important; }
-
-        /* DNA VERDE: Herda da Mãe 3 (TODAS as 5 subpastas ficam VERDES) */
+        
+        /* DNA VERDE - Filhas e Seleção do Bloco 3 */
         .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #2ECC71 !important; }
 
-        /* --- 6. ENVELOPES (MODELO MESTRE) --- */
+        /* --- 6. ENVELOPES (FORMATO MESTRE) --- */
         [data-testid="stFileUploader"] {
             padding: 50px 45px 45px 45px !important;
             border-radius: 10px 10px 45px 45px !important;
@@ -87,10 +85,16 @@ def aplicar_estilo_sentinela():
 
         [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 99; }
 
-        /* Cor do DNA nos Envelopes */
-        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border-color: #A7E9FF !important; }
-        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border-color: #FFD1DC !important; }
-        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border-color: #A9DFBF !important; }
+        /* Cor Genética dos Envelopes */
+        /* AZUL */ .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border-color: #A7E9FF !important; }
+        /* ROSA */ .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border-color: #FFD1DC !important; }
+        /* VERDE */ .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border-color: #A9DFBF !important; }
+
+        /* --- 7. BOTÕES DE DOWNLOAD --- */
+        div.stDownloadButton > button {
+            background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
+            color: #495057 !important; border: 2px solid #ADB5BD !important; border-radius: 15px !important; font-weight: 800 !important; height: 55px !important; text-transform: uppercase !important;
+        }
 
         </style>
     """, unsafe_allow_html=True)
