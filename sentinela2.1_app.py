@@ -460,7 +460,9 @@ elif emp_sel and not modo_adm:
         tabs_pai = st.tabs(abas_v)
         for i, nome_tab_p in enumerate(abas_v):
             with tabs_pai[i]:
+                # --- AQUI ESTÁ A MÁGICA: ETIQUETAS INVISÍVEIS ---
                 if nome_tab_p == "📂 ANÁLISE XML":
+                    st.markdown('<div id="marcador-azul"></div>', unsafe_allow_html=True)
                     st.markdown("### 📥 Central de Importação e Garimpo")
                     c1, c2, c3 = st.columns(3)
                     with c1: 
@@ -517,6 +519,7 @@ elif emp_sel and not modo_adm:
                                 except Exception as e: st.error(f"Erro no Processamento: {e}")
 
                 elif nome_tab_p == "🏢 CONFORMIDADE DOMÍNIO":
+                    st.markdown('<div id="marcador-rosa"></div>', unsafe_allow_html=True)
                     sub_rosa = ["📊 ICMS/IPI", "⚖️ DIFAL/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
                     if ret_sel: sub_rosa.insert(2, "🏨 RET")
                     
@@ -557,6 +560,7 @@ elif emp_sel and not modo_adm:
                                 st.button("⚖️ ANALISAR IMPACTO", use_container_width=True, key="btn_ibscbs")
 
                 elif nome_tab_p == "✅ APURAÇÃO DOMÍNIO":
+                    st.markdown('<div id="marcador-verde"></div>', unsafe_allow_html=True)
                     sub_verde = ["📊 ICMS/ IPI", "⚖️ Difal/ST", "💰 PIS/COFINS", "💎 IBS/CBS"]
                     if ret_sel: sub_verde.insert(2, "RET")
                         
