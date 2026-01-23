@@ -34,7 +34,7 @@ def aplicar_estilo_sentinela():
         }
         @keyframes brilhoMetalico { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* --- 3. MÃES (AS GENERIAS) --- */
+        /* --- 3. MÃES (AS GENERAIS) --- */
         .stTabs > div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; transform: translateY(-30px) !important; color: white !important; }
         .stTabs > div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; transform: translateY(-30px) !important; color: white !important; }
         .stTabs > div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"] { background: #2ECC71 !important; transform: translateY(-30px) !important; color: white !important; }
@@ -54,7 +54,7 @@ def aplicar_estilo_sentinela():
         .stTabs:has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
 
 
-        /* 🟩 TERRITÓRIO 3 (VERDE) - Coloquei antes do rosa para ter menos força */
+        /* 🟩 TERRITÓRIO 3 (VERDE) - Coloquei ANTES do rosa para ter menos força */
         .stTabs:has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) [data-testid="stTabPanel"] .stTabs [aria-selected="true"] {
             background-color: #2ECC71 !important; color: white !important;
         }
@@ -65,12 +65,13 @@ def aplicar_estilo_sentinela():
 
 
         /* 🟥 TERRITÓRIO 2 (ROSA) - A ÚLTIMA PALAVRA É A DELE (PARA SALVAR O RET) */
-        /* Essa regra sobrescreve qualquer regra verde anterior */
+        /* Essa regra sobrescreve qualquer regra verde anterior porque vem depois no código */
         .stTabs:has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] .stTabs [aria-selected="true"] {
             background-color: #FF69B4 !important; color: white !important;
         }
         
         /* 🚨 A CURA DO RET: FORÇA BRUTA NO 3º FILHO DA CASA ROSA 🚨 */
+        /* Aqui dizemos: Se estiver na Casa 2, e o botão 3 (RET) estiver ativo, ele TEM que ser rosa */
         .stTabs:has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) 
         [data-testid="stTabPanel"] .stTabs button:nth-child(3)[aria-selected="true"] {
             background-color: #FF69B4 !important; color: white !important;
