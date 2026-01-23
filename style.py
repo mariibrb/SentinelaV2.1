@@ -11,10 +11,10 @@ def aplicar_estilo_sentinela():
         .stApp { background: radial-gradient(circle at top left, #F8F9FA 0%, #CED4DA 100%) !important; }
         .titulo-principal { font-family: 'Montserrat', sans-serif !important; color: #495057 !important; font-size: 3.5rem; font-weight: 800; text-transform: uppercase; padding: 20px 0 !important; text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.8) !important; }
 
-        /* --- 2. ESTILO BASE DE TODAS AS ABAS (SEM COR AINDA) --- */
+        /* --- 2. DESIGN DAS ABAS (Estrutura Física) --- */
         .stTabs [data-baseweb="tab"] {
             height: 85px !important;
-            background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%);
+            background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
             border-radius: 35px 90px 0 0 !important; 
             padding: 0px 70px !important;
             border: 2px solid #ADB5BD !important;
@@ -24,7 +24,7 @@ def aplicar_estilo_sentinela():
             transition: 0.3s ease !important;
         }
 
-        /* BRILHO METALIZADO (HOVER) */
+        /* Hover Metalizado */
         .stTabs [data-baseweb="tab"]:hover {
             background: linear-gradient(45deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 70%), 
                         linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
@@ -34,79 +34,71 @@ def aplicar_estilo_sentinela():
         }
         @keyframes brilhoMetalico { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* --- 3. A GRANDE MUDANÇA: PINTURA POR NÍVEL HIERÁRQUICO --- */
+        /* --- 3. A LÓGICA DE BLINDAGEM (O SEGREDO ESTÁ AQUI) --- */
+        /* O seletor "> div" obriga a olhar apenas o topo. Ele ignora as sub-abas */
+
+        /* MÃE 1 (AZUL) - CONTROLE TOTAL */
+        .stTabs:has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) {
+            /* Pinta a Mãe */
+            > div > [data-baseweb="tab-list"] > button:nth-child(1) { background: #00BFFF !important; transform: translateY(-30px) !important; color: white !important; }
+            /* Pinta o Neon do Painel */
+            > [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
+            /* Pinta TODAS as sub-abas lá dentro de Azul */
+            [data-testid="stTabPanel"] [aria-selected="true"] { background-color: #00BFFF !important; color: white !important; }
+            /* Pinta os Envelopes */
+            [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
+            /* Pinta o Botão */
+            div.stDownloadButton > button:hover { box-shadow: 0 0 20px #00BFFF !important; border-color: #00BFFF !important; }
+        }
+
+        /* MÃE 2 (ROSA) - CONTROLE TOTAL */
+        .stTabs:has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) {
+            /* Pinta a Mãe */
+            > div > [data-baseweb="tab-list"] > button:nth-child(2) { background: #FF69B4 !important; transform: translateY(-30px) !important; color: white !important; }
+            /* Pinta o Neon do Painel */
+            > [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
+            /* Pinta TODAS as sub-abas lá dentro de Rosa (Inclusive a 3ª, a 4ª...) */
+            [data-testid="stTabPanel"] [aria-selected="true"] { background-color: #FF69B4 !important; color: white !important; }
+            /* Pinta os Envelopes */
+            [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
+            /* Pinta o Botão */
+            div.stDownloadButton > button:hover { box-shadow: 0 0 20px #FF69B4 !important; border-color: #FF69B4 !important; }
+        }
+
+        /* MÃE 3 (VERDE) - CONTROLE TOTAL */
+        .stTabs:has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) {
+            /* Pinta a Mãe */
+            > div > [data-baseweb="tab-list"] > button:nth-child(3) { background: #2ECC71 !important; transform: translateY(-30px) !important; color: white !important; }
+            /* Pinta o Neon do Painel */
+            > [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
+            /* Pinta TODAS as sub-abas lá dentro de Verde */
+            [data-testid="stTabPanel"] [aria-selected="true"] { background-color: #2ECC71 !important; color: white !important; }
+            /* Pinta os Envelopes */
+            [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
+            /* Pinta o Botão */
+            div.stDownloadButton > button:hover { box-shadow: 0 0 20px #2ECC71 !important; border-color: #2ECC71 !important; }
+        }
         
-        /* === NÍVEL 1: AS MÃES (Top Level) === */
-        /* Seleciona apenas as abas que NÃO estão dentro de um painel (ou seja, as do topo) */
-        .main > .block-container > div > div > div > div > div[data-testid="stTabs"] > div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"] { 
-            background: #00BFFF !important; transform: translateY(-30px) !important; color: white !important; 
+        /* FUTURA MÃE 4 (AMARELA) - EXEMPLO (Pode descomentar quando criar) */
+        /*
+        .stTabs:has(> div > [data-baseweb="tab-list"] > button:nth-child(4)[aria-selected="true"]) {
+            > div > [data-baseweb="tab-list"] > button:nth-child(4) { background: #FFD700 !important; color: white !important; }
+            [data-testid="stTabPanel"] [aria-selected="true"] { background-color: #FFD700 !important; }
         }
-        .main > .block-container > div > div > div > div > div[data-testid="stTabs"] > div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"] { 
-            background: #FF69B4 !important; transform: translateY(-30px) !important; color: white !important; 
-        }
-        .main > .block-container > div > div > div > div > div[data-testid="stTabs"] > div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"] { 
-            background: #2ECC71 !important; transform: translateY(-30px) !important; color: white !important; 
-        }
+        */
 
-        /* === NÍVEL 2: AS FILHAS (Nested Level) === */
-        /* Redefine o tamanho para as filhas (para não ficarem gigantes) */
-        [data-testid="stTabPanel"] [data-testid="stTabs"] [data-baseweb="tab"] {
-            height: 60px !important;
-            background: #F1F3F5 !important;
-            border-radius: 15px 45px 0 0 !important;
-            padding: 0 30px !important;
-        }
-
-        /* 🟦 TERRITÓRIO AZUL (MÃE 1 ATIVA) */
-        div[data-testid="stTabs"]:has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) 
-        > [data-testid="stTabPanel"] 
-        div[data-testid="stTabs"] button[aria-selected="true"] {
-            background-color: #00BFFF !important;
-            color: white !important;
-            transform: translateY(-12px) !important;
-        }
-
-        /* 🟥 TERRITÓRIO ROSA (MÃE 2 ATIVA) - AQUI O RET É OBRIGADO A SER ROSA */
-        div[data-testid="stTabs"]:has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) 
-        > [data-testid="stTabPanel"] 
-        div[data-testid="stTabs"] button[aria-selected="true"] {
-            background-color: #FF69B4 !important;
-            color: white !important;
-            transform: translateY(-12px) !important;
-        }
-
-        /* 🟩 TERRITÓRIO VERDE (MÃE 3 ATIVA) */
-        div[data-testid="stTabs"]:has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) 
-        > [data-testid="stTabPanel"] 
-        div[data-testid="stTabs"] button[aria-selected="true"] {
-            background-color: #2ECC71 !important;
-            color: white !important;
-            transform: translateY(-12px) !important;
-        }
-
-        /* --- 4. CAIXOTÃO E ENVELOPES --- */
+        /* --- 4. AJUSTES FINAIS --- */
         [data-testid="stTabPanel"] { background: white !important; padding: 50px !important; border-radius: 0 60px 60px 60px !important; border: 6px solid transparent !important; }
-
-        /* Neon do Caixotão */
-        div[data-testid="stTabs"]:has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) > [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
-        div[data-testid="stTabs"]:has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) > [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
-        div[data-testid="stTabs"]:has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) > [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
-
-        /* Envelopes */
-        [data-testid="stFileUploader"] { padding: 50px 45px 45px 45px !important; border-radius: 10px 10px 45px 45px !important; border-top: 18px solid #FDFDFD !important; position: relative !important; }
-        [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 99; }
         
-        div[data-testid="stTabs"]:has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
-        div[data-testid="stTabs"]:has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
-        div[data-testid="stTabs"]:has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
+        /* Reset para as sub-abas não ativas */
+        [data-testid="stTabPanel"] .stTabs [data-baseweb="tab"] { height: 60px !important; background: #F1F3F5 !important; border-radius: 15px 45px 0 0 !important; }
+        
+        /* Reset do File Uploader */
+        [data-testid="stFileUploader"] { padding: 50px 45px 45px 45px !important; border-radius: 10px 10px 45px 45px !important; margin: 25px 0 !important; position: relative !important; }
+        [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 99; }
 
-        /* --- 5. BOTÃO DE DOWNLOAD --- */
-        div.stDownloadButton > button {
-            background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important; color: #495057 !important; border: 2px solid #ADB5BD !important; border-radius: 15px !important; font-weight: 800 !important; height: 55px !important; width: 100% !important; text-transform: uppercase !important;
-        }
-        div[data-testid="stTabs"]:has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #00BFFF !important; border-color: #00BFFF !important; }
-        div[data-testid="stTabs"]:has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #FF69B4 !important; border-color: #FF69B4 !important; }
-        div[data-testid="stTabs"]:has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #2ECC71 !important; border-color: #2ECC71 !important; }
+        /* Botão Base */
+        div.stDownloadButton > button { background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important; color: #495057 !important; border: 2px solid #ADB5BD !important; border-radius: 15px !important; font-weight: 800 !important; height: 55px !important; width: 100% !important; text-transform: uppercase !important; }
 
         </style>
     """, unsafe_allow_html=True)
