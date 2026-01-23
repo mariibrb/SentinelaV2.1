@@ -23,7 +23,6 @@ def aplicar_estilo_sentinela():
         div[data-testid="stVerticalBlock"] > div:first-child,
         .element-container:has(.titulo-principal) {
             background-color: transparent !important;
-            background: transparent !important;
             box-shadow: none !important;
             border: none !important;
         }
@@ -34,26 +33,20 @@ def aplicar_estilo_sentinela():
             font-size: 3.5rem; 
             font-weight: 800; 
             text-transform: uppercase;
-            background: transparent !important;
             padding: 20px 0 !important;
             text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.8) !important;
         }
 
         /* --- 3. ABAS MESTRE DIAMANTE --- */
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 15px !important; 
-            padding: 60px 0 0 20px !important; 
-        }
-
+        .stTabs [data-baseweb="tab-list"] { gap: 15px !important; padding: 60px 0 0 20px !important; }
         .stTabs [data-baseweb="tab"] {
             height: 85px !important;
             background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
             border-radius: 35px 90px 0 0 !important; 
-            padding: 0px 70px !important;
+            padding: 0px 60px !important;
             border: 2px solid #ADB5BD !important;
-            font-size: 1.6rem !important;
+            font-size: 1.4rem !important;
             font-weight: 800 !important;
-            color: #495057 !important;
         }
 
         /* DNA das Mães (Selecionadas) */
@@ -62,37 +55,31 @@ def aplicar_estilo_sentinela():
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(3)[aria-selected="true"] { background: #2ECC71 !important; color: white !important; transform: translateY(-30px); }
 
         /* --- 4. O CAIXOTÃO --- */
-        [data-testid="stTabPanel"] {
-            background: #FFFFFF !important;
-            padding: 50px !important;
-            border-radius: 0 60px 60px 60px !important;
-            margin-top: -5px !important;
-            border: 6px solid transparent !important;
-            min-height: 800px !important;
-        }
+        [data-testid="stTabPanel"] { background: #FFFFFF !important; padding: 40px !important; border-radius: 0 40px 40px 40px !important; border: 6px solid transparent !important; }
 
-        /* Neon Reativo */
+        /* Neon Reativo ao Bloco */
         .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
         .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
         .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
 
-        /* --- 5. SUB-ABAS (HERANÇA GENÉTICA ABSOLUTA) --- */
-        .stTabs .stTabs [aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
+        /* --- 5. SUB-ABAS (HERANÇA GENÉTICA ABSOLUTA POR BLOCO) --- */
         
-        /* DNA AZUL (Mãe 1) */
-        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; }
-        
-        /* DNA ROSA (Mãe 2) - Força o RET e qualquer outra aba aqui a ser Rosa */
-        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs [data-baseweb="tab"][aria-selected="true"] { 
-            background-color: #FF69B4 !important; 
-        }
-        
-        /* DNA VERDE (Mãe 3) */
-        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs [data-baseweb="tab"][aria-selected="true"] { 
-            background-color: #2ECC71 !important; 
+        /* Se a Mãe for AZUL (1) -> Filhas Azuis */
+        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) .stTabs [data-baseweb="tab"][aria-selected="true"] { 
+            background-color: #00BFFF !important; color: white !important; transform: translateY(-12px) !important;
         }
 
-        /* --- 6. ✉️ ENVELOPE (FORMATO MESTRE) --- */
+        /* Se a Mãe for ROSA (2) -> TODAS as Filhas Rosas (PIS, IBS, RET, etc) */
+        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs [data-baseweb="tab"][aria-selected="true"] { 
+            background-color: #FF69B4 !important; color: white !important; transform: translateY(-12px) !important;
+        }
+
+        /* Se a Mãe for VERDE (3) -> TODAS as Filhas Verdes */
+        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs [data-baseweb="tab"][aria-selected="true"] { 
+            background-color: #2ECC71 !important; color: white !important; transform: translateY(-12px) !important;
+        }
+
+        /* --- 6. ENVELOPES (FORMATO MESTRE) --- */
         [data-testid="stFileUploader"] {
             padding: 50px 45px 45px 45px !important;
             border-radius: 10px 10px 45px 45px !important;
@@ -100,35 +87,24 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 15px 40px rgba(0,0,0,0.1) !important;
             margin: 25px 0 !important;
             position: relative !important;
+            border: 2px solid transparent !important;
         }
 
         [data-testid="stFileUploader"]::before {
             content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 99;
         }
 
-        /* DNA da Cor nos Envelopes */
-        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
-        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
-        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
+        /* Cor dos Envelopes por DNA da Mãe */
+        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border-color: #A7E9FF !important; }
+        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border-color: #FFD1DC !important; }
+        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border-color: #A9DFBF !important; }
 
-        /* --- 7. FINALIZAÇÃO --- */
-        div.stExpander, div.element-container:has(h1, h2, h3), .stDataFrame {
-            background-color: white !important;
-            padding: 30px !important;
-            border-radius: 20px !important;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.03) !important;
-            border: 1px solid #E9ECEF !important;
-        }
-        
+        /* --- 7. BOTÕES E TABELAS --- */
         div.stDownloadButton > button {
             background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
-            color: #495057 !important;
-            border: 2px solid #ADB5BD !important;
-            border-radius: 15px !important;
-            font-weight: 800 !important;
-            height: 55px !important;
-            text-transform: uppercase !important;
+            color: #495057 !important; border: 2px solid #ADB5BD !important; border-radius: 15px !important; font-weight: 800 !important; height: 55px !important; text-transform: uppercase !important;
         }
+        div.stExpander, .stDataFrame { background-color: white !important; padding: 30px !important; border-radius: 20px !important; border: 1px solid #E9ECEF !important; }
 
         </style>
     """, unsafe_allow_html=True)
