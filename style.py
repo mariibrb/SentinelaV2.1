@@ -71,19 +71,28 @@ def aplicar_estilo_sentinela():
             min-height: 800px !important;
         }
 
-        /* Neon Reativo ao DNA da Mãe */
+        /* Neon Reativo */
         .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
         .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
         .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
 
-        /* --- 5. SUB-ABAS (HERANÇA GENÉTICA) --- */
+        /* --- 5. SUB-ABAS (HERANÇA GENÉTICA ABSOLUTA) --- */
         .stTabs .stTabs [aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
         
+        /* DNA AZUL (Mãe 1) */
         .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; }
-        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #FF69B4 !important; }
-        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #2ECC71 !important; }
+        
+        /* DNA ROSA (Mãe 2) - Força o RET e qualquer outra aba aqui a ser Rosa */
+        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs [data-baseweb="tab"][aria-selected="true"] { 
+            background-color: #FF69B4 !important; 
+        }
+        
+        /* DNA VERDE (Mãe 3) */
+        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs [data-baseweb="tab"][aria-selected="true"] { 
+            background-color: #2ECC71 !important; 
+        }
 
-        /* --- 6. ✉️ ENVELOPE (FORMATO MESTRE RESTAURADO) --- */
+        /* --- 6. ✉️ ENVELOPE (FORMATO MESTRE) --- */
         [data-testid="stFileUploader"] {
             padding: 50px 45px 45px 45px !important;
             border-radius: 10px 10px 45px 45px !important;
@@ -91,25 +100,18 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 15px 40px rgba(0,0,0,0.1) !important;
             margin: 25px 0 !important;
             position: relative !important;
-            border: 2px solid transparent !important;
         }
 
         [data-testid="stFileUploader"]::before {
-            content: "📄"; 
-            position: absolute;
-            top: -32px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 30px;
-            z-index: 99;
+            content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 99;
         }
 
         /* DNA da Cor nos Envelopes */
-        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border-color: #A7E9FF !important; }
-        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border-color: #FFD1DC !important; }
-        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border-color: #A9DFBF !important; }
+        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
+        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
+        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
 
-        /* --- 7. ÁREA DE AUDITORIA E DOWNLOADS --- */
+        /* --- 7. FINALIZAÇÃO --- */
         div.stExpander, div.element-container:has(h1, h2, h3), .stDataFrame {
             background-color: white !important;
             padding: 30px !important;
@@ -117,7 +119,7 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 5px 25px rgba(0,0,0,0.03) !important;
             border: 1px solid #E9ECEF !important;
         }
-
+        
         div.stDownloadButton > button {
             background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
             color: #495057 !important;
