@@ -48,10 +48,10 @@ def aplicar_estilo_sentinela():
             color: #495057 !important;
         }
 
-        /* Ativas das Mães */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; color: white !important; transform: translateY(-30px); }
-        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; color: white !important; transform: translateY(-30px); }
-        .stTabs [data-baseweb="tab-list"] button:nth-child(3)[aria-selected="true"] { background: #2ECC71 !important; color: white !important; transform: translateY(-30px); }
+        /* Ativas das Mães (1: Azul, 2: Rosa, 3: Verde) */
+        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; transform: translateY(-30px) !important; color: white !important; }
+        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; transform: translateY(-30px) !important; color: white !important; }
+        .stTabs [data-baseweb="tab-list"] button:nth-child(3)[aria-selected="true"] { background: #2ECC71 !important; transform: translateY(-30px) !important; color: white !important; }
 
         /* --- 4. O CAIXOTÃO (PASTA MÃE) --- */
         [data-testid="stTabPanel"] {
@@ -60,41 +60,51 @@ def aplicar_estilo_sentinela():
             border-radius: 0 40px 40px 40px !important;
             margin-top: -5px !important;
             border: 6px solid transparent !important;
-            min-height: 800px !important;
         }
 
-        /* Neon Reativo por Bloco */
+        /* Neon Reativo por Setor */
         .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
         .stTabs:has(button:nth-child(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
 
-        /* --- 5. SUB-ABAS (HERDANDO A COR DA MÃE) --- */
-        .stTabs .stTabs [aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
+        /* --- 5. SUB-ABAS (AQUI ESTÁ A CORREÇÃO DE HERANÇA) --- */
         
-        /* Se a Mãe 1 estiver ativa, as filhas são Azuis */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; }
-        /* Se a Mãe 2 estiver ativa, as filhas são ROSAS (Incluindo o RET aqui) */
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #FF69B4 !important; }
-        /* Se a Mãe 3 estiver ativa, as filhas são Verdes */
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #2ECC71 !important; }
+        /* Regra para as sub-abas dentro do SETOR ROSA (Conformidade) */
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { 
+            background-color: #FF69B4 !important; 
+            color: white !important;
+            transform: translateY(-10px) !important;
+        }
+
+        /* Regra para as sub-abas dentro do SETOR VERDE (Apuração) */
+        .stTabs:has(button:nth-child(3)[aria-selected="true"]) .stTabs [aria-selected="true"] { 
+            background-color: #2ECC71 !important; 
+            color: white !important;
+            transform: translateY(-10px) !important;
+        }
 
         /* --- 6. ENVELOPES DE UPLOAD (📄) --- */
         [data-testid="stFileUploader"] {
-            padding: 40px !important;
-            border-radius: 20px !important;
-            margin-bottom: 20px !important;
+            padding: 50px 45px 45px 45px !important;
+            border-radius: 10px 10px 45px 45px !important;
+            margin: 25px 0 !important;
             position: relative !important;
             border: 2px solid transparent !important;
         }
 
         [data-testid="stFileUploader"]::before {
-            content: "📄"; position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 25px;
+            content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px;
         }
 
-        /* Cores dos Envelopes acompanhando o Bloco Mãe */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border-color: #A7E9FF !important; }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border-color: #FFD1DC !important; }
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border-color: #A9DFBF !important; }
+        /* Envelopes ROSAS (Conformidade) */
+        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] { 
+            background-color: #FFF0F5 !important; border-color: #FFD1DC !important; 
+        }
+
+        /* Envelopes VERDES (Apuração) */
+        .stTabs:has(button:nth-child(3)[aria-selected="true"]) [data-testid="stFileUploader"] { 
+            background-color: #F1FFF7 !important; border-color: #A9DFBF !important; 
+        }
 
         /* --- 7. BOTÕES DE DOWNLOAD --- */
         div.stDownloadButton > button {
@@ -107,7 +117,6 @@ def aplicar_estilo_sentinela():
             text-transform: uppercase !important;
         }
 
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #00BFFF !important; border-color: #00BFFF !important; }
         .stTabs:has(button:nth-child(2)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #FF69B4 !important; border-color: #FF69B4 !important; }
         .stTabs:has(button:nth-child(3)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #2ECC71 !important; border-color: #2ECC71 !important; }
 
