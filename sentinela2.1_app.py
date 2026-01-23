@@ -161,7 +161,7 @@ def identify_xml_info(content_bytes, client_cnpj, file_name):
 
 # --- CONFIGURAÇÃO DA PÁGINA E CSS ---
 st.set_page_config(
-    page_title="Sentinela 2.3 | Auditoria Fiscal", 
+    page_title="Sentinela 2.3.1 | Auditoria Fiscal", 
     page_icon="🧡", 
     layout="wide"
 )
@@ -251,7 +251,6 @@ if not st.session_state['user_data']:
                     if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                         conn = sqlite3.connect('sentinela_usuarios.db')
                         c = conn.cursor()
-                        # AJUSTE NO LOGIN: Busca por usuário OU e-mail para permitir 'mariana'
                         c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
                                      FROM usuarios 
                                      WHERE (usuario=? OR email=?) AND senha=?""", 
@@ -285,7 +284,6 @@ if not st.session_state['user_data']:
                     if n_nome and n_email and n_pass:
                         try:
                             conn = sqlite3.connect('sentinela_usuarios.db')
-                            # AJUSTE: O e-mail agora é automaticamente o usuário
                             conn.execute("""INSERT INTO usuarios 
                                             (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
                                             VALUES (?, ?, ?, ?, 'PENDENTE', 'USER', 1, 0, 0, 0, 0)""", 
@@ -311,7 +309,7 @@ if not st.session_state['user_data']:
     st.stop()
 
 # --- TÍTULO PRINCIPAL ---
-st.markdown("<div class='titulo-principal'>SENTINELA 2.3</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
+st.markdown("<div class='titulo-principal'>SENTINELA 2.3.1</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
 # --- CONFIGURAÇÃO INICIAL MODO ADM ---
 modo_adm = st.session_state.get('show_adm', False)
@@ -368,7 +366,6 @@ with st.sidebar:
             seg_sel = st.selectbox("Passo 3: Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
             ret_sel = st.toggle("Passo 4: Habilitar MG (RET)", key="f_ret")
             
-            # --- CAIXA DE ANÁLISE EMPRESA - MARIANA ---
             cod_c = emp_sel.split(" - ")[0].strip()
             dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
             cnpj_limpo = dados_e['CNPJ']
@@ -454,7 +451,7 @@ elif emp_sel and not modo_adm:
     abas_v = []
     if perms.get('xml'): abas_v.append("📂 ANÁLISE XML")
     abas_v.append("🏢 CONFORMIDADE DOMÍNIO")
-    abas_v.append("✅ APURAÇÃO DOMÍNIO") # NOVA ÁREA VERDE SOLICITADA
+    abas_v.append("✅ APURAÇÃO DOMÍNIO") # ÁREA VERDE
     
     if abas_v:
         tabs_pai = st.tabs(abas_v)
@@ -531,10 +528,8 @@ elif emp_sel and not modo_adm:
                                 if nome_sub == "📊 ICMS/IPI":
                                     st.markdown("#### Auditoria ICMS/IPI")
                                     c1, c2 = st.columns(2)
-                                    with c1: 
-                                        up1 = st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
-                                    with c2: 
-                                        up2 = st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
+                                    with c1: up1 = st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
+                                    with c2: up2 = st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
                                     st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
                                 elif nome_sub == "⚖️ DIFAL/ST":
                                     st.markdown("#### Auditoria Difal / ST / FECP")
@@ -554,13 +549,21 @@ elif emp_sel and not modo_adm:
                                     st.info("Módulo em fase de implementação estrutural.")
                                     st.button("⚖️ ANALISAR IMPACTO", use_container_width=True, key="btn_ibscbs")
 
-                elif nome_tab_p == "✅ APURAÇÃO DOMÍNIO": # LÓGICA DA ÁREA VERDE
-                    st.markdown("### 🟢 Central de Conferência de Apuração")
-                    st.info("Área destinada à validação final entre Sistema e Livros Fiscais.")
-                    c1, c2 = st.columns(2)
-                    with c1: st.file_uploader("📑 Relatórios de Apuração", type=['xlsx', 'pdf'], key=f"ap_rel_{v}")
-                    with c2: st.file_uploader("📄 Resumo de Impostos", type=['xlsx', 'pdf'], key=f"ap_res_{v}")
-                    st.button("⚙️ PROCESSAR CONFERÊNCIA", use_container_width=True, key="btn_ap_verf")
+                elif nome_tab_p == "✅ APURAÇÃO DOMÍNIO":
+                    # --- CRIAÇÃO DAS 5 SUB-ABAS COM ENVELOPES ---
+                    sub_tributos = ["ICMS/ IPI", "Difal/ST", "RET", "PIS/COFINS", "IBS/CBS"]
+                    tabs_verde = st.tabs(sub_tributos)
+                    
+                    for k, nome_trib in enumerate(sub_tributos):
+                        with tabs_verde[k]:
+                            st.markdown(f"### 🟢 Conferência: {nome_trib}")
+                            st.info(f"Área destinada à validação final entre Sistema e Apuração de {nome_trib}.")
+                            c1, c2 = st.columns(2)
+                            with c1:
+                                st.file_uploader(f"📑 Relatório Apuração {nome_trib}", type=['xlsx', 'pdf'], key=f"ap_rel_{k}_{v}")
+                            with c2:
+                                st.file_uploader(f"📄 Resumo Impostos {nome_trib}", type=['xlsx', 'pdf'], key=f"ap_res_{k}_{v}")
+                            st.button(f"⚙️ PROCESSAR CONFERÊNCIA {nome_trib}", use_container_width=True, key=f"btn_ap_verf_{k}")
         
         # --- ÁREA DE DOWNLOADS (TRAVA DE SENHA REMOVIDA) ---
         if st.session_state.get('executado'):
