@@ -9,171 +9,161 @@ def aplicar_estilo_sentinela():
         [data-testid="stSidebar"] { min-width: 350px !important; background-color: #E9ECEF !important; border-right: 1px solid #CED4DA !important; }
         header, [data-testid="stHeader"] { display: none !important; }
         .stApp { background: #F4F6F9 !important; }
-        .titulo-principal { font-family: 'Montserrat', sans-serif !important; color: #495057 !important; font-size: 3.5rem; font-weight: 900; text-transform: uppercase; padding: 20px 0 !important; text-shadow: 2px 2px 0px #FFFFFF !important; }
+        .titulo-principal { font-family: 'Montserrat', sans-serif !important; color: #495057 !important; font-size: 3.5rem; font-weight: 800; text-transform: uppercase; padding: 20px 0 !important; text-shadow: 2px 2px 0px #FFFFFF !important; }
 
         /* =================================================================================
-           2. O FIM DAS BOLOTINHAS (TRANSFORMAÇÃO TOTAL DO MENU)
+           2. O MENU DE NAVEGAÇÃO "NA CARA" (SEM BOLINHAS)
         ================================================================================= */
         
-        /* 1. Esconde a bolinha original do Streamlit */
-        [role="radiogroup"] label > div:first-child { 
-            display: none !important; 
-        }
-
-        /* 2. O Container do Menu (A Régua) */
+        /* Container do Menu */
         [role="radiogroup"] {
             display: flex;
             justify-content: center;
             gap: 15px;
-            background: #FFFFFF;
-            padding: 15px;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-            border: 1px solid #DEE2E6;
+            width: 100%;
+            background: transparent;
+            margin-bottom: 20px;
         }
 
-        /* 3. O Botão (Label) - Aparência Inativa */
+        /* 🚫 MATA A BOLINHA */
+        [role="radiogroup"] label > div:first-child { display: none !important; }
+
+        /* O BOTÃO (ESTADO NORMAL/DESLIGADO) */
         [role="radiogroup"] label {
-            background-color: #F8F9FA !important;
+            background: #FFFFFF !important;
             border: 2px solid #E9ECEF !important;
-            border-radius: 10px !important;
-            padding: 15px 40px !important; /* Botão Gordo */
-            font-family: 'Montserrat', sans-serif !important;
-            font-size: 1.1rem !important;
-            font-weight: 700 !important;
-            color: #ADB5BD !important; /* Texto cinza claro */
-            cursor: pointer !important;
-            transition: all 0.3s ease !important;
+            border-radius: 12px !important;
+            padding: 15px 20px !important;
+            min-width: 200px;
             text-align: center;
-            min-width: 220px; /* Largura fixa para todos */
+            font-family: 'Montserrat', sans-serif !important;
+            font-weight: 700 !important;
+            color: #ADB5BD !important; /* Cinza apagado */
+            cursor: pointer !important;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        /* Hover no Botão */
+        /* HOVER GERAL (Aumenta um pouquinho) */
         [role="radiogroup"] label:hover {
             transform: translateY(-3px);
-            background-color: #E9ECEF !important;
-            color: #495057 !important;
+            border-color: #CED4DA !important;
+            color: #6C757D !important;
         }
 
         /* =================================================================================
-           3. CORES ATIVAS (AQUI VOCÊ SABE ONDE ESTÁ)
-           Usamos o seletor div:has(...) para iluminar o botão certo
+           3. A EXPLOSÃO DE CORES (IDENTIDADE POR POSIÇÃO)
+           Aqui dizemos: "Se o 1º botão estiver marcado, pinte de AZUL", etc.
         ================================================================================= */
 
-        /* 🟦 SE O MÓDULO FOR XML (AZUL) */
-        div:has(#modulo-xml) [role="radiogroup"] label[data-checked="true"] {
-            background-color: #00BFFF !important; /* Fundo Azul */
+        /* 🟦 BOTÃO 1 (XML) - QUANDO ATIVO */
+        [role="radiogroup"] label:nth-of-type(1)[data-checked="true"] {
+            background-color: #00BFFF !important; /* AZULÃO */
             border-color: #00BFFF !important;
-            color: white !important; /* Texto Branco */
-            box-shadow: 0 8px 20px rgba(0, 191, 255, 0.4) !important; /* Brilho Neon */
+            color: white !important;
+            box-shadow: 0 10px 25px rgba(0, 191, 255, 0.4) !important;
             transform: scale(1.05);
         }
-        /* Pinta a borda do container principal também */
-        div:has(#modulo-xml) [role="radiogroup"] { border-bottom: 5px solid #00BFFF !important; }
 
-
-        /* 🟥 SE O MÓDULO FOR CONFORMIDADE (ROSA) */
-        div:has(#modulo-conformidade) [role="radiogroup"] label[data-checked="true"] {
-            background-color: #FF69B4 !important; /* Fundo Rosa */
+        /* 🟥 BOTÃO 2 (CONFORMIDADE) - QUANDO ATIVO */
+        [role="radiogroup"] label:nth-of-type(2)[data-checked="true"] {
+            background-color: #FF69B4 !important; /* ROSÃO */
             border-color: #FF69B4 !important;
-            color: white !important; /* Texto Branco */
-            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.4) !important; /* Brilho Neon */
+            color: white !important;
+            box-shadow: 0 10px 25px rgba(255, 105, 180, 0.4) !important;
             transform: scale(1.05);
         }
-        /* Pinta a borda do container principal também */
-        div:has(#modulo-conformidade) [role="radiogroup"] { border-bottom: 5px solid #FF69B4 !important; }
 
-
-        /* 🟩 SE O MÓDULO FOR APURAÇÃO (VERDE) */
-        div:has(#modulo-apuracao) [role="radiogroup"] label[data-checked="true"] {
-            background-color: #2ECC71 !important; /* Fundo Verde */
+        /* 🟩 BOTÃO 3 (APURAÇÃO) - QUANDO ATIVO */
+        [role="radiogroup"] label:nth-of-type(3)[data-checked="true"] {
+            background-color: #2ECC71 !important; /* VERDÃO */
             border-color: #2ECC71 !important;
-            color: white !important; /* Texto Branco */
-            box-shadow: 0 8px 20px rgba(46, 204, 113, 0.4) !important; /* Brilho Neon */
+            color: white !important;
+            box-shadow: 0 10px 25px rgba(46, 204, 113, 0.4) !important;
             transform: scale(1.05);
         }
-        /* Pinta a borda do container principal também */
-        div:has(#modulo-apuracao) [role="radiogroup"] { border-bottom: 5px solid #2ECC71 !important; }
-
 
         /* =================================================================================
-           4. VISUAL DAS ABAS INTERNAS (PASTAS RETRÔ)
+           4. REFLEXO NO PAINEL (O AMBIENTE REAGE)
+           Usamos os IDs que colocamos no app.py para pintar as bordas
         ================================================================================= */
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 5px !important;
-            padding-top: 15px !important;
-            border-bottom: none !important;
-        }
 
-        /* Aba Inativa (Visor de Pasta) */
+        /* 🟦 CENÁRIO AZUL */
+        div:has(#modulo-xml) .stTabs [aria-selected="true"] { border-top-color: #00BFFF !important; color: #00BFFF !important; }
+        div:has(#modulo-xml) [data-testid="stFileUploader"] { border: 2px dashed #00BFFF !important; background: #F0F8FF !important; }
+        div:has(#modulo-xml) div.stDownloadButton > button:hover { background: #00BFFF !important; color: white !important; }
+        /* Vareta do Painel */
+        div:has(#modulo-xml) [data-testid="stTabPanel"] { border-top: 6px solid #00BFFF !important; }
+
+        /* 🟥 CENÁRIO ROSA */
+        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { border-top-color: #FF69B4 !important; color: #FF69B4 !important; }
+        div:has(#modulo-conformidade) [data-testid="stFileUploader"] { border: 2px dashed #FF69B4 !important; background: #FFF0F5 !important; }
+        div:has(#modulo-conformidade) div.stDownloadButton > button:hover { background: #FF69B4 !important; color: white !important; }
+        /* Vareta do Painel */
+        div:has(#modulo-conformidade) [data-testid="stTabPanel"] { border-top: 6px solid #FF69B4 !important; }
+
+        /* 🟩 CENÁRIO VERDE */
+        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { border-top-color: #2ECC71 !important; color: #2ECC71 !important; }
+        div:has(#modulo-apuracao) [data-testid="stFileUploader"] { border: 2px dashed #2ECC71 !important; background: #F0FFF4 !important; }
+        div:has(#modulo-apuracao) div.stDownloadButton > button:hover { background: #2ECC71 !important; color: white !important; }
+        /* Vareta do Painel */
+        div:has(#modulo-apuracao) [data-testid="stTabPanel"] { border-top: 6px solid #2ECC71 !important; }
+
+        /* =================================================================================
+           5. ACABAMENTOS (PASTAS E ENVELOPES)
+        ================================================================================= */
+        
+        /* ENVELOPE GIGANTE (Nunca some) */
+        [data-testid="stFileUploader"] {
+            padding: 40px 30px 30px 30px !important;
+            border-radius: 10px !important;
+            margin: 25px 0 !important;
+            position: relative !important;
+            background-color: #FFFFFF;
+            border: 2px dashed #CED4DA; /* Padrão */
+        }
+        [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -18px; left: 20px; font-size: 28px; z-index: 99; }
+
+        /* PASTINHAS QUADRADAS (Retrô) */
+        .stTabs [data-baseweb="tab-list"] { gap: 5px; border-bottom: 2px solid #DEE2E6; padding-top: 15px; }
+        
         .stTabs [data-baseweb="tab"] {
             height: 50px !important;
             background: #E9ECEF !important;
             border-radius: 8px 8px 0 0 !important;
-            padding: 0px 30px !important;
+            padding: 0 25px !important;
             border: 1px solid #CED4DA !important;
             border-bottom: none !important;
-            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            color: #ADB5BD !important;
             font-weight: 600 !important;
-            color: #6C757D !important;
-            margin-right: 2px !important;
-            transition: all 0.2s ease !important;
         }
 
-        /* Aba Ativa (Sobe e Ganha Cor do Módulo) */
+        /* PASTINHA ATIVA */
         .stTabs [aria-selected="true"] {
             background: #FFFFFF !important;
+            color: #212529 !important;
             font-weight: 800 !important;
-            border-top-width: 5px !important; /* A cor vem dos blocos abaixo */
-            transform: translateY(-2px) !important;
-            box-shadow: 0 -3px 10px rgba(0,0,0,0.05) !important;
+            border-top: 6px solid !important; /* Cor vem do cenário acima */
+            height: 60px !important;
+            transform: translateY(2px) !important;
             z-index: 10;
         }
 
-        /* Aplicação das Cores nas Abas Internas */
-        div:has(#modulo-xml) .stTabs [aria-selected="true"] { border-top-color: #00BFFF !important; color: #00BFFF !important; }
-        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { border-top-color: #FF69B4 !important; color: #FF69B4 !important; }
-        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { border-top-color: #2ECC71 !important; color: #2ECC71 !important; }
-
-        /* =================================================================================
-           5. CAIXOTÃO E ENVELOPES (ACABAMENTOS)
-        ================================================================================= */
+        /* CAIXOTÃO BRANCO */
         [data-testid="stTabPanel"] {
             background: #FFFFFF !important;
-            padding: 40px !important;
-            border-radius: 0 10px 10px 10px !important;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05) !important;
             border: 1px solid #DEE2E6;
+            border-top: none; /* A borda colorida vem do "has" acima */
+            border-radius: 0 0 10px 10px !important;
+            padding: 40px !important;
         }
 
-        /* Cor da Borda do Painel por Módulo */
-        div:has(#modulo-xml) [data-testid="stTabPanel"] { border-top: 4px solid #00BFFF !important; }
-        div:has(#modulo-conformidade) [data-testid="stTabPanel"] { border-top: 4px solid #FF69B4 !important; }
-        div:has(#modulo-apuracao) [data-testid="stTabPanel"] { border-top: 4px solid #2ECC71 !important; }
-
-        /* Envelopes (Nunca Somem) */
-        [data-testid="stFileUploader"] {
-            padding: 30px !important;
-            border-radius: 10px !important;
-            margin: 20px 0 !important;
-            position: relative !important;
-            background-color: #FFFFFF;
-            border: 2px dashed #CED4DA;
-        }
-        [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -18px; left: 20px; font-size: 26px; z-index: 99; }
-
-        /* Cores dos Envelopes por Módulo */
-        div:has(#modulo-xml) [data-testid="stFileUploader"] { border-color: #00BFFF !important; background: #F0F8FF !important; }
-        div:has(#modulo-conformidade) [data-testid="stFileUploader"] { border-color: #FF69B4 !important; background: #FFF0F5 !important; }
-        div:has(#modulo-apuracao) [data-testid="stFileUploader"] { border-color: #2ECC71 !important; background: #F0FFF4 !important; }
-
-        /* Botões Gerais */
+        /* BOTÕES GERAIS SÓLIDOS */
         div.stButton > button, div.stDownloadButton > button {
-            background: white !important;
+            background: #FFFFFF !important;
             color: #495057 !important;
             border: 1px solid #ADB5BD !important;
             border-radius: 8px !important;
