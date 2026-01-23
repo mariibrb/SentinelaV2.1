@@ -18,7 +18,7 @@ def aplicar_estilo_sentinela():
             background: radial-gradient(circle at top left, #F8F9FA 0%, #CED4DA 100%) !important; 
         }
 
-        /* --- 2. 🚫 REMOÇÃO TOTAL DA CAIXA BRANCA DO TÍTULO --- */
+        /* --- 2. 🚫 TÍTULO LÍMPIDO --- */
         div[data-testid="stVerticalBlock"] > div:has(.titulo-principal),
         div[data-testid="stVerticalBlock"] > div:first-child,
         .element-container:has(.titulo-principal) {
@@ -60,18 +60,25 @@ def aplicar_estilo_sentinela():
             transition: all 0.3s ease !important;
         }
 
+        /* ✨ EFEITO DE BRILHO AO PASSAR O MOUSE NAS ABAS */
+        .stTabs [data-baseweb="tab"]:hover {
+            box-shadow: 0 -10px 20px rgba(255, 255, 255, 0.5) !important;
+            border-color: #FFFFFF !important;
+            color: #000000 !important;
+        }
+
         /* Elevação das Mães Selecionadas */
         .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] { 
             transform: translateY(-30px) !important; 
             color: white !important; 
         }
 
-        /* DNA das Mães - SEPARAÇÃO POR TIPO (nth-of-type) */
-        .stTabs [data-baseweb="tab-list"] button:nth-of-type(1)[aria-selected="true"] { background: #00BFFF !important; }
-        .stTabs [data-baseweb="tab-list"] button:nth-of-type(2)[aria-selected="true"] { background: #FF69B4 !important; }
-        .stTabs [data-baseweb="tab-list"] button:nth-of-type(3)[aria-selected="true"] { background: #2ECC71 !important; }
+        /* DNA das Mães */
+        .stTabs [data-baseweb="tab-list"] button:nth-of-type(1)[aria-selected="true"] { background: #00BFFF !important; box-shadow: 0 0 20px #00BFFF !important; }
+        .stTabs [data-baseweb="tab-list"] button:nth-of-type(2)[aria-selected="true"] { background: #FF69B4 !important; box-shadow: 0 0 20px #FF69B4 !important; }
+        .stTabs [data-baseweb="tab-list"] button:nth-of-type(3)[aria-selected="true"] { background: #2ECC71 !important; box-shadow: 0 0 20px #2ECC71 !important; }
 
-        /* --- 4. 📦 O CAIXOTÃO (PASTA MÃE) --- */
+        /* --- 4. 📦 O CAIXOTÃO --- */
         [data-testid="stTabPanel"] {
             background: #FFFFFF !important;
             padding: 50px !important;
@@ -82,7 +89,7 @@ def aplicar_estilo_sentinela():
             overflow: visible !important;
         }
 
-        /* Neon Setorizado Reativo ao DNA */
+        /* Neon Setorizado Reativo */
         .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
         .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
         .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
@@ -93,21 +100,22 @@ def aplicar_estilo_sentinela():
             height: 60px !important;
             background: #F1F3F5 !important;
             border-radius: 15px 45px 0 0 !important;
+            padding: 0 30px !important;
         }
 
         .stTabs .stTabs button[aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
         
-        /* HERANÇA DO GRUPO 1 (AZUL) */
-        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #00BFFF !important; }
+        /* DNA AZUL (G1) */
+        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #00BFFF !important; box-shadow: 0 0 15px #00BFFF !important; }
         
-        /* HERANÇA DO GRUPO 2 (ROSA) - TODAS AS FILHAS SÃO ROSAS (FIM DO VÍCIO VERDE) */
+        /* DNA ROSA (G2) - TODOS SÃO ROSAS (FIM DO VÍCIO VERDE) */
         .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs button[aria-selected="true"] { 
-            background-color: #FF69B4 !important; 
+            background-color: #FF69B4 !important; box-shadow: 0 0 15px #FF69B4 !important;
         }
 
-        /* HERANÇA DO GRUPO 3 (VERDE) */
+        /* DNA VERDE (G3) */
         .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs button[aria-selected="true"] { 
-            background-color: #2ECC71 !important; 
+            background-color: #2ECC71 !important; box-shadow: 0 0 15px #2ECC71 !important;
         }
 
         /* --- 6. ✉️ ENVELOPE COM ÍCONE 📄 --- */
@@ -119,6 +127,12 @@ def aplicar_estilo_sentinela():
             margin: 25px 0 !important;
             position: relative !important;
             border: 2px solid transparent !important;
+            transition: all 0.3s ease !important;
+        }
+
+        [data-testid="stFileUploader"]:hover {
+            transform: scale(1.02);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15) !important;
         }
 
         [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 99; }
@@ -128,11 +142,37 @@ def aplicar_estilo_sentinela():
         .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border-color: #FFD1DC !important; }
         .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border-color: #A9DFBF !important; }
 
-        /* --- 7. BOTÕES E TABELAS --- */
+        /* --- 7. BOTÕES COM O BRILHO DE VOLTA --- */
         div.stDownloadButton > button {
             background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
-            color: #495057 !important; border: 2px solid #ADB5BD !important; border-radius: 15px !important; font-weight: 800 !important; height: 55px !important; text-transform: uppercase !important;
+            color: #495057 !important; 
+            border: 2px solid #ADB5BD !important; 
+            border-radius: 15px !important; 
+            font-weight: 800 !important; 
+            height: 55px !important; 
+            text-transform: uppercase !important;
+            transition: all 0.3s ease-in-out !important;
         }
+
+        /* ✨ BRILHO NEON NO HOVER DO BOTÃO CONFORME O DNA */
+        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) div.stDownloadButton > button:hover {
+            box-shadow: 0 0 25px #00BFFF !important;
+            border-color: #00BFFF !important;
+            color: #00BFFF !important;
+        }
+
+        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) div.stDownloadButton > button:hover {
+            box-shadow: 0 0 25px #FF69B4 !important;
+            border-color: #FF69B4 !important;
+            color: #FF69B4 !important;
+        }
+
+        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) div.stDownloadButton > button:hover {
+            box-shadow: 0 0 25px #2ECC71 !important;
+            border-color: #2ECC71 !important;
+            color: #2ECC71 !important;
+        }
+
         div.stExpander, .stDataFrame { background-color: white !important; padding: 30px !important; border-radius: 20px !important; border: 1px solid #E9ECEF !important; }
 
         </style>
