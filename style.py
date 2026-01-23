@@ -12,7 +12,7 @@ def aplicar_estilo_sentinela():
         .titulo-principal { font-family: 'Montserrat', sans-serif !important; color: #495057 !important; font-size: 3.5rem; font-weight: 800; text-transform: uppercase; padding: 20px 0 !important; text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.8) !important; }
         div[data-testid="stVerticalBlock"] > div:has(.titulo-principal) { background: transparent !important; box-shadow: none !important; border: none !important; }
 
-        /* 2. DESIGN DAS ABAS (Formato) */
+        /* 2. DESIGN DAS ABAS */
         .stTabs [data-baseweb="tab"] {
             height: 85px !important;
             background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
@@ -32,76 +32,58 @@ def aplicar_estilo_sentinela():
         }
         @keyframes brilhoMetalico { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* MÃES ATIVAS (Elevação) */
+        /* Mães Ativas (Design Base) */
         .stTabs > div > [data-baseweb="tab-list"] > button[aria-selected="true"] {
             transform: translateY(-30px) !important; color: white !important;
         }
 
-        /* 3. REGRAS EXCLUSIVAS PARA AS MÃES (AS GENERIAS) */
-        /* O SEGREDO: :not([data-testid="stTabPanel"] .stTabs)
-           Isso diz: "Aplique isso SÓ se você NÃO for uma sub-aba" */
+        /* 3. LÓGICA DAS BANDEIRAS (INFALÍVEL) */
+        /* O CSS agora procura o ID que colocamos no Python */
 
-        /* MÃE 1: AZUL */
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) 
-        > div > [data-baseweb="tab-list"] > button:nth-child(1) { 
-            background: #00BFFF !important; 
+        /* --- 🔵 BANDEIRA AZUL (XML) --- */
+        .stTabs:has(#marcador-azul) {
+            /* Pinta a Mãe */
+            > div > [data-baseweb="tab-list"] > button[aria-selected="true"] { background: #00BFFF !important; }
+            /* Pinta TODAS as sub-abas */
+            [data-testid="stTabPanel"] button[aria-selected="true"] { background-color: #00BFFF !important; color: white !important; }
+            /* Acabamentos */
+            [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
+            [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
+            div.stDownloadButton > button:hover { box-shadow: 0 0 20px #00BFFF !important; border-color: #00BFFF !important; }
         }
 
-        /* MÃE 2: ROSA */
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) 
-        > div > [data-baseweb="tab-list"] > button:nth-child(2) { 
-            background: #FF69B4 !important; 
+        /* --- 🩷 BANDEIRA ROSA (CONFORMIDADE) --- */
+        .stTabs:has(#marcador-rosa) {
+            /* Pinta a Mãe */
+            > div > [data-baseweb="tab-list"] > button[aria-selected="true"] { background: #FF69B4 !important; }
+            /* Pinta TODAS as sub-abas (Incluindo RET) */
+            [data-testid="stTabPanel"] button[aria-selected="true"] { background-color: #FF69B4 !important; color: white !important; }
+            /* Acabamentos */
+            [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
+            [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
+            div.stDownloadButton > button:hover { box-shadow: 0 0 20px #FF69B4 !important; border-color: #FF69B4 !important; }
         }
 
-        /* MÃE 3: VERDE */
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) 
-        > div > [data-baseweb="tab-list"] > button:nth-child(3) { 
-            background: #2ECC71 !important; 
+        /* --- 🟢 BANDEIRA VERDE (APURAÇÃO) --- */
+        .stTabs:has(#marcador-verde) {
+            /* Pinta a Mãe */
+            > div > [data-baseweb="tab-list"] > button[aria-selected="true"] { background: #2ECC71 !important; }
+            /* Pinta TODAS as sub-abas */
+            [data-testid="stTabPanel"] button[aria-selected="true"] { background-color: #2ECC71 !important; color: white !important; }
+            /* Acabamentos */
+            [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
+            [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
+            div.stDownloadButton > button:hover { box-shadow: 0 0 20px #2ECC71 !important; border-color: #2ECC71 !important; }
         }
 
-        /* 4. HERANÇA PARA AS FILHAS (A LEI DA CASA) */
-        /* Aqui pintamos as filhas baseadas na MÃE que está ativa lá no topo */
-
-        /* Reset para filhas */
-        [data-testid="stTabPanel"] .stTabs [data-baseweb="tab"] { height: 60px !important; background: #F1F3F5 !important; border-radius: 15px 45px 0 0 !important; }
-
-        /* SE A MÃE É AZUL -> TUDO DENTRO É AZUL */
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) 
-        [data-testid="stTabPanel"] button[aria-selected="true"] { 
-            background-color: #00BFFF !important; color: white !important; 
-        }
-        /* Neon/Envelope Azul */
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
-
-        /* SE A MÃE É ROSA -> TUDO DENTRO É ROSA */
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) 
-        [data-testid="stTabPanel"] button[aria-selected="true"] { 
-            background-color: #FF69B4 !important; color: white !important; 
-        }
-        /* Neon/Envelope Rosa */
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
-
-        /* SE A MÃE É VERDE -> TUDO DENTRO É VERDE */
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) 
-        [data-testid="stTabPanel"] button[aria-selected="true"] { 
-            background-color: #2ECC71 !important; color: white !important; 
-        }
-        /* Neon/Envelope Verde */
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
-
-        /* 5. ACABAMENTOS */
+        /* 4. RESET E COMPONENTES */
         [data-testid="stTabPanel"] { background: white !important; padding: 50px !important; border-radius: 0 60px 60px 60px !important; border: 6px solid transparent !important; }
+        /* Reset Sub-abas */
+        [data-testid="stTabPanel"] .stTabs [data-baseweb="tab"] { height: 60px !important; background: #F1F3F5 !important; border-radius: 15px 45px 0 0 !important; }
+        
         [data-testid="stFileUploader"] { padding: 50px 45px 45px 45px !important; border-radius: 10px 10px 45px 45px !important; margin: 25px 0 !important; position: relative !important; }
         [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 99; }
         div.stDownloadButton > button { background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important; color: #495057 !important; border: 2px solid #ADB5BD !important; border-radius: 15px !important; font-weight: 800 !important; height: 55px !important; width: 100% !important; text-transform: uppercase !important; }
-        
-        /* Botão Hover reativo */
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(1)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #00BFFF !important; border-color: #00BFFF !important; }
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(2)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #FF69B4 !important; border-color: #FF69B4 !important; }
-        .stTabs:not([data-testid="stTabPanel"] .stTabs):has(> div > [data-baseweb="tab-list"] > button:nth-child(3)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #2ECC71 !important; border-color: #2ECC71 !important; }
         
         </style>
     """, unsafe_allow_html=True)
