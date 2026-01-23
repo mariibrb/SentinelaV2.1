@@ -9,28 +9,20 @@ def aplicar_estilo_sentinela():
         [data-testid="stSidebar"] { min-width: 350px !important; background-color: #E9ECEF !important; border-right: 5px solid #ADB5BD !important; }
         header, [data-testid="stHeader"] { display: none !important; }
         .stApp { background: radial-gradient(circle at top left, #FFFFFF 0%, #DEE2E6 100%) !important; }
-        
-        /* Título e Versão Discretos */
         .titulo-principal { font-family: 'Montserrat', sans-serif !important; color: #6C757D !important; font-size: 1rem !important; font-weight: 800; text-transform: uppercase; padding: 5px 0 !important; letter-spacing: 2px; }
 
         /* =================================================================================
-           2. MENU MASTER (PASTINHAS MIÚDAS QUE PULAM E BRILHAM)
+           2. MENU MASTER - PINTANDO AS ABAS PRINCIPAIS (O CORAÇÃO DO SISTEMA)
         ================================================================================= */
-        [role="radiogroup"] { 
-            display: flex; 
-            justify-content: center; 
-            gap: 12px; 
-            padding-top: 25px !important; 
-            overflow: visible !important;
-        }
-        
+        [role="radiogroup"] { display: flex; justify-content: center; gap: 12px; padding-top: 25px !important; overflow: visible !important; }
         [role="radiogroup"] label > div:first-child { display: none !important; }
 
+        /* Estilo Base das Abas Mestras (Inativas) */
         [role="radiogroup"] label {
             background: linear-gradient(180deg, #FFFFFF 0%, #E9ECEF 100%) !important;
             border: 1px solid #ADB5BD !important;
-            border-radius: 12px 35px 0 0 !important; /* Visual de pasta escolar */
-            padding: 10px 25px !important; /* VOLTOU AO TAMANHO NORMAL */
+            border-radius: 12px 35px 0 0 !important; 
+            padding: 10px 25px !important;
             min-width: 180px; 
             font-family: 'Montserrat', sans-serif !important;
             font-weight: 800;
@@ -41,38 +33,35 @@ def aplicar_estilo_sentinela():
             text-align: center;
         }
 
-        /* ✨ GLITTER E BRILHO NO HOVER ✨ */
+        /* ✨ EFEITO GLITTER NO HOVER ✨ */
         [role="radiogroup"] label:hover {
             transform: translateY(-8px) !important;
-            background: linear-gradient(45deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 80%), 
-                        linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
+            background: linear-gradient(45deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 80%), linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
             background-size: 200% 100% !important;
             animation: brilhoDiamond 1.5s infinite linear !important;
-            color: #212529 !important;
         }
-        @keyframes brilhoDiamond { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* 🟦 AZUL NEON (XML) */
+        /* 🟦 PINTURA XML (AZUL) */
         div:has(#modulo-xml) [role="radiogroup"] label[data-checked="true"] {
-            background: linear-gradient(135deg, #00BFFF 0%, #0072FF 100%) !important;
-            color: white !important;
-            border: none !important;
-            transform: translateY(-12px) !important; /* Pulo sutil */
-            box-shadow: 0 8px 20px rgba(0, 191, 255, 0.5) !important;
-        }
-
-        /* 🟥 ROSA GLAMOUR (CONFORMIDADE) */
-        div:has(#modulo-conformidade) [role="radiogroup"] label[data-checked="true"] {
-            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%) !important;
+            background: #00BFFF !important; /* COR INTEIRA */
             color: white !important;
             border: none !important;
             transform: translateY(-12px) !important;
-            box-shadow: 0 8px 20px rgba(255, 20, 147, 0.5) !important;
+            box-shadow: 0 8px 20px rgba(0, 191, 255, 0.5) !important;
         }
 
-        /* 🟩 VERDE GAMER (APURAÇÃO) */
+        /* 🟥 PINTURA CONFORMIDADE (ROSA) */
+        div:has(#modulo-conformidade) [role="radiogroup"] label[data-checked="true"] {
+            background: #FF69B4 !important; /* COR INTEIRA */
+            color: white !important;
+            border: none !important;
+            transform: translateY(-12px) !important;
+            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.5) !important;
+        }
+
+        /* 🟩 PINTURA APURAÇÃO (VERDE) */
         div:has(#modulo-apuracao) [role="radiogroup"] label[data-checked="true"] {
-            background: linear-gradient(135deg, #2ECC71 0%, #27AE60 100%) !important;
+            background: #2ECC71 !important; /* COR INTEIRA */
             color: white !important;
             border: none !important;
             transform: translateY(-12px) !important;
@@ -80,7 +69,7 @@ def aplicar_estilo_sentinela():
         }
 
         /* =================================================================================
-           3. ABAS INTERNAS (PASTINHAS MIÚDAS)
+           3. ABAS FILHAS (AS PASTINHAS DE DENTRO)
         ================================================================================= */
         .stTabs [data-baseweb="tab"] {
             height: 48px !important;
@@ -92,18 +81,19 @@ def aplicar_estilo_sentinela():
             font-size: 0.9rem !important;
         }
         
-        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; border: none !important; }
-        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; border: none !important; }
-        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; border: none !important; }
+        /* Pintura das pastinhas internas quando selecionadas */
+        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
+        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
+        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; }
 
         /* =================================================================================
-           4. ENVELOPE LINDINHO 📄
+           4. ENVELOPES E PAINEL (RESTANTE DO VISUAL RIHANNA)
         ================================================================================= */
         [data-testid="stFileUploader"] {
             padding: 45px 25px 25px 25px !important;
             border-radius: 12px !important;
             border: 2px dashed #ADB5BD !important;
-            background: #FFFFFF !important;
+            background-color: #FFFFFF !important;
             box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
             position: relative !important;
             margin: 20px 0 !important;
@@ -114,7 +104,6 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-conformidade) [data-testid="stFileUploader"] { background: linear-gradient(180deg, #FFF0F5 0%, #FFFFFF 100%) !important; border-color: #FF69B4 !important; }
         div:has(#modulo-apuracao) [data-testid="stFileUploader"] { background: linear-gradient(180deg, #F1FFF7 0%, #FFFFFF 100%) !important; border-color: #2ECC71 !important; }
 
-        /* 5. PAINEL */
         [data-testid="stTabPanel"] {
             background: #FFFFFF !important;
             border-radius: 0 15px 15px 15px !important;
@@ -126,5 +115,12 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-conformidade) [data-testid="stTabPanel"] { border-top-color: #FF69B4 !important; }
         div:has(#modulo-apuracao) [data-testid="stTabPanel"] { border-top-color: #2ECC71 !important; }
 
+        @keyframes brilhoDiamond { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        div.stButton > button, div.stDownloadButton > button {
+            background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
+            font-weight: 800 !important;
+            text-transform: uppercase;
+        }
         </style>
     """, unsafe_allow_html=True)
