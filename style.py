@@ -29,7 +29,7 @@ def aplicar_estilo_sentinela():
             text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.8) !important;
         }
 
-        /* --- 3. ABAS MESTRE (OS PAÍSES DO WAR) --- */
+        /* --- 3. ABAS MESTRE (OS PAÍSES) --- */
         .stTabs [data-baseweb="tab-list"] { gap: 15px !important; padding: 60px 0 0 20px !important; }
         
         .stTabs [data-baseweb="tab"] {
@@ -43,7 +43,7 @@ def aplicar_estilo_sentinela():
             transition: all 0.3s ease !important;
         }
 
-        /* ✨ BRILHO METALIZADO NO HOVER (REFLEXO DE AÇO) */
+        /* ✨ BRILHO METALIZADO NO HOVER (REFLEXO) */
         .stTabs [data-baseweb="tab"]:hover {
             background: linear-gradient(70deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 70%), 
                         linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
@@ -54,54 +54,56 @@ def aplicar_estilo_sentinela():
 
         @keyframes brilhoMetalico { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* --- 4. CORES DAS NAÇÕES (MÃES SELECIONADAS) --- */
+        /* Cores das Mães Ativas */
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(1)[aria-selected="true"] { background: #00BFFF !important; transform: translateY(-30px) !important; color: white !important; }
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(2)[aria-selected="true"] { background: #FF69B4 !important; transform: translateY(-30px) !important; color: white !important; }
         .stTabs [data-baseweb="tab-list"] button:nth-of-type(3)[aria-selected="true"] { background: #2ECC71 !important; transform: translateY(-30px) !important; color: white !important; }
 
-        /* --- 5. LÓGICA DE TERRITÓRIO (SUB-ABAS / ESTADOS) --- */
-        /* Estilo base de todas as sub-abas */
+        /* --- 4. ⚔️ LÓGICA DE TERRITÓRIO BLINDADA (SUB-ABAS) ⚔️ --- */
+        
+        /* Estilo comum para todas as sub-abas */
         [data-testid="stTabPanel"] .stTabs [data-baseweb="tab"] {
             height: 60px !important;
             background: #F1F3F5 !important;
             border-radius: 15px 45px 0 0 !important;
             padding: 0 30px !important;
+            color: #495057 !important;
         }
 
-        /* ⚔️ LEI DO TERRITÓRIO 1: TUDO AZUL SE A MÃE É AZUL */
-        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stTabPanel"] [aria-selected="true"] {
+        /* 🟦 TERRITÓRIO XML: Se a Mãe 1 está ativa, QUALQUER sub-aba selecionada é AZUL */
+        .stTabs:has(> div > div > button:nth-of-type(1)[aria-selected="true"]) .stTabs [aria-selected="true"] {
             background-color: #00BFFF !important;
-            transform: translateY(-12px) !important;
             color: white !important;
+            transform: translateY(-12px) !important;
         }
 
-        /* ⚔️ LEI DO TERRITÓRIO 2: TUDO ROSA SE A MÃE É ROSA (CONFORMIDADE) */
-        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stTabPanel"] [aria-selected="true"] {
+        /* 🟥 TERRITÓRIO CONFORMIDADE: Se a Mãe 2 está ativa, QUALQUER sub-aba selecionada é ROSA */
+        .stTabs:has(> div > div > button:nth-of-type(2)[aria-selected="true"]) .stTabs [aria-selected="true"] {
             background-color: #FF69B4 !important;
-            transform: translateY(-12px) !important;
             color: white !important;
+            transform: translateY(-12px) !important;
         }
 
-        /* ⚔️ LEI DO TERRITÓRIO 3: TUDO VERDE SE A MÃE É VERDE (APURAÇÃO) */
-        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stTabPanel"] [aria-selected="true"] {
+        /* 🟩 TERRITÓRIO APURAÇÃO: Se a Mãe 3 está ativa, QUALQUER sub-aba selecionada é VERDE */
+        .stTabs:has(> div > div > button:nth-of-type(3)[aria-selected="true"]) .stTabs [aria-selected="true"] {
             background-color: #2ECC71 !important;
-            transform: translateY(-12px) !important;
             color: white !important;
+            transform: translateY(-12px) !important;
         }
 
-        /* --- 6. CAIXOTÃO E ENVELOPES (O CONTINENTE) --- */
+        /* --- 5. CAIXOTÃO E ENVELOPES --- */
         [data-testid="stTabPanel"] { background: #FFFFFF !important; padding: 50px !important; border-radius: 0 60px 60px 60px !important; border: 6px solid transparent !important; }
         
-        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
-        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
-        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
+        .stTabs:has(> div > div > button:nth-of-type(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF !important; }
+        .stTabs:has(> div > div > button:nth-of-type(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4 !important; }
+        .stTabs:has(> div > div > button:nth-of-type(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71 !important; }
 
         [data-testid="stFileUploader"] { padding: 50px 45px 45px 45px !important; border-radius: 10px 10px 45px 45px !important; border-top: 18px solid #FDFDFD !important; position: relative !important; }
         [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 99; }
         
-        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
-        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
-        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
+        .stTabs:has(> div > div > button:nth-of-type(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
+        .stTabs:has(> div > div > button:nth-of-type(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
+        .stTabs:has(> div > div > button:nth-of-type(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
 
         </style>
     """, unsafe_allow_html=True)
