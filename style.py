@@ -39,7 +39,7 @@ def aplicar_estilo_sentinela():
             text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.8) !important;
         }
 
-        /* --- 3. ABAS MESTRE DIAMANTE (PRATA) --- */
+        /* --- 3. ABAS MESTRE DIAMANTE (MODELO RIHANNA - ELEVAÇÃO) --- */
         .stTabs { overflow: visible !important; }
         .stTabs [data-baseweb="tab-list"] {
             gap: 15px !important; 
@@ -59,10 +59,16 @@ def aplicar_estilo_sentinela():
             color: #495057 !important;
         }
 
-        /* Ativas das Mães - MODELO RIHANNA (ELEVAÇÃO) */
-        .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] { background: #00BFFF !important; transform: translateY(-30px) !important; color: white !important; }
-        .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] { background: #FF69B4 !important; transform: translateY(-30px) !important; color: white !important; }
-        .stTabs [data-baseweb="tab-list"] button:nth-child(3)[aria-selected="true"] { background: #2ECC71 !important; transform: translateY(-30px) !important; color: white !important; }
+        /* Elevação das Mães Selecionadas */
+        .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] { 
+            transform: translateY(-30px) !important; 
+            color: white !important; 
+        }
+
+        /* DNA das Mães (Azul, Rosa, Verde) */
+        .stTabs [data-baseweb="tab-list"] button:nth-of-type(1)[aria-selected="true"] { background: #00BFFF !important; }
+        .stTabs [data-baseweb="tab-list"] button:nth-of-type(2)[aria-selected="true"] { background: #FF69B4 !important; }
+        .stTabs [data-baseweb="tab-list"] button:nth-of-type(3)[aria-selected="true"] { background: #2ECC71 !important; }
 
         /* --- 4. 📦 O CAIXOTÃO (PASTA MÃE) --- */
         [data-testid="stTabPanel"] {
@@ -76,20 +82,11 @@ def aplicar_estilo_sentinela():
         }
 
         /* Neon Setorizado Reativo */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border-color: #00D1FF !important;
-            box-shadow: 0 0 30px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.4) !important;
-        }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border-color: #FF69B4 !important;
-            box-shadow: 0 0 30px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4) !important;
-        }
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) [data-testid="stTabPanel"] {
-            border-color: #2ECC71 !important;
-            box-shadow: 0 0 30px #2ECC71, 0 0 80px rgba(46, 204, 113, 0.4) !important;
-        }
+        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #00D1FF !important; box-shadow: 0 0 30px #00D1FF, 0 0 80px rgba(0, 209, 255, 0.4) !important; }
+        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #FF69B4 !important; box-shadow: 0 0 30px #FF69B4, 0 0 80px rgba(255, 105, 180, 0.4) !important; }
+        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stTabPanel"] { border-color: #2ECC71 !important; box-shadow: 0 0 30px #2ECC71, 0 0 80px rgba(46, 204, 113, 0.4) !important; }
 
-        /* --- 5. SUB-ABAS SETORIZADAS (HERANÇA GENÉTICA) --- */
+        /* --- 5. SUB-ABAS (HERANÇA GENÉTICA REAL POR BLOCO PAI) --- */
         .stTabs .stTabs [data-baseweb="tab-list"] { padding: 0 0 30px 0 !important; }
         .stTabs .stTabs [data-baseweb="tab"] {
             height: 60px !important;
@@ -97,12 +94,16 @@ def aplicar_estilo_sentinela():
             border-radius: 15px 45px 0 0 !important;
         }
 
-        .stTabs .stTabs [aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
+        .stTabs .stTabs button[aria-selected="true"] { transform: translateY(-12px) !important; color: white !important; }
         
-        /* DNA das Filhas baseado na Mãe - CORREÇÃO ABSOLUTA */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #00BFFF !important; }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #FF69B4 !important; }
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) .stTabs [aria-selected="true"] { background: #2ECC71 !important; }
+        /* HERANÇA: SE O PAI FOR GRUPO 1 (AZUL) -> Filhas Azuis */
+        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #00BFFF !important; }
+        
+        /* HERANÇA: SE O PAI FOR GRUPO 2 (ROSA - CONFORMIDADE) -> TODAS as 5 subpastas são ROSAS */
+        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #FF69B4 !important; }
+        
+        /* HERANÇA: SE O PAI FOR GRUPO 3 (VERDE - APURAÇÃO) -> TODAS as 5 subpastas são VERDES */
+        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) .stTabs button[aria-selected="true"] { background-color: #2ECC71 !important; }
 
         /* --- 6. ✉️ ENVELOPE COM ÍCONE 📄 --- */
         [data-testid="stFileUploader"] {
@@ -112,33 +113,19 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 15px 40px rgba(0,0,0,0.1) !important;
             margin: 25px 0 !important;
             position: relative !important;
+            border: 2px solid transparent !important;
         }
 
         [data-testid="stFileUploader"]::before {
-            content: "📄"; 
-            position: absolute;
-            top: -32px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 30px;
-            z-index: 99;
+            content: "📄"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 99;
         }
 
-        /* Cor dos Envelopes por DNA */
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border: 2px solid #A7E9FF !important; }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border: 2px solid #FFD1DC !important; }
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border: 2px solid #A9DFBF !important; }
+        /* Cor dos Envelopes acompanhando o PAI */
+        .stTabs:has(button:nth-of-type(1)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #EBF9FF !important; border-color: #A7E9FF !important; }
+        .stTabs:has(button:nth-of-type(2)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #FFF0F5 !important; border-color: #FFD1DC !important; }
+        .stTabs:has(button:nth-of-type(3)[aria-selected="true"]) [data-testid="stFileUploader"] { background-color: #F1FFF7 !important; border-color: #A9DFBF !important; }
 
-        /* --- 7. 📄 ÁREA DE AUDITORIA --- */
-        div.stExpander, div.element-container:has(h1, h2, h3), .stDataFrame {
-            background-color: white !important;
-            padding: 30px !important;
-            border-radius: 20px !important;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.03) !important;
-            border: 1px solid #E9ECEF !important;
-        }
-
-        /* --- 8. 🎯 BOTÃO DE DOWNLOAD --- */
+        /* --- 7. BOTÕES DE DOWNLOAD --- */
         div.stDownloadButton > button {
             background: linear-gradient(180deg, #FFFFFF 0%, #DEE2E6 100%) !important;
             color: #495057 !important;
@@ -146,15 +133,8 @@ def aplicar_estilo_sentinela():
             border-radius: 15px !important;
             font-weight: 800 !important;
             height: 55px !important;
-            width: 100% !important;
             text-transform: uppercase !important;
-            box-shadow: none !important;
-            transition: 0.3s ease !important;
         }
-
-        .stTabs:has(button:nth-child(1)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #00BFFF !important; border-color: #00BFFF !important; }
-        .stTabs:has(button:nth-child(2)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #FF69B4 !important; border-color: #FF69B4 !important; }
-        .stTabs:has(button:nth-child(3)[aria-selected="true"]) div.stDownloadButton > button:hover { box-shadow: 0 0 20px #2ECC71 !important; border-color: #2ECC71 !important; }
 
         </style>
     """, unsafe_allow_html=True)
