@@ -15,6 +15,9 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-xml) .stApp { 
             background: radial-gradient(circle at top right, #D6F2FF 0%, #F8F9FA 100%) !important; 
         }
+        div:has(#modulo-amarelo) .stApp { 
+            background: radial-gradient(circle at top right, #FFF9C4 0%, #F8F9FA 100%) !important; 
+        }
         div:has(#modulo-conformidade) .stApp { 
             background: radial-gradient(circle at top right, #FFDEEF 0%, #F8F9FA 100%) !important; 
         }
@@ -36,7 +39,7 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
         }
 
-        /* 🟦 XML - AZUL VIBRANTE E FUNDO */
+        /* 🟦 XML - AZUL VIBRANTE */
         div:has(#modulo-xml) div.stButton > button[kind="primary"] {
             background: #00BFFF !important;
             color: white !important;
@@ -45,7 +48,16 @@ def aplicar_estilo_sentinela():
             transform: scale(1.08) translateY(-5px) !important;
         }
 
-        /* 🟥 CONFORMIDADE - ROSA VIBRANTE E FUNDO */
+        /* 🟨 CONCILIADOR - AMARELO VIBRANTE */
+        div:has(#modulo-amarelo) div.stButton > button[kind="primary"] {
+            background: #FFD700 !important;
+            color: #424242 !important;
+            border: none !important;
+            box-shadow: 0 15px 35px rgba(255, 215, 0, 0.5) !important;
+            transform: scale(1.08) translateY(-5px) !important;
+        }
+
+        /* 🟥 CONFORMIDADE - ROSA VIBRANTE */
         div:has(#modulo-conformidade) div.stButton > button[kind="primary"] {
             background: #FF69B4 !important;
             color: white !important;
@@ -54,7 +66,7 @@ def aplicar_estilo_sentinela():
             transform: scale(1.08) translateY(-5px) !important;
         }
 
-        /* 🟩 APURAÇÃO - VERDE VIBRANTE E FUNDO */
+        /* 🟩 APURAÇÃO - VERDE VIBRANTE */
         div:has(#modulo-apuracao) div.stButton > button[kind="primary"] {
             background: #2ECC71 !important;
             color: white !important;
