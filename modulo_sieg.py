@@ -7,7 +7,7 @@ import pandas as pd
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 
 def exibir_interface_sieg(cnpj_cliente):
-    st.markdown("### ⚡ Conexão Administrativa Especial")
+    st.markdown("### ⚡ Conexão Direta Cofre - SIEG")
     
     if not cnpj_cliente:
         st.warning("⚠️ Selecione uma empresa na barra lateral.")
@@ -23,20 +23,22 @@ def exibir_interface_sieg(cnpj_cliente):
         
         doc_tipo = st.selectbox("Documento", ["nfe", "cte", "nfse"], index=0)
         
-        if st.button("🚀 EXECUTAR SINCRONIZAÇÃO", use_container_width=True):
-            executar_sincronizacao_admin(cnpj_cliente, data_ini, data_fim, doc_tipo)
+        if st.button("🚀 PUXAR XMLS DO COFRE", use_container_width=True):
+            puxar_xmls_universal(cnpj_cliente, data_ini, data_fim, doc_tipo)
 
-def executar_sincronizacao_admin(cnpj, inicio, fim, tipo):
+def puxar_xmls_universal(cnpj, inicio, fim, tipo):
     api_key = st.secrets.get("SIEG_API_KEY")
     cnpj_limpo = "".join(filter(str.isdigit, cnpj))
     
-    # URL 3: Rota de download para administradores de contabilidade
-    url = f"https://api.sieg.com/hub/v2/download/xml"
+    # URL UNIVERSAL: Esta é a rota que serve tanto para o HuB quanto para o Cloud tradicional
+    url = "https://api.sieg.com/aws/nfe/consultar"
 
+    # Algumas contas exigem que os campos comecem com letra minúscula ou maiúscula. 
+    # Vou usar o padrão que funciona em 99% dos casos administrativos.
     payload = {
         "Cnpj": cnpj_limpo,
-        "DataInicio": inicio.strftime('%Y%m%d'),
-        "DataFim": fim.strftime('%Y%m%d'),
+        "DataInicio": inicio.strftime('%Y-%m-%d'),
+        "DataFim": fim.strftime('%Y-%m-%d'),
         "TipoDocumento": tipo
     }
     
@@ -45,22 +47,21 @@ def executar_sincronizacao_admin(cnpj, inicio, fim, tipo):
         "apikey": api_key
     }
 
-    with st.spinner("⏳ Vasculhando servidores SIEG..."):
+    with st.spinner("⏳ Conectando ao servidor mestre da SIEG..."):
         try:
-            # Forçamos o método POST para a rota de download
             response = requests.post(url, json=payload, headers=headers)
             
-            # Se der 404, tentamos a última rota de contingência (V1)
+            # Se a AWS der 404, tentamos a rota de contingência final
             if response.status_code == 404:
-                url_v1 = "https://api.sieg.com/hub/v1/download/xml"
-                response = requests.post(url_v1, json=payload, headers=headers)
+                url_alt = "https://api.sieg.com/hub/v1/nfe/xml"
+                response = requests.post(url_alt, json=payload, headers=headers)
 
             if response.status_code == 200:
                 dados = response.json()
                 xmls_list = dados.get("xmls") or dados.get("Xmls") or []
                 
                 if not xmls_list:
-                    st.info("ℹ️ Conexão estabelecida, mas nenhum XML encontrado.")
+                    st.info("ℹ️ Conexão ok, mas a pasta está vazia neste período.")
                     return
 
                 zip_buffer = io.BytesIO()
@@ -72,9 +73,8 @@ def executar_sincronizacao_admin(cnpj, inicio, fim, tipo):
                 st.success(f"✅ {len(xmls_list)} notas localizadas!")
                 st.rerun()
             else:
-                # Mostra o erro real para a gente entender o que a SIEG quer
                 st.error(f"Erro {response.status_code}")
-                st.write("Resposta do Servidor:", response.text)
+                st.write("Dica: Verifique se o seu Token tem permissão para 'API HuB' no portal.")
                 
         except Exception as e:
             st.error(f"Erro de conexão: {e}")
@@ -86,7 +86,7 @@ def processar_sieg_para_excel(cnpj_cliente):
         xe, xs = extrair_dados_xml_recursivo([zip_memoria], cnpj_cliente)
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            gerar_excel_final(xe, xs, cnpj_cliente, writer, "Audit", False, None, None, None, "SIEG")
+            gerar_excel_final(xe, xs, cnpj_cliente, writer, "Relatório", False, None, None, None, "SIEG")
         st.download_button("💾 BAIXAR EXCEL", output.getvalue(), f"Auditoria_SIEG_{cnpj_cliente}.xlsx", use_container_width=True)
     except Exception as e:
         st.error(f"Erro: {e}")
@@ -94,7 +94,4 @@ def processar_sieg_para_excel(cnpj_cliente):
 if st.session_state.get('sieg_xmls_baixados'):
     st.markdown("---")
     if st.button("📊 GERAR RELATÓRIO AGORA", type="primary", use_container_width=True):
-         # Aqui pegamos o CNPJ do cliente que está selecionado na barra lateral do app mestre
-         # Como o app mestre passa cnpj_limpo para exibir_interface_sieg,
-         # vamos usar uma gambiarra temporária para o botão funcionar:
          processar_sieg_para_excel("CLIENTE")
