@@ -33,10 +33,9 @@ st.markdown("""
 
 aplicar_estilo_sentinela()
 
-# --- CARREGAMENTO DE CLIENTES (RESTAURADO) ---
+# --- CARREGAMENTO DE CLIENTES ---
 @st.cache_data(ttl=600)
 def carregar_clientes():
-    # Procura o arquivo em caminhos comuns
     caminhos = ["Clientes Ativos.xlsx", ".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx"]
     for p in caminhos:
         if os.path.exists(p):
@@ -49,11 +48,10 @@ def carregar_clientes():
 
 df_cli = carregar_clientes()
 
-# Session State para navegação
 if 'modulo_atual' not in st.session_state:
     st.session_state['modulo_atual'] = "GARIMPEIRO"
 
-# --- SIDEBAR OPERACIONAL ---
+# --- SIDEBAR OPERACIONAL (COM MENSAGENS DE BASE) ---
 with st.sidebar:
     # Busca e exibe a Logo
     for logo_path in ["logo.png", "streamlit/logo.png", ".streamlit/logo.png"]:
@@ -63,31 +61,45 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # Lista de Empresas Restaurada
     if not df_cli.empty:
         opcoes = [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()]
         emp_sel = st.selectbox("1. Empresa", [""] + opcoes, key="main_emp")
     else:
-        st.error("Arquivo 'Clientes Ativos.xlsx' não encontrado.")
+        st.error("Lista de clientes não carregada.")
         emp_sel = ""
 
     if emp_sel:
-        # Campos Essenciais
+        # 1. Parâmetros Fiscais
         reg_sel = st.selectbox("2. Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"])
         seg_sel = st.selectbox("3. Segmento", ["", "Comércio", "Indústria", "Equiparado"])
         ret_sel = st.toggle("4. Habilitar MG (RET)")
         
-        # Caixa de Status Mariana
         cod_c = emp_sel.split(" - ")[0].strip()
         dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
+        
+        # 2. STATUS DA BASE (MODO ELITE OU CEGAS)
+        st.markdown("---")
+        # Procura a base na pasta (ajuste o caminho conforme sua estrutura do GitHub)
+        path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
+        
+        if os.path.exists(path_base):
+            st.success("💎 Modo Elite: Base Localizada")
+        else:
+            st.warning("🔍 Modo Cegas: Base não localizada")
+
+        # 3. STATUS DO RET (SE ATIVADO)
+        if ret_sel:
+            st.info("🏨 Auditoria RET MG Ativa")
+
+        # 4. CAIXA DE ANÁLISE MARIANA
         st.markdown(f"""
             <div style="background-color: #f8f9fa; border-left: 5px solid #ff4b4b; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 13px;">
-                <b>🔍 Analisando:</b> {dados_e['RAZÃO SOCIAL']}<br>
+                <b>🚀 Analisando:</b> {dados_e['RAZÃO SOCIAL']}<br>
                 <b>CNPJ:</b> {dados_e['CNPJ']}
             </div>
         """, unsafe_allow_html=True)
         
-        # Download de Modelos
+        # 5. POPOVER DE MODELOS
         with st.popover("📥 Baixar Modelos Base", use_container_width=True):
             if st.text_input("Senha", type="password", key="p_side") == "Senhaforte@123":
                 st.download_button("Modelo Padrão (.xlsx)", pd.DataFrame().to_csv(), "modelo.xlsx")
@@ -101,9 +113,8 @@ with st.sidebar:
 st.markdown("<div class='titulo-principal'>SENTINELA 2.4.0</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
 if emp_sel:
-    # BOTÕES SOMENTE TEXTO (Limpos conforme pedido)
+    # BOTÕES SOMENTE TEXTO
     c1, c2, c3, c4 = st.columns(4)
-    
     setores = ["GARIMPEIRO", "CONCILIADOR", "AUDITOR", "ESPELHO"]
     cols = [c1, c2, c3, c4]
     
@@ -116,31 +127,33 @@ if emp_sel:
     mod = st.session_state['modulo_atual']
     st.markdown("---")
 
+    # Módulo Garimpeiro com os botões de download que você pediu
     if mod == "GARIMPEIRO":
         st.markdown('<div id="modulo-xml"></div>', unsafe_allow_html=True)
         st.subheader("Auditoria de Origem (XML)")
-        # Área de Uploads
         ca, cb = st.columns(2)
         u_xml = ca.file_uploader("ZIP de XMLs", accept_multiple_files=True)
         u_sieg = cb.file_uploader("Autenticidade SIEG")
         
-        if st.button("🚀 INICIAR GARIMPEIRO", use_container_width=True):
-            st.toast("Processando...")
+        st.button("🚀 INICIAR GARIMPEIRO", use_container_width=True)
+        
+        st.markdown("### 📥 Área de Downloads")
+        d1, d2, d3 = st.columns(3)
+        d1.button("💾 Baixar Relatório de Análises", use_container_width=True)
+        d2.button("📂 Baixar ZIP Separadinho", use_container_width=True)
+        d3.button("📦 Baixar Download Completo", use_container_width=True)
 
     elif mod == "CONCILIADOR":
         st.markdown('<div id="modulo-amarelo"></div>', unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align:center;'>🕵️‍♀️ OPERAÇÃO PENTE FINO</h2>", unsafe_allow_html=True)
-        st.info("Módulo em construção: XML vs Domínio.")
+        st.info("Módulo Conciliador em construção...")
 
     elif mod == "AUDITOR":
         st.markdown('<div id="modulo-conformidade"></div>', unsafe_allow_html=True)
-        st.subheader("Auditoria de Escrituração (Domínio)")
         st.tabs(["💰 PIS/COFINS", "📊 ICMS/IPI", "🏨 RET"])
 
     elif mod == "ESPELHO":
         st.markdown('<div id="modulo-apuracao"></div>', unsafe_allow_html=True)
-        st.subheader("Espelho dos Livros Fiscais")
         st.info("Aguardando auditoria...")
 
 else:
-    st.info("👈 Selecione a empresa na barra lateral para começar.")
+    st.info("👈 Selecione a empresa na barra lateral para carregar os setores.")
