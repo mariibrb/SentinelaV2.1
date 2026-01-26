@@ -15,110 +15,75 @@ def exibir_interface_sieg(cnpj_cliente):
         return
 
     with st.container(border=True):
-        st.write(f"Conectado ao CNPJ: **{cnpj_cliente}**")
-        
+        st.write(f"Empresa: **{cnpj_cliente}**")
         c1, c2 = st.columns(2)
         with c1:
-            data_ini = st.date_input("Data Inicial", format="DD/MM/YYYY")
+            data_ini = st.date_input("Início", format="DD/MM/YYYY")
         with c2:
-            data_fim = st.date_input("Data Final", format="DD/MM/YYYY")
+            data_fim = st.date_input("Fim", format="DD/MM/YYYY")
         
-        doc_tipo = st.selectbox("Tipo de Documento", ["nfe", "cte", "nfse", "nfce"], index=0)
+        doc_tipo = st.selectbox("Documento", ["nfe", "cte", "nfse"], index=0)
         
-        if st.button("🚀 PUXAR DADOS DO COFRE", use_container_width=True):
+        if st.button("🚀 BUSCAR NO COFRE", use_container_width=True):
             puxar_xmls_da_api(cnpj_cliente, data_ini, data_fim, doc_tipo)
 
     if st.session_state.get('sieg_xmls_baixados'):
         st.markdown("---")
-        st.success(f"📦 Arquivos em memória prontos para auditoria.")
-        
-        if st.button("📊 GERAR RELATÓRIO AUDITADO", type="primary", use_container_width=True):
+        if st.button("📊 GERAR RELATÓRIO AGORA", type="primary", use_container_width=True):
             processar_sieg_para_excel(cnpj_cliente)
 
 def puxar_xmls_da_api(cnpj, inicio, fim, tipo):
+    # Esta é a URL que as chaves novas do portal SIEG HuB mais utilizam
+    url = "https://api.sieg.com/hub/v2/nfe/xml"
     api_key = st.secrets.get("SIEG_API_KEY")
-    if not api_key:
-        st.error("❌ API Key não configurada nos Secrets!")
-        return
-
     cnpj_limpo = "".join(filter(str.isdigit, cnpj))
-    
-    # Lista de URLs Oficiais da SIEG para tentar uma por uma
-    urls_para_tentar = [
-        "https://api.sieg.com/aws/nfe/consultar",        # Principal (Consulta de Lote)
-        "https://api.sieg.com/hub/v1/nfe/xml",           # Legada v1
-        "https://api.sieg.com/hub/v2/nfe/xml"            # Nova v2
-    ]
-
-    # Formatação de datas
-    d_ini = inicio.strftime('%Y-%m-%d')
-    d_fim = fim.strftime('%Y-%m-%d')
 
     payload = {
         "Cnpj": cnpj_limpo,
-        "DataInicio": d_ini,
-        "DataFim": d_fim,
+        "DataInicio": inicio.strftime('%Y%m%d'),
+        "DataFim": fim.strftime('%Y%m%d'),
         "TipoDocumento": tipo
     }
-    
     headers = {"Content-Type": "application/json", "apikey": api_key}
 
-    sucesso = False
-    with st.spinner("⏳ Escaneando servidores da SIEG (Tentando rotas alternativas)..."):
-        for url in urls_para_tentar:
-            try:
-                response = requests.post(url, json=payload, headers=headers)
-                
-                if response.status_code == 200:
-                    dados = response.json()
-                    # A SIEG varia o nome do campo entre xmls e Xmls
-                    xmls_b64 = dados.get("xmls") or dados.get("Xmls") or []
-                    
-                    if xmls_b64:
-                        zip_buffer = io.BytesIO()
-                        with zipfile.ZipFile(zip_buffer, "w") as z:
-                            for i, b in enumerate(xmls_b64):
-                                try:
-                                    z.writestr(f"sieg_{i}.xml", base64.b64decode(b))
-                                except: continue
-                        
-                        st.session_state['sieg_xmls_baixados'] = zip_buffer
-                        sucesso = True
-                        st.rerun()
-                        break # Sai do loop se conseguiu
-                else:
-                    continue # Tenta a próxima URL da lista se der 404 ou erro
-            except:
-                continue
-
-    if not sucesso:
-        st.error("""
-            ❌ Erro 404 persistente em todas as rotas. 
-            Isso geralmente indica que o seu Token da SIEG não tem permissão para a 'API HuB'.
+    with st.spinner("⏳ Acessando SIEG..."):
+        try:
+            response = requests.post(url, json=payload, headers=headers)
             
-            Próximo passo: 
-            1. Entre no portal da SIEG.
-            2. Verifique se a chave API foi criada com permissão 'Total' ou 'HuB'.
-            3. Verifique se o seu plano contempla o uso de API.
-        """)
+            # Se der 404, tentamos a rota alternativa de consulta
+            if response.status_code == 404:
+                url_alt = "https://api.sieg.com/aws/nfe/consultar"
+                response = requests.post(url_alt, json=payload, headers=headers)
+
+            if response.status_code == 200:
+                dados = response.json()
+                xmls_b64 = dados.get("xmls") or dados.get("Xmls") or []
+                
+                if not xmls_b64:
+                    st.info("ℹ️ Nenhuma nota encontrada neste período.")
+                    return
+
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, "w") as z:
+                    for i, b in enumerate(xmls_b64):
+                        z.writestr(f"sieg_{i}.xml", base64.b64decode(b))
+                
+                st.session_state['sieg_xmls_baixados'] = zip_buffer
+                st.rerun()
+            else:
+                st.error(f"Erro {response.status_code}: A SIEG não encontrou os dados. Verifique se há notas nesse mês.")
+        except Exception as e:
+            st.error(f"Erro de conexão: {e}")
 
 def processar_sieg_para_excel(cnpj_cliente):
-    with st.spinner("🚀 Motor Sentinela processando dados da nuvem..."):
-        try:
-            zip_memoria = st.session_state['sieg_xmls_baixados']
-            zip_memoria.seek(0)
-            xe, xs = extrair_dados_xml_recursivo([zip_memoria], cnpj_cliente)
-            
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                gerar_excel_final(xe, xs, cnpj_cliente, writer, "Regime SIEG", False, None, None, None, "SIEG_CLOUD")
-            
-            st.balloons()
-            st.download_button(
-                label="💾 BAIXAR RELATÓRIO AUDITADO (SIEG)", 
-                data=output.getvalue(), 
-                file_name=f"Auditoria_SIEG_{cnpj_cliente}.xlsx", 
-                use_container_width=True
-            )
-        except Exception as e:
-            st.error(f"Erro no processamento: {e}")
+    try:
+        zip_memoria = st.session_state['sieg_xmls_baixados']
+        zip_memoria.seek(0)
+        xe, xs = extrair_dados_xml_recursivo([zip_memoria], cnpj_cliente)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            gerar_excel_final(xe, xs, cnpj_cliente, writer, "SIEG", False, None, None, None, "SIEG")
+        st.balloons()
+        st.download_button("💾 BAIXAR EXCEL", output.getvalue(), f"Auditoria_SIEG_{cnpj_cliente}.xlsx", use_container_width=True)
+    except Exception as e:
+        st.error(f"Erro no motor: {e}")
