@@ -166,6 +166,7 @@ st.set_page_config(
     layout="wide"
 )
 
+# AJUSTE DE CSS: LIMPO PARA NÃO CONFLITAR COM O STYLE.PY
 st.markdown("""
     <style>
     .stAppHeader {display: none !important;}
@@ -174,16 +175,14 @@ st.markdown("""
     .st-emotion-cache-h5rgaw, .st-emotion-cache-18ni7ap, .st-emotion-cache-12fmjuu {display: none !important;}
     .block-container {padding-top: 1rem !important;}
     
-    /* BLOQUEIO DE SOBREPOSIÇÃO DO TÍTULO */
     .titulo-principal {
         margin-top: 0px !important;
         padding-top: 0px !important;
-        padding-bottom: 45px !important; /* CRIA O ESPAÇO PARA O TEXTO DA VERSÃO */
+        padding-bottom: 45px !important;
         display: block;
         width: 100%;
     }
     
-    /* AJUSTE DEFINITIVO DE ESPAÇAMENTO DA LOGO */
     [data-testid="stSidebar"] div.stImage {
         margin-top: -65px !important; 
         margin-bottom: -55px !important; 
@@ -194,7 +193,6 @@ st.markdown("""
         padding-top: 0rem !important;
     }
 
-    /* CAIXA DE ANÁLISE EMPRESA - MARIANA */
     .status-container-mariana {
         background-color: #f8f9fa;
         border: 1px solid #dee2e6;
@@ -206,14 +204,6 @@ st.markdown("""
         color: #212529;
         font-size: 14px;
         line-height: 1.5;
-    }
-
-    /* ESTILO PARA AS ABAS DE BOTÕES SUPERIORES */
-    div.stButton > button {
-        width: 100%;
-        height: 3.5em;
-        font-weight: bold;
-        border-radius: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -408,7 +398,7 @@ with st.sidebar:
     else:
         st.info("⚙️ Modo Administrativo Ativo.")
 
-# PAINEL ADM E ÁREA CENTRAL (MANTIDOS INTEGRALMENTE)
+# PAINEL ADM E ÁREA CENTRAL
 if modo_adm:
     with st.container(border=True):
         st.subheader("🛠️ PAINEL DE CONTROLE DE USUÁRIOS")
@@ -469,7 +459,6 @@ elif emp_sel and not modo_adm:
     
     st.markdown("---")
     
-    # LISTA PADRONIZADA DE SUB-ABAS (IGUAL PARA ROSA E VERDE)
     sub_padrao = ["📊 ICMS / IPI", "⚖️ DIFAL / ST", "💰 PIS / COFINS", "💎 IBS / CBS"]
     if ret_sel: sub_padrao.insert(2, "🏨 RET")
 
