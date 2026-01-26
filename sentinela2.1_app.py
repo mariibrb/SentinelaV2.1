@@ -71,7 +71,7 @@ def init_db():
     
     # GARANTIA DO ACESSO MESTRE (Reinjetando Mariana conforme solicitado)
     email_admin = 'marii.brbj@gmail.com'
-    senha_mestre = sha256("Senhaforte@123".encode()).hexdigest()
+    senha_mestre = hash_senha("Senhaforte@123".encode()).hexdigest()
     
     c.execute("SELECT * FROM usuarios WHERE usuario='mariana' OR email=?", (email_admin,))
     if not c.fetchone():
@@ -313,12 +313,6 @@ if not st.session_state['user_data']:
 
     st.stop()
 
-# --- TÍTULO PRINCIPAL ---
-st.markdown("<div class='titulo-principal'>SENTINELA 2.4.0</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
-
-# --- CONFIGURAÇÃO INICIAL MODO ADM ---
-modo_adm = st.session_state.get('show_adm', False)
-
 # --- CARREGAMENTO DE CLIENTES ---
 @st.cache_data(ttl=600)
 def carregar_clientes():
@@ -334,6 +328,9 @@ def carregar_clientes():
 
 df_cli = carregar_clientes()
 v = st.session_state['v_ver']
+
+# --- CONFIGURAÇÃO INICIAL MODO ADM ---
+modo_adm = st.session_state.get('show_adm', False)
 
 # --- SIDEBAR DINÂMICA ---
 emp_sel = ""
@@ -356,9 +353,6 @@ with st.sidebar:
                 st.session_state['show_adm'] = False
                 st.rerun()
 
-    if st.button("🚪 SAIR DO SISTEMA", use_container_width=True):
-        st.session_state.clear()
-        st.rerun()
     st.markdown("---")
     
     if not modo_adm:
@@ -397,6 +391,12 @@ with st.sidebar:
                     st.download_button("Baixar Modelo", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
     else:
         st.info("⚙️ Modo Administrativo Ativo.")
+
+    # BOTÃO SAIR NO FINAL DA SIDEBAR
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🚪 SAIR DO SISTEMA", use_container_width=True):
+        st.session_state.clear()
+        st.rerun()
 
 # PAINEL ADM E ÁREA CENTRAL
 if modo_adm:
@@ -483,7 +483,7 @@ elif emp_sel and not modo_adm:
             if u_xml:
                 with st.spinner("Auditando..."):
                     try:
-                        u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
+                        u_validos = [f f in u_xml if zipfile.is_zipfile(f)]
                         xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
                         buf = io.BytesIO()
                         with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
@@ -559,3 +559,6 @@ elif emp_sel and not modo_adm:
 
 else:
     st.info("👈 Selecione a empresa na barra lateral para começar a auditoria.")
+
+# --- TÍTULO PRINCIPAL (MOVIDO PARA O FINAL) ---
+st.markdown("<div class='titulo-principal'>SENTINELA 2.4.0</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
