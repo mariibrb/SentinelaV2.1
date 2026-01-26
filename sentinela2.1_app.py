@@ -340,6 +340,7 @@ modo_adm = st.session_state.get('show_adm', False)
 
 # --- SIDEBAR DINÂMICA ---
 emp_sel = ""
+cnpj_limpo = "" # DEFINIÇÃO INICIAL PARA EVITAR ERRO DE VARIÁVEL
 with st.sidebar:
     for logo_p in ["logo.png", "streamlit/logo.png", ".streamlit/logo.png"]:
         if os.path.exists(logo_p):
@@ -555,7 +556,7 @@ elif emp_sel and not modo_adm:
     elif st.session_state['modulo_atual'] == "AUDITOR":
         st.markdown('<div id="modulo-conformidade"></div>', unsafe_allow_html=True)
         tabs_rosa = st.tabs(sub_padrao)
-        for j, nome_sub in enumerate(sub_padrao):
+        for j, name_sub in enumerate(sub_padrao):
             with tabs_rosa[j]:
                 st.markdown(f"#### Auditoria: {nome_sub}")
                 st.file_uploader(f"📑 Gerencial {nome_sub}", key=f"g_aud_{j}_{v}")
