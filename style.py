@@ -16,7 +16,7 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-conformidade) .stApp { background: radial-gradient(circle at top right, #FFDEEF 0%, #F8F9FA 100%) !important; }
         div:has(#modulo-apuracao) .stApp { background: radial-gradient(circle at top right, #DFFFEA 0%, #F8F9FA 100%) !important; }
 
-        /* 2. MENU MASTER - CORES FIXAS NOS BOTÕES (IMPEDE O VERMELHO) */
+        /* 2. MENU MASTER - CORES FIXAS NOS BOTÕES SUPERIORES */
         div.stButton > button {
             color: white !important;
             border: none !important;
@@ -29,17 +29,11 @@ def aplicar_estilo_sentinela():
             transition: all 0.4s ease !important;
         }
 
-        /* Forçando a cor de cada zona individualmente */
-        /* 1º Botão: AZUL (GARIMPEIRO) */
         div.stHorizontalBlock > div:nth-child(1) button { background-color: #00BFFF !important; }
-        /* 2º Botão: AMARELO (CONCILIADOR) */
         div.stHorizontalBlock > div:nth-child(2) button { background-color: #FFD700 !important; color: #424242 !important; }
-        /* 3º Botão: ROSA (AUDITOR) */
         div.stHorizontalBlock > div:nth-child(3) button { background-color: #FF69B4 !important; }
-        /* 4º Botão: VERDE (ESPELHO) */
         div.stHorizontalBlock > div:nth-child(4) button { background-color: #2ECC71 !important; }
 
-        /* BRILHO BRANCO NO MÓDULO ATIVO */
         div:has(#modulo-xml) div.stHorizontalBlock > div:nth-child(1) button,
         div:has(#modulo-amarelo) div.stHorizontalBlock > div:nth-child(2) button,
         div:has(#modulo-conformidade) div.stHorizontalBlock > div:nth-child(3) button,
@@ -59,13 +53,12 @@ def aplicar_estilo_sentinela():
             color: #6C757D !important;
         }
 
-        /* COR DA PASTINHA ATIVA */
         div:has(#modulo-xml) .stTabs [aria-selected="true"] { background-color: #00BFFF !important; color: white !important; }
         div:has(#modulo-amarelo) .stTabs [aria-selected="true"] { background-color: #FFD700 !important; color: #424242 !important; }
         div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background-color: #FF69B4 !important; color: white !important; }
         div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background-color: #2ECC71 !important; color: white !important; }
 
-        /* 4. ÁREA DE UPLOAD - TOTALMENTE CINZA NEUTRO */
+        /* 4. ÁREA DE UPLOAD E BOTÃO BROWSE - TUDO CINZA (BLINDADO) */
         [data-testid="stFileUploader"] {
             border: 2px dashed #ADB5BD !important;
             background: #FFFFFF !important;
@@ -73,15 +66,25 @@ def aplicar_estilo_sentinela():
             padding: 30px !important;
         }
 
+        /* AJUSTE DO BOTÃO "BROWSE FILES" - FORÇANDO CINZA */
         [data-testid="stFileUploader"] section button {
             background-color: #6C757D !important; 
             color: white !important;
             border: none !important;
+            box-shadow: none !important;
         }
 
-        [data-testid="stFileUploader"] svg { fill: #6C757D !important; }
+        /* Efeito ao passar o mouse no browse files */
+        [data-testid="stFileUploader"] section button:hover {
+            background-color: #495057 !important;
+            color: white !important;
+        }
 
-        /* 5. PAINEL DAS ABAS (ENVELOPE) */
+        /* Força o ícone de upload e textos auxiliares para cinza */
+        [data-testid="stFileUploader"] svg { fill: #6C757D !important; }
+        [data-testid="stFileUploader"] small { color: #6C757D !important; }
+
+        /* 5. PAINEL DAS ABAS */
         [data-testid="stTabPanel"] {
             background: rgba(255, 255, 255, 0.9) !important;
             backdrop-filter: blur(10px);
