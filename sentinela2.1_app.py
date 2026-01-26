@@ -173,17 +173,9 @@ st.markdown("""
     footer {visibility: hidden !important;}
     .st-emotion-cache-h5rgaw, .st-emotion-cache-18ni7ap, .st-emotion-cache-12fmjuu {display: none !important;}
     .block-container {padding-top: 1rem !important;}
-    
-    /* AJUSTE DE ESPAÇAMENTO DO TÍTULO PARA NÃO SOBREPOR AS ABAS */
     .titulo-principal {
         margin-top: 0px !important;
         padding-top: 0px !important;
-        margin-bottom: 2.5rem !important; /* EMPURRA AS ABAS PARA BAIXO */
-    }
-    
-    /* ESPAÇO ADICIONAL ACIMA DO CONTEÚDO CENTRAL */
-    [data-testid="stHorizontalBlock"] {
-        margin-top: 1rem !important;
     }
     
     /* AJUSTE DEFINITIVO DE ESPAÇAMENTO DA LOGO */
@@ -256,7 +248,7 @@ if not st.session_state['user_data']:
                     nova_s = st.text_input("Nova Senha", type="password")
                     conf_s = st.text_input("Confirme a Nova Senha", type="password")
                     if st.button("SALVAR E ACESSAR", use_container_width=True):
-                        if nova_s == comf_s and len(nova_s) >= 4 and nova_s != "123456":
+                        if nova_s == conf_s and len(nova_s) >= 4 and nova_s != "123456":
                             conn = sqlite3.connect('sentinela_usuarios.db')
                             conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha(nova_s), st.session_state['temp_email']))
                             conn.commit(); conn.close()
@@ -269,6 +261,7 @@ if not st.session_state['user_data']:
                     if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                         conn = sqlite3.connect('sentinela_usuarios.db')
                         c = conn.cursor()
+                        # AJUSTE NO LOGIN: Busca por usuário OU e-mail para permitir 'mariana'
                         c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
                                      FROM usuarios 
                                      WHERE (usuario=? OR email=?) AND senha=?""", 
@@ -302,6 +295,7 @@ if not st.session_state['user_data']:
                     if n_nome and n_email and n_pass:
                         try:
                             conn = sqlite3.connect('sentinela_usuarios.db')
+                            # AJUSTE: O e-mail agora é automaticamente o usuário
                             conn.execute("""INSERT INTO usuarios 
                                             (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
                                             VALUES (?, ?, ?, ?, 'PENDENTE', 'USER', 1, 0, 0, 0, 0)""", 
@@ -478,6 +472,10 @@ elif emp_sel and not modo_adm:
     
     st.markdown("---")
     modulo_selecionado = st.session_state['modulo_atual']
+    
+    # LISTA PADRONIZADA DE SUB-ABAS (IGUAL PARA ROSA E VERDE)
+    sub_padrao = ["📊 ICMS / IPI", "⚖️ DIFAL / ST", "💰 PIS / COFINS", "💎 IBS / CBS"]
+    if ret_sel: sub_padrao.insert(2, "🏨 RET")
 
     # ----------------------------------------------------------------------
     # 🔵 MÓDULO AZUL: GARIMPEIRO (MANTIDO INTEGRALMENTE)
@@ -573,12 +571,10 @@ elif emp_sel and not modo_adm:
     # ----------------------------------------------------------------------
     elif modulo_selecionado == "AUDITOR":
         st.markdown('<div id="modulo-conformidade"></div>', unsafe_allow_html=True)
-        sub_rosa = ["📊 ICMS/IPI", "⚖️ DIFAL/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
-        if ret_sel: sub_rosa.insert(2, "🏨 RET")
-        tabs_rosa = st.tabs(sub_rosa)
-        for j, nome_sub in enumerate(sub_rosa):
+        tabs_rosa = st.tabs(sub_padrao)
+        for j, nome_sub in enumerate(sub_padrao):
             with tabs_rosa[j]:
-                st.markdown(f"#### Auditoria {nome_sub}")
+                st.markdown(f"#### Auditoria: {nome_sub}")
                 st.file_uploader(f"📑 Gerencial {nome_sub}", key=f"g_aud_{j}_{v}")
                 st.button(f"🚀 PROCESSAR {nome_sub}", key=f"btn_aud_{j}", use_container_width=True)
 
@@ -587,10 +583,8 @@ elif emp_sel and not modo_adm:
     # ----------------------------------------------------------------------
     elif modulo_selecionado == "ESPELHO":
         st.markdown('<div id="modulo-apuracao"></div>', unsafe_allow_html=True)
-        sub_verde = ["📊 ICMS/ IPI", "⚖️ Difal/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
-        if ret_sel: sub_verde.insert(2, "RET")
-        tabs_verde = st.tabs(sub_verde)
-        for k, nome_trib in enumerate(sub_verde):
+        tabs_verde = st.tabs(sub_padrao)
+        for k, nome_trib in enumerate(sub_padrao):
             with tabs_verde[k]:
                 st.markdown(f"### 🟢 Conferência: {nome_trib}")
                 st.info(f"Veredito Final de {nome_trib}")
