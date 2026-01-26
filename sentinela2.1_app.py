@@ -552,7 +552,8 @@ elif emp_sel and not modo_adm:
                 <h1 style="font-size: 80px; margin-bottom: 0px;">🏗️</h1>
                 <h2 style="color: #B8860B; font-weight: 800;">MÓDULO EM CONSTRUÇÃO</h2>
                 <p style="font-size: 20px; color: #555;">
-                    Projeto de infraestrutura de dados em andamento. Estamos consolidando as bases lógicas para o cruzamento automatizado entre <br>
+                    Projeto de infraestrutura de dados em andamento. 
+                    Estamos consolidando as bases lógicas para o cruzamento automatizado entre <br>
                     <b>XML e Escrituração Domínio.</b>
                 </p>
                 <p style="font-style: italic; color: #B8860B; font-size: 18px; margin-top: 20px;">
