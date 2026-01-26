@@ -17,56 +17,67 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-conformidade) .stApp { background: radial-gradient(circle at top right, #FFDEEF 0%, #F8F9FA 100%) !important; }
         div:has(#modulo-apuracao) .stApp { background: radial-gradient(circle at top right, #DFFFEA 0%, #F8F9FA 100%) !important; }
 
-        /* 2. BOTÕES DE MÓDULO (SEMPRE COLORIDOS) */
+        /* 2. BOTÕES DE MÓDULO (ESTILO NEON INTENSO) */
         div.stButton > button {
             color: white !important;
             border: none !important;
             border-radius: 15px !important;
             font-family: 'Montserrat', sans-serif !important;
             font-weight: 800 !important;
-            height: 70px !important;
-            transition: all 0.3s ease-in-out !important;
+            height: 75px !important; /* Ligeiramente maior */
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
             text-transform: uppercase;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-            opacity: 0.8; /* Tom mais fosco por padrão */
+            opacity: 0.6; /* Mais apagado quando inativo para dar contraste */
+            filter: grayscale(30%); /* Levemente cinza quando inativo */
         }
 
-        /* HOVER GERAL: ACENDE AO PASSAR O MOUSE */
+        /* HOVER: ACENDE AO PASSAR O MOUSE */
         div.stButton > button:hover {
-            opacity: 1 !important;
-            transform: translateY(-3px) !important;
+            opacity: 0.9 !important;
+            filter: grayscale(0%);
+            transform: translateY(-5px) !important;
         }
 
+        /* ESTADO SELECIONADO (SUPER VISÍVEL) */
         /* 🟦 XML - AZUL */
         div.stHorizontalBlock > div:nth-child(1) button { background: #00BFFF !important; }
         div:has(#modulo-xml) div.stHorizontalBlock > div:nth-child(1) button {
             opacity: 1 !important;
-            box-shadow: 0 10px 25px rgba(0, 191, 255, 0.5) !important;
-            transform: scale(1.05) !important;
+            filter: grayscale(0%) !important;
+            transform: scale(1.1) translateY(-5px) !important;
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.6), 0 0 40px rgba(0, 191, 255, 0.4) !important;
+            border: 2px solid #FFFFFF !important;
         }
 
         /* 🟨 CONCILIADOR - AMARELO */
         div.stHorizontalBlock > div:nth-child(2) button { background: #FFD700 !important; color: #424242 !important; }
         div:has(#modulo-amarelo) div.stHorizontalBlock > div:nth-child(2) button {
             opacity: 1 !important;
-            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.5) !important;
-            transform: scale(1.05) !important;
+            filter: grayscale(0%) !important;
+            transform: scale(1.1) translateY(-5px) !important;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 215, 0, 0.4) !important;
+            border: 2px solid #424242 !important;
         }
 
         /* 🟥 AUDITOR - ROSA */
         div.stHorizontalBlock > div:nth-child(3) button { background: #FF69B4 !important; }
         div:has(#modulo-conformidade) div.stHorizontalBlock > div:nth-child(3) button {
             opacity: 1 !important;
-            box-shadow: 0 10px 25px rgba(255, 105, 180, 0.5) !important;
-            transform: scale(1.05) !important;
+            filter: grayscale(0%) !important;
+            transform: scale(1.1) translateY(-5px) !important;
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.6), 0 0 40px rgba(255, 105, 180, 0.4) !important;
+            border: 2px solid #FFFFFF !important;
         }
 
         /* 🟩 ESPELHO - VERDE */
         div.stHorizontalBlock > div:nth-child(4) button { background: #2ECC71 !important; }
         div:has(#modulo-apuracao) div.stHorizontalBlock > div:nth-child(4) button {
             opacity: 1 !important;
-            box-shadow: 0 10px 25px rgba(46, 204, 113, 0.5) !important;
-            transform: scale(1.05) !important;
+            filter: grayscale(0%) !important;
+            transform: scale(1.1) translateY(-5px) !important;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.6), 0 0 40px rgba(46, 204, 113, 0.4) !important;
+            border: 2px solid #FFFFFF !important;
         }
 
         /* 3. ABAS INTERNAS (PASTINHAS) */
