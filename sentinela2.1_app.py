@@ -15,7 +15,6 @@ from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 # --- CONFIGURAÇÃO DE E-MAIL (FUNCIONALIDADE GMAIL) ---
 def enviar_email(destinatario, assunto, corpo):
     remetente = "marii.brbj@gmail.com"
-    # Sua Chave de Segurança configurada: odmu rqgq pamj laog
     senha_app = "odmurqgqpamjlaog" 
     
     msg = MIMEMultipart()
@@ -37,8 +36,6 @@ def enviar_email(destinatario, assunto, corpo):
 def init_db():
     conn = sqlite3.connect('sentinela_usuarios.db')
     c = conn.cursor()
-    
-    # Criamos a tabela base caso não exista - AGORA COM CAMPO USUARIO E XML
     c.execute('''CREATE TABLE IF NOT EXISTS usuarios 
                  (nome TEXT, 
                   usuario TEXT,
@@ -52,7 +49,6 @@ def init_db():
                   perm_pis INTEGER DEFAULT 0,
                   perm_ret INTEGER DEFAULT 0)''')
     
-    # Lógica de Migração de Colunas (Garante integridade total do esquema)
     c.execute("PRAGMA table_info(usuarios)")
     colunas_atuais = [col[1] for col in c.fetchall()]
     
@@ -69,7 +65,6 @@ def init_db():
         if col_nome not in colunas_atuais:
             c.execute(f"ALTER TABLE usuarios ADD COLUMN {col_nome} {col_tipo}")
     
-    # GARANTIA DO ACESSO MESTRE (Reinjetando Mariana conforme solicitado)
     email_admin = 'marii.brbj@gmail.com'
     senha_mestre = sha256("Senhaforte@123".encode()).hexdigest()
     
@@ -208,16 +203,12 @@ st.markdown("""
 aplicar_estilo_sentinela()
 init_db()
 
-if 'user_data' not in st.session_state: 
-    st.session_state['user_data'] = None
-if 'v_ver' not in st.session_state: 
-    st.session_state['v_ver'] = 0
-if 'executado' not in st.session_state: 
-    st.session_state['executado'] = False
-if 'show_adm' not in st.session_state:
-    st.session_state['show_adm'] = False
-if 'change_pass_mode' not in st.session_state:
-    st.session_state['change_pass_mode'] = False
+if 'user_data' not in st.session_state: st.session_state['user_data'] = None
+if 'v_ver' not in st.session_state: st.session_state['v_ver'] = 0
+if 'executado' not in st.session_state: st.session_state['executado'] = False
+if 'show_adm' not in st.session_state: st.session_state['show_adm'] = False
+if 'change_pass_mode' not in st.session_state: st.session_state['change_pass_mode'] = False
+if 'modulo_atual' not in st.session_state: st.session_state['modulo_atual'] = "📂 ANÁLISE XML"
 
 def limpar_central():
     st.session_state.clear()
@@ -251,7 +242,6 @@ if not st.session_state['user_data']:
                     if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                         conn = sqlite3.connect('sentinela_usuarios.db')
                         c = conn.cursor()
-                        # AJUSTE NO LOGIN: Busca por usuário OU e-mail para permitir 'mariana'
                         c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
                                      FROM usuarios 
                                      WHERE (usuario=? OR email=?) AND senha=?""", 
@@ -285,7 +275,6 @@ if not st.session_state['user_data']:
                     if n_nome and n_email and n_pass:
                         try:
                             conn = sqlite3.connect('sentinela_usuarios.db')
-                            # AJUSTE: O e-mail agora é automaticamente o usuário
                             conn.execute("""INSERT INTO usuarios 
                                             (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
                                             VALUES (?, ?, ?, ?, 'PENDENTE', 'USER', 1, 0, 0, 0, 0)""", 
@@ -335,12 +324,8 @@ v = st.session_state['v_ver']
 # --- SIDEBAR DINÂMICA ---
 emp_sel = ""
 with st.sidebar:
-    if os.path.exists("streamlit/logo.png"):
-        st.image("streamlit/logo.png", use_container_width=True)
-    elif os.path.exists("logo.png"):
+    if os.path.exists("logo.png"):
         st.image("logo.png", use_container_width=True)
-    elif os.path.exists(".streamlit/logo.png"):
-        st.image(".streamlit/logo.png", use_container_width=True)
 
     st.markdown("---")
     st.write(f"👤 Olá, **{st.session_state['user_data']['nome']}**")
@@ -368,7 +353,6 @@ with st.sidebar:
             seg_sel = st.selectbox("Passo 3: Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
             ret_sel = st.toggle("Passo 4: Habilitar MG (RET)", key="f_ret")
             
-            # --- CAIXA DE ANÁLISE EMPRESA - MARIANA ---
             cod_c = emp_sel.split(" - ")[0].strip()
             dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
             cnpj_limpo = dados_e['CNPJ']
@@ -386,21 +370,10 @@ with st.sidebar:
                 st.success("💎 Modo Elite: Base Localizada")
             else:
                 st.warning("🔍 Modo Cegas: Base não localizada")
-                
-            if ret_sel:
-                path_ret_base = f"RET/{cod_c}-RET_MG.xlsx"
-                if os.path.exists(path_ret_base):
-                    st.success("💎 Modo Elite: Base RET Localizada")
-                else:
-                    st.warning("🔍 Modo Cegas: Base RET não localizada")
-                
-            with st.popover("📥 Modelo Bases", use_container_width=True):
-                if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
-                    st.download_button("Baixar Modelo", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
     else:
         st.info("⚙️ Modo Administrativo Ativo.")
 
-# PAINEL ADM E ÁREA CENTRAL (MANTIDOS INTEGRALMENTE)
+# --- PAINEL ADM ---
 if modo_adm:
     with st.container(border=True):
         st.subheader("🛠️ PAINEL DE CONTROLE DE USUÁRIOS")
@@ -413,203 +386,144 @@ if modo_adm:
                 edit_nome = c1.text_input("Nome Completo", value=row['nome'], key=f"n_{idx}")
                 edit_mail = c2.text_input("E-mail (Login)", value=row['email'], key=f"m_{idx}")
                 edit_user = c1.text_input("Usuário Login", value=row['usuario'], key=f"u_{idx}")
-                st_txt = "🟢 ATIVO" if row['status'] == 'ATIVO' else "🟡 PENDENTE"
-                c2.write(f"Status Atual: {st_txt}")
                 if c2.button("🔄 Reset Senha", key=f"rs_{idx}"):
-                    nova_senha = "123456"
-                    conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha(nova_senha), row['email']))
-                    conn.commit()
-                    enviar_email(row['email'], "SENHA RESETADA", f"Sua nova senha é: {nova_senha}\nPor favor, altere no login.")
-                    st.info("Senha resetada.")
+                    conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha("123456"), row['email']))
+                    conn.commit(); st.info("Senha resetada.")
                 p_x = c3.checkbox("Audit XML", value=bool(row['perm_xml']), key=f"x_p_{idx}")
-                p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
-                p_d = c3.checkbox("Audit DIFAL/ST", value=bool(row['perm_difal']), key=f"d_{idx}")
-                p_p = c3.checkbox("Audit PIS/COFINS", value=bool(row['perm_pis']), key=f"p_{idx}")
+                p_i = c3.checkbox("Audit ICMS", value=bool(row['perm_icms']), key=f"i_{idx}")
+                p_d = c3.checkbox("Audit DIFAL", value=bool(row['perm_difal']), key=f"d_{idx}")
+                p_p = c3.checkbox("Audit PIS", value=bool(row['perm_pis']), key=f"p_{idx}")
                 p_r = c3.checkbox("Audit RET", value=bool(row['perm_ret']), key=f"r_{idx}")
                 if not is_me:
-                    if row['status'] == 'PENDENTE':
-                        if c4.button("✅ LIBERAR", key=f"ok_{idx}", use_container_width=True):
-                            conn.execute("""UPDATE usuarios SET status='ATIVO' WHERE email=?""", (row['email'],))
-                            conn.commit(); st.rerun()
-                    if c4.button("🗑️ EXCLUIR", key=f"del_{idx}", use_container_width=True):
-                        conn.execute("DELETE FROM usuarios WHERE email=?", (row['email'],))
-                        conn.commit(); st.rerun()
-                    if c4.button("💾 SALVAR ALTERAÇÕES", key=f"save_{idx}", use_container_width=True, type="primary"):
-                        conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
+                    if c4.button("💾 SALVAR", key=f"save_{idx}", use_container_width=True, type="primary"):
+                        conn.execute("UPDATE usuarios SET nome=?, email=?, usuario=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?", 
                                      (edit_nome, edit_mail, edit_user, int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
                         conn.commit(); st.success("Salvo!")
-                else:
-                    c4.write("🛡️ Conta Mestre")
-                    if c4.button("💾 ATUALIZAR PERFIL", key=f"sv_me_{idx}", use_container_width=True, type="primary"):
-                        conn.execute("""UPDATE usuarios SET nome=?, email=?, usuario=?, perm_xml=?, perm_icms=?, perm_difal=?, perm_pis=?, perm_ret=? WHERE email=?""", 
-                                     (edit_nome, edit_mail, row['usuario'], int(p_x), int(p_i), int(p_d), int(p_p), int(p_r), row['email']))
-                        conn.commit()
-                        st.session_state['user_data'].update({"nome": edit_nome, "usuario": edit_user, "email": edit_mail})
-                        st.success("Atualizado!"); st.rerun()
         conn.close()
 
 elif emp_sel and not modo_adm:
     perms = st.session_state['user_data']['perms']
-    
-    # 1. Definir quais módulos o usuário pode ver
     modulos_disponiveis = []
     if perms.get('xml'): modulos_disponiveis.append("📂 ANÁLISE XML")
     modulos_disponiveis.append("🏢 CONFORMIDADE DOMÍNIO")
     modulos_disponiveis.append("✅ APURAÇÃO DOMÍNIO")
-    
-    if modulos_disponiveis:
-        # 2. Criar o Seletor de Módulo (AGORA NO TOPO, NÃO NA SIDEBAR)
-        st.markdown('<div class="menu-flutuante-container">', unsafe_allow_html=True)
-        # st.radio horizontal funciona como um menu de abas
-        modulo_atual = st.radio("Selecione o Módulo:", modulos_disponiveis, horizontal=True, label_visibility="collapsed")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.markdown("---") # Separação visual elegante
 
-        # ----------------------------------------------------------------------
-        # MÓDULO AZUL: ANÁLISE XML
-        # ----------------------------------------------------------------------
-        if modulo_atual == "📂 ANÁLISE XML":
-            # 🚀 ETIQUETA DE COR: AZUL
-            st.markdown('<div id="modulo-xml"></div>', unsafe_allow_html=True)
-            
-            st.markdown("### 📥 Central de Importação e Garimpo")
+    # --- NOVA CIRURGIA DE SELEÇÃO (3 BOTÕES) ---
+    st.write("### 🚀 Selecione o Estágio da Auditoria:")
+    c_m1, c_m2, c_m3 = st.columns(3)
+    if c_m1.button("📂 ANÁLISE XML", use_container_width=True, type="primary" if st.session_state['modulo_atual'] == "📂 ANÁLISE XML" else "secondary"):
+        st.session_state['modulo_atual'] = "📂 ANÁLISE XML"
+        st.rerun()
+    if c_m2.button("🏢 CONFORMIDADE", use_container_width=True, type="primary" if st.session_state['modulo_atual'] == "🏢 CONFORMIDADE DOMÍNIO" else "secondary"):
+        st.session_state['modulo_atual'] = "🏢 CONFORMIDADE DOMÍNIO"
+        st.rerun()
+    if c_m3.button("✅ APURAÇÃO", use_container_width=True, type="primary" if st.session_state['modulo_atual'] == "✅ APURAÇÃO DOMÍNIO" else "secondary"):
+        st.session_state['modulo_atual'] = "✅ APURAÇÃO DOMÍNIO"
+        st.rerun()
+
+    modulo_atual = st.session_state['modulo_atual']
+    st.markdown("---")
+
+    # ----------------------------------------------------------------------
+    # MÓDULO AZUL: ANÁLISE XML
+    # ----------------------------------------------------------------------
+    if modulo_atual == "📂 ANÁLISE XML":
+        st.markdown('<div id="modulo-xml"></div>', unsafe_allow_html=True)
+        st.markdown("### 📥 Central de Importação e Garimpo")
+        c1, c2, c3 = st.columns(3)
+        with c1: u_xml = st.file_uploader("📁 ZIP XML", accept_multiple_files=True, key=f"x_{v}")
+        with c2: u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
+        with c3: u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
+
+        if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True):
+            if u_xml:
+                with st.spinner("Auditando..."):
+                    try:
+                        u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
+                        xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
+                        buf = io.BytesIO()
+                        with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
+                            gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, "CEGAS")
+                        st.session_state['relat_buf'] = buf.getvalue()
+                        
+                        p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
+                        b_org, b_todos = io.BytesIO(), io.BytesIO()
+                        with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
+                            for zf in u_validos:
+                                zf.seek(0)
+                                with zipfile.ZipFile(zf) as zi:
+                                    for name in zi.namelist():
+                                        if name.lower().endswith('.xml'):
+                                            xml_d = zi.read(name)
+                                            res, is_p = identify_xml_info(xml_d, cnpj_limpo, name)
+                                            if res and res["Chave"] not in p_keys:
+                                                p_keys.add(res["Chave"])
+                                                z_org.writestr(f"{res['Pasta']}/{name}", xml_d); z_todos.writestr(name, xml_d)
+                                                rel_list.append(res)
+                                                if is_p:
+                                                    if res["Status"] in st_counts: st_counts[res["Status"]] += 1
+                                                    sk = (res["Tipo"], res["Série"])
+                                                    if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
+                                                    seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
+                        
+                        res_f, fal_f = [], []
+                        for (t, s), d in seq_map.items():
+                            ns = d["nums"]
+                            res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
+                            for b in sorted(list(set(range(min(ns), max(ns) + 1)) - ns)):
+                                fal_f.append({"Série": s, "Nº Faltante": b})
+                        
+                        st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'relatorio': rel_list, 'executado': True})
+                        st.rerun()
+                    except Exception as e: st.error(f"Erro: {e}")
+
+        if st.session_state.get('executado'):
+            st.markdown("---")
             c1, c2, c3 = st.columns(3)
-            with c1: 
-                u_xml = st.file_uploader("📁 ZIP XML", accept_multiple_files=True, key=f"x_{v}")
-                if u_xml:
-                    if st.button("🗑️ Excluir Tudo (XML)", use_container_width=True, key="clr_xml"):
-                        st.session_state['v_ver'] += 1; st.rerun()
-            with c2: 
-                u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
-                if u_ae:
-                    if st.button("🗑️ Excluir Tudo (Entradas)", use_container_width=True, key="clr_ae"):
-                        st.session_state['v_ver'] += 1; st.rerun()
-            with c3: 
-                u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
-                if u_as:
-                    if st.button("🗑️ Excluir Tudo (Saídas)", use_container_width=True, key="clr_as"):
-                        st.session_state['v_ver'] += 1; st.rerun()
-
-            if st.button("🚀 INICIAR ANÁLISE XML", use_container_width=True):
-                if u_xml:
-                    with st.spinner("Auditando..."):
-                        try:
-                            u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
-                            xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
-                            buf = io.BytesIO()
-                            with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
-                                gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, "CEGAS")
-                            st.session_state['relat_buf'] = buf.getvalue()
-                            p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
-                            b_org, b_todos = io.BytesIO(), io.BytesIO()
-                            with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
-                                for zf in u_validos:
-                                    zf.seek(0)
-                                    with zipfile.ZipFile(zf) as zi:
-                                        for name in zi.namelist():
-                                            if name.lower().endswith('.xml'):
-                                                xml_d = zi.read(name)
-                                                res, is_p = identify_xml_info(xml_d, cnpj_limpo, name)
-                                                if res and res["Chave"] not in p_keys:
-                                                    p_keys.add(res["Chave"])
-                                                    z_org.writestr(f"{res['Pasta']}/{name}", xml_d); z_todos.writestr(name, xml_d)
-                                                    rel_list.append(res)
-                                                    if is_p:
-                                                        if res["Status"] in st_counts: st_counts[res["Status"]] += 1
-                                                        sk = (res["Tipo"], res["Série"])
-                                                        if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
-                                                        seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
-                            res_f, fal_f = [], []
-                            for (t, s), d in seq_map.items():
-                                ns = d["nums"]; res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
-                                for b in sorted(list(set(range(min(ns), max(ns) + 1)) - ns)): fal_f.append({"Série": s, "Nº Faltante": b})
-                            st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'relatorio': rel_list, 'executado': True})
-                            st.rerun()
-                        except Exception as e: st.error(f"Erro no Processamento: {e}")
-
-            # DOWNLOADS DO MÓDULO XML
-            if st.session_state.get('executado'):
-                st.markdown("---")
-                st.write("### 📥 Área de Downloads")
-                c1, c2, c3 = st.columns(3)
-                with c1: st.download_button("💾 BAIXAR RELATÓRIO EXCEL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, type="primary")
-                with c2: st.download_button("📂 BAIXAR ZIP ORGANIZADO", st.session_state['z_org'], "garimpo_pastas.zip", use_container_width=True)
-                with c3: st.download_button("📦 BAIXAR TODOS XMLS", st.session_state['z_todos'], "todos_xmls.zip", use_container_width=True)
-
-                st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
-                sc = st.session_state.get('st_counts'); d1, d2, d3 = st.columns(3)
-                d1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', []))); d2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0)); d3.metric("🚫 INUTILIZADOS", sc.get("INUTILIZADOS", 0))
-                cr, cf = st.columns(2)
-                with cr: st.write("**Resumo por Série:**"); st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
-                with cf: st.write("**Notas Faltantes:**"); st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
-
-        # ----------------------------------------------------------------------
-        # MÓDULO ROSA: CONFORMIDADE
-        # ----------------------------------------------------------------------
-        elif modulo_atual == "🏢 CONFORMIDADE DOMÍNIO":
-            # 🚀 ETIQUETA DE COR: ROSA
-            st.markdown('<div id="modulo-conformidade"></div>', unsafe_allow_html=True)
+            with c1: st.download_button("💾 RELATÓRIO EXCEL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, type="primary")
+            with c2: st.download_button("📂 ZIP ORGANIZADO", st.session_state['z_org'], "garimpo.zip", use_container_width=True)
+            with c3: st.download_button("📦 TODOS XMLS", st.session_state['z_todos'], "xmls.zip", use_container_width=True)
             
-            sub_rosa = ["📊 ICMS/IPI", "⚖️ DIFAL/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
-            if ret_sel: sub_rosa.insert(2, "🏨 RET")
-            
-            # ABAS FILHAS (ICMS, PIS, ETC)
-            tabs_rosa = st.tabs(sub_rosa)
-            for j, nome_sub in enumerate(sub_rosa):
-                with tabs_rosa[j]:
-                    if "ICMS/IPI" in nome_sub:
-                        st.markdown("#### Auditoria ICMS/IPI")
-                        c1, c2 = st.columns(2)
-                        with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"icms_s_{v}")
-                        with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"icms_e_{v}")
-                        st.button("⚖️ CRUZAR ICMS/IPI", use_container_width=True, key="btn_icms")
-                    elif "DIFAL/ST" in nome_sub:
-                        st.markdown("#### Auditoria Difal / ST / FECP")
-                        c1, c2, c3 = st.columns(3)
-                        with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"dif_s_{v}")
-                        with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"dif_e_{v}")
-                        with c3: st.file_uploader("📄 Demonstrativo DIFAL", type=['xlsx'], key=f"dom_dif_{v}")
-                        st.button("⚖️ CRUZAR DIFAL/ST", use_container_width=True, key="btn_difal")
-                    elif "RET" in nome_sub:
-                        st.markdown("#### Auditoria RET")
-                        c1, c2 = st.columns(2)
-                        with c1: st.file_uploader("📑 Gerencial RET", type=['xlsx'], key=f"ret_conf_g_{v}")
-                        with c2: st.file_uploader("📄 Demonstrativo RET", type=['xlsx'], key=f"ret_conf_d_{v}")
-                        st.button("⚖️ VALIDAR RET", use_container_width=True, key="btn_ret")
-                    elif "PIS/COFINS" in nome_sub:
-                        st.markdown("#### Auditoria PIS/Cofins")
-                        c1, c2, c3 = st.columns(3)
-                        with c1: st.file_uploader("📑 Gerencial Saídas PIS", type=['xlsx'], key=f"p_s_{v}")
-                        with c2: st.file_uploader("📑 Gerencial Entradas PIS", type=['xlsx'], key=f"p_e_{v}")
-                        with c3: st.file_uploader("📄 Resumo PIS", type=['xlsx'], key=f"p_r_{v}")
-                        st.button("⚖️ CRUZAR PIS/COFINS", use_container_width=True, key="btn_pis")
-                    elif "IBS / CBS" in nome_sub:
-                        st.markdown("#### Planejamento Reforma Tributária")
-                        c1, c2 = st.columns(2)
-                        with c1: st.file_uploader("📑 Gerencial IBS/CBS", type=['xlsx'], key=f"ibs_g_{v}")
-                        with c2: st.file_uploader("📄 Projeção IBS/CBS", type=['xlsx'], key=f"ibs_p_{v}")
-                        st.button("⚖️ ANALISAR IMPACTO", use_container_width=True, key="btn_ibscbs")
+            st.markdown("<h2 style='text-align: center;'>⛏️ O GARIMPEIRO</h2>", unsafe_allow_html=True)
+            sc = st.session_state.get('st_counts')
+            d1, d2, d3 = st.columns(3)
+            d1.metric("📦 VOLUME TOTAL", len(st.session_state.get('relatorio', [])))
+            d2.metric("❌ CANCELADAS", sc.get("CANCELADOS", 0))
+            d3.metric("🚫 INUTILIZADOS", sc.get("INUTILIZADOS", 0))
+            cr, cf = st.columns(2)
+            with cr: st.write("**Resumo por Série:**"); st.dataframe(st.session_state['df_resumo'], use_container_width=True, hide_index=True)
+            with cf: st.write("**Notas Faltantes:**"); st.dataframe(st.session_state['df_faltantes'], use_container_width=True, hide_index=True)
 
-        # ----------------------------------------------------------------------
-        # MÓDULO VERDE: APURAÇÃO
-        # ----------------------------------------------------------------------
-        elif modulo_atual == "✅ APURAÇÃO DOMÍNIO":
-            # 🚀 ETIQUETA DE COR: VERDE
-            st.markdown('<div id="modulo-apuracao"></div>', unsafe_allow_html=True)
-            
-            sub_verde = ["📊 ICMS/ IPI", "⚖️ Difal/ST", "💰 PIS/COFINS", "💎 IBS/CBS"]
-            if ret_sel: sub_verde.insert(2, "RET")
-                
-            tabs_verde = st.tabs(sub_verde)
-            for k, nome_trib in enumerate(sub_verde):
-                with tabs_verde[k]:
-                    st.markdown(f"### 🟢 Conferência: {nome_trib}")
-                    st.info(f"Área destinada à validação final entre Sistema e Apuração de {nome_trib}.")
-                    c1, c2 = st.columns(2)
-                    with c1: st.file_uploader(f"📑 Relatório Apuração {nome_trib}", type=['xlsx', 'pdf'], key=f"ap_rel_{k}_{v}")
-                    with c2: st.file_uploader(f"📄 Resumo Impostos {nome_trib}", type=['xlsx', 'pdf'], key=f"ap_res_{k}_{v}")
-                    st.button(f"⚙️ PROCESSAR CONFERÊNCIA {nome_trib}", use_container_width=True, key=f"btn_ap_verf_{k}")
+    # ----------------------------------------------------------------------
+    # MÓDULO ROSA: CONFORMIDADE
+    # ----------------------------------------------------------------------
+    elif modulo_atual == "🏢 CONFORMIDADE DOMÍNIO":
+        st.markdown('<div id="modulo-conformidade"></div>', unsafe_allow_html=True)
+        sub_rosa = ["📊 ICMS/IPI", "⚖️ DIFAL/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
+        if ret_sel: sub_rosa.insert(2, "🏨 RET")
+        tabs_rosa = st.tabs(sub_rosa)
+        for j, nome_sub in enumerate(sub_rosa):
+            with tabs_rosa[j]:
+                st.markdown(f"#### Auditoria {nome_sub}")
+                c1, c2 = st.columns(2)
+                with c1: st.file_uploader("📑 Gerencial Saídas", type=['xlsx'], key=f"c1_{j}")
+                with c2: st.file_uploader("📑 Gerencial Entradas", type=['xlsx'], key=f"c2_{j}")
+                st.button(f"⚖️ CRUZAR {nome_sub}", use_container_width=True)
 
-    else: st.warning("⚠️ Você não possui permissões de auditoria ativa.")
+    # ----------------------------------------------------------------------
+    # MÓDULO VERDE: APURAÇÃO
+    # ----------------------------------------------------------------------
+    elif modulo_atual == "✅ APURAÇÃO DOMÍNIO":
+        st.markdown('<div id="modulo-apuracao"></div>', unsafe_allow_html=True)
+        sub_verde = ["📊 ICMS/ IPI", "⚖️ Difal/ST", "💰 PIS/COFINS", "💎 IBS/CBS"]
+        if ret_sel: sub_verde.insert(2, "RET")
+        tabs_verde = st.tabs(sub_verde)
+        for k, nome_trib in enumerate(sub_verde):
+            with tabs_verde[k]:
+                st.markdown(f"### 🟢 Conferência: {nome_trib}")
+                c1, c2 = st.columns(2)
+                with c1: st.file_uploader(f"📑 Relatório Apuração {nome_trib}", key=f"a1_{k}")
+                with c2: st.file_uploader(f"📄 Resumo Impostos {nome_trib}", key=f"a2_{k}")
+                st.button(f"⚙️ PROCESSAR {nome_trib}", use_container_width=True)
+
 elif not modo_adm: st.info("👈 Selecione a empresa na barra lateral para começar a auditoria.")
