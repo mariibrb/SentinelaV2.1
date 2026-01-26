@@ -173,9 +173,14 @@ st.markdown("""
     footer {visibility: hidden !important;}
     .st-emotion-cache-h5rgaw, .st-emotion-cache-18ni7ap, .st-emotion-cache-12fmjuu {display: none !important;}
     .block-container {padding-top: 1rem !important;}
+    
+    /* BLOQUEIO DE SOBREPOSIÇÃO DO TÍTULO */
     .titulo-principal {
         margin-top: 0px !important;
         padding-top: 0px !important;
+        padding-bottom: 45px !important; /* CRIA O ESPAÇO PARA O TEXTO DA VERSÃO */
+        display: block;
+        width: 100%;
     }
     
     /* AJUSTE DEFINITIVO DE ESPAÇAMENTO DA LOGO */
@@ -261,7 +266,6 @@ if not st.session_state['user_data']:
                     if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                         conn = sqlite3.connect('sentinela_usuarios.db')
                         c = conn.cursor()
-                        # AJUSTE NO LOGIN: Busca por usuário OU e-mail para permitir 'mariana'
                         c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
                                      FROM usuarios 
                                      WHERE (usuario=? OR email=?) AND senha=?""", 
@@ -295,7 +299,6 @@ if not st.session_state['user_data']:
                     if n_nome and n_email and n_pass:
                         try:
                             conn = sqlite3.connect('sentinela_usuarios.db')
-                            # AJUSTE: O e-mail agora é automaticamente o usuário
                             conn.execute("""INSERT INTO usuarios 
                                             (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
                                             VALUES (?, ?, ?, ?, 'PENDENTE', 'USER', 1, 0, 0, 0, 0)""", 
@@ -345,12 +348,10 @@ v = st.session_state['v_ver']
 # --- SIDEBAR DINÂMICA ---
 emp_sel = ""
 with st.sidebar:
-    if os.path.exists("streamlit/logo.png"):
-        st.image("streamlit/logo.png", use_container_width=True)
-    elif os.path.exists("logo.png"):
-        st.image("logo.png", use_container_width=True)
-    elif os.path.exists(".streamlit/logo.png"):
-        st.image(".streamlit/logo.png", use_container_width=True)
+    for logo_p in ["logo.png", "streamlit/logo.png", ".streamlit/logo.png"]:
+        if os.path.exists(logo_p):
+            st.image(logo_p, use_container_width=True)
+            break
 
     st.markdown("---")
     st.write(f"👤 Olá, **{st.session_state['user_data']['nome']}**")
@@ -378,7 +379,6 @@ with st.sidebar:
             seg_sel = st.selectbox("Passo 3: Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
             ret_sel = st.toggle("Passo 4: Habilitar MG (RET)", key="f_ret")
             
-            # --- CAIXA DE ANÁLISE EMPRESA - MARIANA ---
             cod_c = emp_sel.split(" - ")[0].strip()
             dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
             cnpj_limpo = dados_e['CNPJ']
@@ -391,15 +391,13 @@ with st.sidebar:
                 </div>
             """, unsafe_allow_html=True)
             
-            path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
-            if os.path.exists(path_base):
+            if os.path.exists(f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"):
                 st.success("💎 Modo Elite: Base Localizada")
             else:
                 st.warning("🔍 Modo Cegas: Base não localizada")
                 
             if ret_sel:
-                path_ret_base = f"RET/{cod_c}-RET_MG.xlsx"
-                if os.path.exists(path_ret_base):
+                if os.path.exists(f"RET/{cod_c}-RET_MG.xlsx"):
                     st.success("💎 Modo Elite: Base RET Localizada")
                 else:
                     st.warning("🔍 Modo Cegas: Base RET não localizada")
@@ -429,7 +427,7 @@ if modo_adm:
                     nova_senha = "123456"
                     conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha(nova_senha), row['email']))
                     conn.commit()
-                    enviar_email(row['email'], "SENHA RESETADA", f"Sua nova senha é: {nova_senha}\nPor favor, altere no login.")
+                    enviar_email(row['email'], "SENHA RESETADA", f"Sua nova senha é: {nova_senha}")
                     st.info("Senha resetada.")
                 p_x = c3.checkbox("Audit XML", value=bool(row['perm_xml']), key=f"x_p_{idx}")
                 p_i = c3.checkbox("Audit ICMS/IPI", value=bool(row['perm_icms']), key=f"i_{idx}")
@@ -459,7 +457,6 @@ if modo_adm:
         conn.close()
 
 elif emp_sel and not modo_adm:
-    # --- NOVO SELETOR DE MÓDULOS (ABAS EM BOTÕES SEM BOLINHAS) ---
     c_aba1, c_aba2, c_aba3, c_aba4 = st.columns(4)
     if c_aba1.button("GARIMPEIRO", use_container_width=True, type="primary" if st.session_state['modulo_atual'] == "GARIMPEIRO" else "secondary"):
         st.session_state['modulo_atual'] = "GARIMPEIRO"; st.rerun()
@@ -471,16 +468,12 @@ elif emp_sel and not modo_adm:
         st.session_state['modulo_atual'] = "ESPELHO"; st.rerun()
     
     st.markdown("---")
-    modulo_selecionado = st.session_state['modulo_atual']
     
     # LISTA PADRONIZADA DE SUB-ABAS (IGUAL PARA ROSA E VERDE)
     sub_padrao = ["📊 ICMS / IPI", "⚖️ DIFAL / ST", "💰 PIS / COFINS", "💎 IBS / CBS"]
     if ret_sel: sub_padrao.insert(2, "🏨 RET")
 
-    # ----------------------------------------------------------------------
-    # 🔵 MÓDULO AZUL: GARIMPEIRO (MANTIDO INTEGRALMENTE)
-    # ----------------------------------------------------------------------
-    if modulo_selecionado == "GARIMPEIRO":
+    if st.session_state['modulo_atual'] == "GARIMPEIRO":
         st.markdown('<div id="modulo-xml"></div>', unsafe_allow_html=True)
         st.markdown("### 📥 Central de Importação e Garimpo")
         c1, c2, c3 = st.columns(3)
@@ -506,7 +499,6 @@ elif emp_sel and not modo_adm:
                         buf = io.BytesIO()
                         with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
                             gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, "CEGAS")
-                        st.session_state['relat_buf'] = buf.getvalue()
                         
                         p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
                         b_org, b_todos = io.BytesIO(), io.BytesIO()
@@ -534,9 +526,9 @@ elif emp_sel and not modo_adm:
                             res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
                             for b in sorted(list(set(range(min(ns), max(ns) + 1)) - ns)): fal_f.append({"Série": s, "Nº Faltante": b})
                         
-                        st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'relatorio': rel_list, 'executado': True})
+                        st.session_state.update({'relat_buf': buf.getvalue(), 'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'relatorio': rel_list, 'executado': True})
                         st.rerun()
-                    except Exception as e: st.error(f"Erro no Processamento: {e}")
+                    except Exception as e: st.error(f"Erro: {e}")
 
         if st.session_state.get('executado'):
             st.markdown("---")
@@ -546,30 +538,18 @@ elif emp_sel and not modo_adm:
             with d2: st.download_button("📂 ZIP SEPARADO", st.session_state['z_org'], "organizado.zip", use_container_width=True)
             with d3: st.download_button("📦 DOWNLOAD COMPLETO", st.session_state['z_todos'], "completo.zip", use_container_width=True)
 
-    # ----------------------------------------------------------------------
-    # 🟡 MÓDULO AMARELO: CONCILIADOR
-    # ----------------------------------------------------------------------
     elif st.session_state['modulo_atual'] == "CONCILIADOR":
         st.markdown('<div id="modulo-amarelo"></div>', unsafe_allow_html=True)
         st.markdown("""
             <div style="text-align: center; padding: 60px; background: rgba(255, 215, 0, 0.05); border: 2px dashed #FFD700; border-radius: 30px;">
                 <h1 style="font-size: 80px; margin-bottom: 0px;">🏗️</h1>
                 <h2 style="color: #B8860B; font-weight: 800;">MÓDULO EM CONSTRUÇÃO</h2>
-                <p style="font-size: 20px; color: #555;">
-                    Projeto de infraestrutura de dados em andamento. <br>
-                    Estamos consolidando as bases lógicas para o cruzamento automatizado entre <br>
-                    <b>XML e Escrituração Domínio.</b>
-                </p>
-                <p style="font-style: italic; color: #B8860B; font-size: 18px; margin-top: 20px;">
-                    🚧 Status: Implementação de protocolos para detecção de divergências fiscais. 🚧
-                </p>
+                <p style="font-size: 20px; color: #555;">Projeto de infraestrutura de dados em andamento. Estamos consolidando as bases lógicas para o cruzamento automatizado entre <b>XML e Escrituração Domínio.</b></p>
+                <p style="font-style: italic; color: #B8860B; font-size: 18px;">🚧 Status: Implementação de protocolos para detecção de divergências fiscais. 🚧</p>
             </div>
         """, unsafe_allow_html=True)
 
-    # ----------------------------------------------------------------------
-    # 💗 MÓDULO ROSA: AUDITOR (MANTIDO INTEGRALMENTE)
-    # ----------------------------------------------------------------------
-    elif modulo_selecionado == "AUDITOR":
+    elif st.session_state['modulo_atual'] == "AUDITOR":
         st.markdown('<div id="modulo-conformidade"></div>', unsafe_allow_html=True)
         tabs_rosa = st.tabs(sub_padrao)
         for j, nome_sub in enumerate(sub_padrao):
@@ -578,10 +558,7 @@ elif emp_sel and not modo_adm:
                 st.file_uploader(f"📑 Gerencial {nome_sub}", key=f"g_aud_{j}_{v}")
                 st.button(f"🚀 PROCESSAR {nome_sub}", key=f"btn_aud_{j}", use_container_width=True)
 
-    # ----------------------------------------------------------------------
-    # 🟢 MÓDULO VERDE: ESPELHO (MANTIDO INTEGRALMENTE)
-    # ----------------------------------------------------------------------
-    elif modulo_selecionado == "ESPELHO":
+    elif st.session_state['modulo_atual'] == "ESPELHO":
         st.markdown('<div id="modulo-apuracao"></div>', unsafe_allow_html=True)
         tabs_verde = st.tabs(sub_padrao)
         for k, nome_trib in enumerate(sub_padrao):
