@@ -543,15 +543,15 @@ elif emp_sel and not modo_adm:
             with d3: st.download_button("📦 DOWNLOAD COMPLETO", st.session_state['z_todos'], "completo.zip", use_container_width=True)
 
     # ----------------------------------------------------------------------
-    # 🟡 MÓDULO AMARELO: CONCILIADOR (ATUALIZADO: TRATOR DE OBRA E MENSAGEM DIRETA)
+    # 🟡 MÓDULO AMARELO: CONCILIADOR
     # ----------------------------------------------------------------------
-    elif modulo_selecionado == "CONCILIADOR":
+    elif st.session_state['modulo_atual'] == "CONCILIADOR":
         st.markdown('<div id="modulo-amarelo"></div>', unsafe_allow_html=True)
         st.markdown("""
             <div style="text-align: center; padding: 60px; background: rgba(255, 215, 0, 0.05); border: 2px dashed #FFD700; border-radius: 30px;">
-                <h1 style="font-size: 100px; margin-bottom: 10px;">🏗️</h1>
+                <h1 style="font-size: 80px; margin-bottom: 0px;">🏗️</h1>
                 <h2 style="color: #B8860B; font-weight: 800;">MÓDULO EM CONSTRUÇÃO PESADA</h2>
-                <p style="font-size: 22px; color: #555;">
+                <p style="font-size: 20px; color: #555;">
                     Operação de terraplenagem fiscal iniciada. O motor de cruzamento <br>
                     <b>XML vs Escrituração Domínio</b> está sendo montado.
                 </p>
