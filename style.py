@@ -38,7 +38,6 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
         div:has(#modulo-xml) [data-testid="stFileUploader"] { border-color: #00BFFF !important; }
         
-        /* BOTAO BROWSE AZUL NEON */
         div:has(#modulo-xml) [data-testid="stFileUploader"] section button {
             background-color: #00BFFF !important; 
             color: white !important; 
@@ -73,11 +72,10 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
         div:has(#modulo-conformidade) [data-testid="stFileUploader"] { border-color: #FF69B4 !important; }
 
-        /* AJUSTE MESTRE: Botão Browse Files na Zona Rosa (Fundo Rosa + Borda Branca Neon) */
         div:has(#modulo-conformidade) [data-testid="stFileUploader"] section button {
             background-color: #FF69B4 !important; 
             color: white !important; 
-            border: 3px solid #FFFFFF !important; /* CONTORNO BRANCO NEON */
+            border: 3px solid #FFFFFF !important;
             font-weight: 700 !important;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.6), 0 0 25px rgba(255, 105, 180, 0.4) !important;
         }
@@ -94,8 +92,18 @@ def aplicar_estilo_sentinela():
             border: 3px solid #FFFFFF !important; 
         }
         div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; }
+        div:has(#modulo-apuracao) [data-testid="stFileUploader"] { border-color: #2ECC71 !important; }
 
-        /* 4. REGRA GERAL UPLOADER (PADRÃO PARA OUTRAS ZONAS) */
+        div:has(#modulo-apuracao) [data-testid="stFileUploader"] section button {
+            background-color: #2ECC71 !important; 
+            color: white !important; 
+            border: 3px solid #FFFFFF !important;
+            font-weight: 700 !important;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.6), 0 0 25px rgba(46, 204, 113, 0.4) !important;
+        }
+        div:has(#modulo-apuracao) [data-testid="stFileUploader"] svg { fill: #2ECC71 !important; }
+
+        /* 4. REGRA GERAL UPLOADER (PADRÃO PARA ZONA AMARELA OU NEUTRO) */
         [data-testid="stFileUploader"] section button {
             background-color: #6C757D !important;
             color: white !important;
@@ -104,7 +112,6 @@ def aplicar_estilo_sentinela():
         }
         [data-testid="stFileUploader"] section button:hover { background-color: #495057 !important; }
         [data-testid="stFileUploader"] svg { fill: #6C757D !important; }
-        [data-testid="stFileUploader"] section div div { color: #6C757D !important; }
 
         /* 5. SIDEBAR - AJUSTE CINZA CHUMBO */
         [data-testid="stSidebar"] .stButton > button {
