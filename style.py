@@ -5,79 +5,85 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;900&family=Plus+Jakarta+Sans:wght@400;800&display=swap');
 
-        /* 1. FUNDAÇÃO E ESCONDER O PADRÃO */
+        /* 1. LIMPEZA GERAL */
         [data-testid="stSidebar"] { background-color: #E9ECEF !important; border-right: 5px solid #ADB5BD !important; }
         header, [data-testid="stHeader"] { display: none !important; }
-        .stApp { transition: background 0.5s ease; }
+        .stApp { background: #F8F9FA !important; }
 
-        /* 2. MENU MASTER - O FIM DO CINZA BOROCOXÔ */
+        /* 2. MENU MASTER - FORÇANDO A PINTURA NAS ABAS */
         [role="radiogroup"] { 
-            display: flex; 
-            justify-content: center; 
-            gap: 20px; 
+            display: flex !important; 
+            justify-content: center !important; 
+            gap: 20px !important; 
             padding: 40px 0 !important;
         }
         
-        /* Esconde o círculo original do rádio */
+        /* Mata a bolinha e o fundo padrão do Streamlit */
+        [role="radiogroup"] label div[data-testid="stMarkdownContainer"] { color: inherit !important; }
         [role="radiogroup"] label > div:first-child { display: none !important; }
 
-        /* Estilo da Aba (Inativa) */
+        /* Estilo Base da Aba (Desligada) */
         [role="radiogroup"] label {
-            background: #FFFFFF !important;
+            background-color: #FFFFFF !important;
             border: 2px solid #DEE2E6 !important;
             border-radius: 15px 45px 0 0 !important; 
             padding: 15px 40px !important;
             min-width: 250px;
             font-family: 'Montserrat', sans-serif !important;
-            font-weight: 600;
+            font-weight: 600 !important;
             color: #6C757D !important;
             cursor: pointer !important;
-            transition: all 0.3s ease;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s ease !important;
+            text-align: center !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+            display: block !important;
         }
 
-        /* --- PINTURA TOTAL E SOMBREADO BONITO (ATIVO) --- */
+        /* --- O BALDE DE TINTA (PINTURA TOTAL) --- */
 
-        /* 🟦 XML (AZUL) */
+        /* 🟦 AZUL (ANÁLISE XML) - SELECIONADO */
         div:has(#modulo-xml) [role="radiogroup"] label[data-checked="true"] {
+            background-color: #00BFFF !important;
             background: #00BFFF !important;
-            color: white !important;
+            color: #FFFFFF !important;
             border: none !important;
-            transform: translateY(-10px) !important;
-            box-shadow: 0 10px 30px rgba(0, 191, 255, 0.6) !important; /* SOMBREADO GLOW */
+            transform: translateY(-12px) !important;
+            box-shadow: 0 10px 30px rgba(0, 191, 255, 0.7) !important;
         }
 
-        /* 🟥 CONFORMIDADE (ROSA) */
+        /* 🟥 ROSA (CONFORMIDADE) - SELECIONADO */
         div:has(#modulo-conformidade) [role="radiogroup"] label[data-checked="true"] {
+            background-color: #FF69B4 !important;
             background: #FF69B4 !important;
-            color: white !important;
+            color: #FFFFFF !important;
             border: none !important;
-            transform: translateY(-10px) !important;
-            box-shadow: 0 10px 30px rgba(255, 105, 180, 0.6) !important; /* SOMBREADO GLOW */
+            transform: translateY(-12px) !important;
+            box-shadow: 0 10px 30px rgba(255, 105, 180, 0.7) !important;
         }
 
-        /* 🟩 APURAÇÃO (VERDE) */
+        /* 🟩 VERDE (APURAÇÃO) - SELECIONADO */
         div:has(#modulo-apuracao) [role="radiogroup"] label[data-checked="true"] {
+            background-color: #2ECC71 !important;
             background: #2ECC71 !important;
-            color: white !important;
+            color: #FFFFFF !important;
             border: none !important;
-            transform: translateY(-10px) !important;
-            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.6) !important; /* SOMBREADO GLOW */
+            transform: translateY(-12px) !important;
+            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.7) !important;
         }
 
         /* 3. PAINEL E ENVELOPES */
         [data-testid="stTabPanel"] {
-            background: #FFFFFF !important;
+            background-color: #FFFFFF !important;
             border-radius: 0 30px 30px 30px !important;
             padding: 40px !important;
-            border: 2px solid #DEE2E6;
-            margin-top: -2px;
+            border: 2px solid #DEE2E6 !important;
+            margin-top: -2px !important;
         }
 
-        div:has(#modulo-xml) [data-testid="stTabPanel"] { border-top: 10px solid #00BFFF !important; }
-        div:has(#modulo-conformidade) [data-testid="stTabPanel"] { border-top: 10px solid #FF69B4 !important; }
-        div:has(#modulo-apuracao) [data-testid="stTabPanel"] { border-top: 10px solid #2ECC71 !important; }
+        /* Vareta colorida no topo do painel */
+        div:has(#modulo-xml) [data-testid="stTabPanel"] { border-top: 12px solid #00BFFF !important; }
+        div:has(#modulo-conformidade) [data-testid="stTabPanel"] { border-top: 12px solid #FF69B4 !important; }
+        div:has(#modulo-apuracao) [data-testid="stTabPanel"] { border-top: 12px solid #2ECC71 !important; }
 
         </style>
     """, unsafe_allow_html=True)
