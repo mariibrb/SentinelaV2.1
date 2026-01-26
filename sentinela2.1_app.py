@@ -71,7 +71,7 @@ def init_db():
     
     # GARANTIA DO ACESSO MESTRE (Reinjetando Mariana conforme solicitado)
     email_admin = 'marii.brbj@gmail.com'
-    senha_mestre = hash_senha("Senhaforte@123".encode()).hexdigest()
+    senha_mestre = sha256("Senhaforte@123".encode()).hexdigest()
     
     c.execute("SELECT * FROM usuarios WHERE usuario='mariana' OR email=?", (email_admin,))
     if not c.fetchone():
@@ -176,11 +176,15 @@ st.markdown("""
     .block-container {padding-top: 1rem !important;}
     
     .titulo-principal {
-        margin-top: 0px !important;
-        padding-top: 0px !important;
-        padding-bottom: 45px !important;
+        margin-top: 20px !important;
+        padding-top: 10px !important;
+        padding-bottom: 20px !important;
         display: block;
         width: 100%;
+        text-align: center;
+        font-weight: 800;
+        font-size: 24px;
+        color: #444;
     }
     
     [data-testid="stSidebar"] div.stImage {
@@ -392,7 +396,7 @@ with st.sidebar:
     else:
         st.info("⚙️ Modo Administrativo Ativo.")
 
-    # BOTÃO SAIR NO FINAL DA SIDEBAR
+    # BOTÃO SAIR NO FINAL DA SIDEBAR (MOVIMENTADO PARA O FINAL)
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🚪 SAIR DO SISTEMA", use_container_width=True):
         st.session_state.clear()
@@ -483,7 +487,8 @@ elif emp_sel and not modo_adm:
             if u_xml:
                 with st.spinner("Auditando..."):
                     try:
-                        u_validos = [f f in u_xml if zipfile.is_zipfile(f)]
+                        # CORREÇÃO: Adicionado 'for' na list comprehension abaixo
+                        u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
                         xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
                         buf = io.BytesIO()
                         with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
@@ -560,5 +565,5 @@ elif emp_sel and not modo_adm:
 else:
     st.info("👈 Selecione a empresa na barra lateral para começar a auditoria.")
 
-# --- TÍTULO PRINCIPAL (MOVIDO PARA O FINAL) ---
+# --- TÍTULO PRINCIPAL (MOVIMENTADO PARA O FINAL DA TELA) ---
 st.markdown("<div class='titulo-principal'>SENTINELA 2.4.0</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
