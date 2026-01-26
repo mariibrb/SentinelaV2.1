@@ -544,7 +544,9 @@ elif emp_sel and not modo_adm:
             <div style="text-align: center; padding: 60px; background: rgba(255, 215, 0, 0.05); border: 2px dashed #FFD700; border-radius: 30px;">
                 <h1 style="font-size: 80px; margin-bottom: 0px;">🏗️</h1>
                 <h2 style="color: #B8860B; font-weight: 800;">MÓDULO EM CONSTRUÇÃO</h2>
-                <p style="font-size: 20px; color: #555;">Projeto de infraestrutura de dados em andamento. Estamos consolidando as bases lógicas para o cruzamento automatizado entre <b>XML e Escrituração Domínio.</b></p>
+                <p style="font-size: 20px; color: #555;">Projeto de infraestrutura de dados em andamento. 
+                </p>
+                Estamos consolidando as bases lógicas para o cruzamento automatizado entre <b>XML e Escrituração Domínio.</b></p>
                 <p style="font-style: italic; color: #B8860B; font-size: 18px;">🚧 Status: Implementação de protocolos para detecção de divergências fiscais. 🚧</p>
             </div>
         """, unsafe_allow_html=True)
