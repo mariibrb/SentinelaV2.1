@@ -173,9 +173,17 @@ st.markdown("""
     footer {visibility: hidden !important;}
     .st-emotion-cache-h5rgaw, .st-emotion-cache-18ni7ap, .st-emotion-cache-12fmjuu {display: none !important;}
     .block-container {padding-top: 1rem !important;}
+    
+    /* AJUSTE DE ESPAÇAMENTO DO TÍTULO PARA NÃO SOBREPOR AS ABAS */
     .titulo-principal {
         margin-top: 0px !important;
         padding-top: 0px !important;
+        margin-bottom: 2.5rem !important; /* EMPURRA AS ABAS PARA BAIXO */
+    }
+    
+    /* ESPAÇO ADICIONAL ACIMA DO CONTEÚDO CENTRAL */
+    [data-testid="stHorizontalBlock"] {
+        margin-top: 1rem !important;
     }
     
     /* AJUSTE DEFINITIVO DE ESPAÇAMENTO DA LOGO */
@@ -248,7 +256,7 @@ if not st.session_state['user_data']:
                     nova_s = st.text_input("Nova Senha", type="password")
                     conf_s = st.text_input("Confirme a Nova Senha", type="password")
                     if st.button("SALVAR E ACESSAR", use_container_width=True):
-                        if nova_s == conf_s and len(nova_s) >= 4 and nova_s != "123456":
+                        if nova_s == comf_s and len(nova_s) >= 4 and nova_s != "123456":
                             conn = sqlite3.connect('sentinela_usuarios.db')
                             conn.execute("UPDATE usuarios SET senha=? WHERE email=?", (hash_senha(nova_s), st.session_state['temp_email']))
                             conn.commit(); conn.close()
@@ -261,7 +269,6 @@ if not st.session_state['user_data']:
                     if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                         conn = sqlite3.connect('sentinela_usuarios.db')
                         c = conn.cursor()
-                        # AJUSTE NO LOGIN: Busca por usuário OU e-mail para permitir 'mariana'
                         c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
                                      FROM usuarios 
                                      WHERE (usuario=? OR email=?) AND senha=?""", 
@@ -295,7 +302,6 @@ if not st.session_state['user_data']:
                     if n_nome and n_email and n_pass:
                         try:
                             conn = sqlite3.connect('sentinela_usuarios.db')
-                            # AJUSTE: O e-mail agora é automaticamente o usuário
                             conn.execute("""INSERT INTO usuarios 
                                             (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
                                             VALUES (?, ?, ?, ?, 'PENDENTE', 'USER', 1, 0, 0, 0, 0)""", 
@@ -552,7 +558,7 @@ elif emp_sel and not modo_adm:
                 <h1 style="font-size: 80px; margin-bottom: 0px;">🏗️</h1>
                 <h2 style="color: #B8860B; font-weight: 800;">MÓDULO EM CONSTRUÇÃO</h2>
                 <p style="font-size: 20px; color: #555;">
-                    Projeto de infraestrutura de dados em andamento. </p>
+                    Projeto de infraestrutura de dados em andamento. <br>
                     Estamos consolidando as bases lógicas para o cruzamento automatizado entre <br>
                     <b>XML e Escrituração Domínio.</b>
                 </p>
