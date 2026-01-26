@@ -35,7 +35,11 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 0 25px rgba(255, 255, 255, 0.6), 0 0 40px rgba(0, 191, 255, 0.4) !important; 
             border: 3px solid #FFFFFF !important; 
         }
-        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
+        div:has(#modulo-xml) .stTabs [aria-selected="true"] { 
+            background: linear-gradient(180deg, #00BFFF 0%, #0099CC 100%) !important; 
+            color: white !important; 
+            box-shadow: 0 -5px 15px rgba(0, 191, 255, 0.3) !important;
+        }
         div:has(#modulo-xml) [data-testid="stFileUploader"] { border-color: #00BFFF !important; }
         
         div:has(#modulo-xml) [data-testid="stFileUploader"] section button {
@@ -57,7 +61,10 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 0 25px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 215, 0, 0.5) !important; 
             border: 3px solid #FFFFFF !important; 
         }
-        div:has(#modulo-amarelo) .stTabs [aria-selected="true"] { background: #FFD700 !important; color: #424242 !important; }
+        div:has(#modulo-amarelo) .stTabs [aria-selected="true"] { 
+            background: linear-gradient(180deg, #FFD700 0%, #FFCC00 100%) !important; 
+            color: #424242 !important; 
+        }
 
         /* --- 🟥 ZONA ROSA (AUDITOR) --- */
         div:has(#modulo-conformidade) .stApp { background: radial-gradient(circle at top right, #FFDEEF 0%, #F8F9FA 100%) !important; }
@@ -69,7 +76,11 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 0 25px rgba(255, 255, 255, 0.6), 0 0 40px rgba(255, 105, 180, 0.4) !important; 
             border: 3px solid #FFFFFF !important; 
         }
-        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
+        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { 
+            background: linear-gradient(180deg, #FF69B4 0%, #FF4da6 100%) !important; 
+            color: white !important; 
+            box-shadow: 0 -5px 15px rgba(255, 105, 180, 0.3) !important;
+        }
         div:has(#modulo-conformidade) [data-testid="stFileUploader"] { border-color: #FF69B4 !important; }
 
         div:has(#modulo-conformidade) [data-testid="stFileUploader"] section button {
@@ -91,7 +102,11 @@ def aplicar_estilo_sentinela():
             box-shadow: 0 0 25px rgba(255, 255, 255, 0.6), 0 0 40px rgba(46, 204, 113, 0.4) !important; 
             border: 3px solid #FFFFFF !important; 
         }
-        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; }
+        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { 
+            background: linear-gradient(180deg, #2ECC71 0%, #27ae60 100%) !important; 
+            color: white !important; 
+            box-shadow: 0 -5px 15px rgba(46, 204, 113, 0.3) !important;
+        }
         div:has(#modulo-apuracao) [data-testid="stFileUploader"] { border-color: #2ECC71 !important; }
 
         div:has(#modulo-apuracao) [data-testid="stFileUploader"] section button {
@@ -103,7 +118,7 @@ def aplicar_estilo_sentinela():
         }
         div:has(#modulo-apuracao) [data-testid="stFileUploader"] svg { fill: #2ECC71 !important; }
 
-        /* 4. REGRA GERAL UPLOADER (PADRÃO PARA ZONA AMARELA OU NEUTRO) */
+        /* 4. REGRA GERAL UPLOADER (PADRÃO) */
         [data-testid="stFileUploader"] section button {
             background-color: #6C757D !important;
             color: white !important;
@@ -124,22 +139,36 @@ def aplicar_estilo_sentinela():
             opacity: 1 !important;
         }
 
-        /* 6. PAINÉIS E ABAS INTERNAS - AJUSTADO PARA SIMETRIA PROFISSIONAL */
+        /* 6. PAINÉIS E ABAS INTERNAS (CORRIGIDO: DEGRADÊ + BRILHO HOVER) */
         [data-testid="stTabPanel"] {
             background: rgba(255, 255, 255, 0.8) !important;
             backdrop-filter: blur(10px);
-            border-radius: 0px 25px 25px 25px !important; /* Conecta suavemente com a aba */
+            border-radius: 0px 25px 25px 25px !important; 
             padding: 40px !important;
             border: 1px solid #DEE2E6;
         }
+        
+        /* Estilo base das abas (inativas) com degradê suave */
         .stTabs [data-baseweb="tab"] {
-            border-radius: 12px 12px 0 0 !important; /* FORMATO SIMÉTRICO DE PASTA */
+            border-radius: 12px 12px 0 0 !important; 
             font-weight: 700;
-            margin-right: 5px !important;
+            margin-right: 8px !important;
             color: #ADB5BD !important;
-            background: rgba(255,255,255,0.5) !important;
-            padding: 10px 20px !important;
+            background: linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(240,240,240,0.5) 100%) !important;
+            padding: 12px 25px !important;
+            border: 1px solid #DEE2E6 !important;
+            border-bottom: none !important;
+            transition: all 0.3s ease !important;
         }
+
+        /* EFEITO DE BRILHO (HOVER) NAS ABAS */
+        .stTabs [data-baseweb="tab"]:hover {
+            color: #6C757D !important;
+            background: #FFFFFF !important;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.08) !important;
+            transform: translateY(-2px) !important;
+        }
+
         [data-testid="stFileUploader"] {
             border-radius: 20px !important;
             background: #FFFFFF !important;
