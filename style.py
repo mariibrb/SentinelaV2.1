@@ -5,108 +5,100 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;800&family=Plus+Jakarta+Sans:wght@400;700&display=swap');
 
-        /* 1. FUNDAÇÃO CHUMBO CLARO/PRATEADO */
+        /* 1. FUNDAÇÃO E SIDEBAR (LIMPA) */
         [data-testid="stSidebar"] { background-color: #E9ECEF !important; border-right: 5px solid #ADB5BD !important; }
         header, [data-testid="stHeader"] { display: none !important; }
-        .stApp { background: radial-gradient(circle at top left, #F8F9FA 0%, #DEE2E6 100%) !important; }
         
-        .titulo-principal { font-family: 'Montserrat', sans-serif !important; color: #6C757D !important; font-size: 0.9rem !important; font-weight: 800; text-transform: uppercase; padding: 5px 0 !important; letter-spacing: 2px; }
+        .stApp { transition: background 0.8s ease-in-out !important; }
 
-        /* =================================================================================
-           2. MENU MASTER - ABAS COM FLAG DE LED (BOLINHA INTERNA)
-        ================================================================================= */
-        [role="radiogroup"] { display: flex; justify-content: center; gap: 12px; padding-top: 30px !important; overflow: visible !important; }
-        
-        /* Remove a bolinha original do Streamlit */
-        [role="radiogroup"] label > div:first-child { display: none !important; }
+        /* FUNDOS REATIVOS POR SETOR */
+        div:has(#modulo-xml) .stApp { background: radial-gradient(circle at top right, #D6F2FF 0%, #F8F9FA 100%) !important; }
+        div:has(#modulo-amarelo) .stApp { background: radial-gradient(circle at top right, #FFF9C4 0%, #F8F9FA 100%) !important; }
+        div:has(#modulo-conformidade) .stApp { background: radial-gradient(circle at top right, #FFDEEF 0%, #F8F9FA 100%) !important; }
+        div:has(#modulo-apuracao) .stApp { background: radial-gradient(circle at top right, #DFFFEA 0%, #F8F9FA 100%) !important; }
 
-        [role="radiogroup"] label {
-            background: linear-gradient(180deg, #FFFFFF 0%, #CED4DA 100%) !important;
-            border: 1px solid #ADB5BD !important;
-            border-radius: 12px 35px 0 0 !important; 
-            padding: 12px 25px !important;
-            min-width: 200px;
+        /* 2. TÍTULO E VERSÃO (REPROJETADO PARA NÃO SOBREPOR) */
+        .titulo-principal {
             font-family: 'Montserrat', sans-serif !important;
-            font-weight: 800;
             color: #6C757D !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease;
-            text-align: center;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
+            font-size: 0.9rem !important;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding-bottom: 55px !important; /* Respiro para a tag da versão */
+            display: block;
         }
 
-        /* --- CRIAÇÃO DO FLAG (BOLINHA DE LED) --- */
-        [role="radiogroup"] label::before {
-            content: "";
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #ADB5BD; /* Cor desligada */
-            transition: 0.3s;
-        }
-
-        /* ELEVAÇÃO E BRILHO NO SELECIONADO */
-        [role="radiogroup"] label[data-checked="true"] {
-            transform: translateY(-10px) !important;
-            background: #FFFFFF !important;
-            color: #212529 !important;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-            border-bottom: none !important;
-        }
-
-        /* --- PINTANDO O LED POR MÓDULO --- */
-
-        /* 🟦 LED AZUL (XML) */
-        div:has(#modulo-xml) [role="radiogroup"] label[data-checked="true"]::before {
-            background: #00BFFF !important;
-            box-shadow: 0 0 10px #00BFFF, 0 0 20px #00BFFF !important;
-        }
-        div:has(#modulo-xml) [role="radiogroup"] label[data-checked="true"] { border-top: 4px solid #00BFFF !important; }
-
-        /* 🟥 LED ROSA (CONFORMIDADE) */
-        div:has(#modulo-conformidade) [role="radiogroup"] label[data-checked="true"]::before {
-            background: #FF69B4 !important;
-            box-shadow: 0 0 10px #FF69B4, 0 0 20px #FF69B4 !important;
-        }
-        div:has(#modulo-conformidade) [role="radiogroup"] label[data-checked="true"] { border-top: 4px solid #FF69B4 !important; }
-
-        /* 🟩 LED VERDE (APURAÇÃO) */
-        div:has(#modulo-apuracao) [role="radiogroup"] label[data-checked="true"]::before {
-            background: #2ECC71 !important;
-            box-shadow: 0 0 10px #2ECC71, 0 0 20px #2ECC71 !important;
-        }
-        div:has(#modulo-apuracao) [role="radiogroup"] label[data-checked="true"] { border-top: 4px solid #2ECC71 !important; }
-
-        /* =================================================================================
-           3. RESTANTE DO VISUAL (ENVELOPES E PAINEL)
-        ================================================================================= */
-        .stTabs [data-baseweb="tab"] { border-radius: 8px 25px 0 0 !important; font-weight: 700; margin-right: 5px; }
-        
-        /* Envelopes Lindinhos Restaurados */
-        [data-testid="stFileUploader"] {
-            padding: 45px 25px 25px 25px !important;
+        /* 3. BOTÕES DO MENU SUPERIOR (MENU MASTER) */
+        div.stButton > button {
+            color: white !important;
+            border: none !important;
             border-radius: 15px !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-weight: 800 !important;
+            height: 70px !important;
+            text-transform: uppercase;
+            opacity: 0.6 !important;
+            transition: all 0.4s ease !important;
+        }
+
+        /* BRILHO BRANCO NO MENU ATIVO */
+        div:has(#modulo-xml) div.stHorizontalBlock > div:nth-child(1) button,
+        div:has(#modulo-amarelo) div.stHorizontalBlock > div:nth-child(2) button,
+        div:has(#modulo-conformidade) div.stHorizontalBlock > div:nth-child(3) button,
+        div:has(#modulo-apuracao) div.stHorizontalBlock > div:nth-child(4) button {
+            opacity: 1 !important;
+            transform: scale(1.08) translateY(-5px) !important;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.9) !important;
+            border: 3px solid #FFFFFF !important;
+        }
+
+        /* 4. AS ABAS (PASTINHAS) - CORES RESTAURADAS POR SETOR */
+        .stTabs [data-baseweb="tab"] {
+            border-radius: 10px 30px 0 0 !important;
+            font-weight: 700;
+            padding: 12px 25px !important;
+            background: rgba(255,255,255,0.5) !important;
+            color: #6C757D !important;
+        }
+
+        /* CORES DAS PASTINHAS ATIVAS */
+        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background-color: #00BFFF !important; color: white !important; box-shadow: 0 -5px 15px rgba(0, 191, 255, 0.3); }
+        div:has(#modulo-amarelo) .stTabs [aria-selected="true"] { background-color: #FFD700 !important; color: #424242 !important; box-shadow: 0 -5px 15px rgba(255, 215, 0, 0.3); }
+        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background-color: #FF69B4 !important; color: white !important; box-shadow: 0 -5px 15px rgba(255, 105, 180, 0.3); }
+        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background-color: #2ECC71 !important; color: white !important; box-shadow: 0 -5px 15px rgba(46, 204, 113, 0.3); }
+
+        /* 5. ÁREA DE UPLOAD (CENTRAL DE IMPORTAÇÃO) - TOTALMENTE CINZA */
+        [data-testid="stFileUploader"] {
             border: 2px dashed #ADB5BD !important;
             background: #FFFFFF !important;
-            position: relative !important;
-            margin: 20px 0 !important;
-        }
-        [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 32px; z-index: 99; }
-
-        div:has(#modulo-xml) [data-testid="stFileUploader"] { background: #EBF9FF !important; border-color: #00BFFF !important; }
-        div:has(#modulo-conformidade) [data-testid="stFileUploader"] { background: #FFF0F5 !important; border-color: #FF69B4 !important; }
-        div:has(#modulo-apuracao) [data-testid="stFileUploader"] { background: #F1FFF7 !important; border-color: #2ECC71 !important; }
-
-        [data-testid="stTabPanel"] {
-            background: #FFFFFF !important;
-            border-radius: 0 15px 15px 15px !important;
+            border-radius: 20px !important;
             padding: 30px !important;
-            border: 1px solid #DEE2E6;
-            border-top: 8px solid #DEE2E6;
         }
-        div:has(#modulo-xml) [data-testid="stTabPanel"] { border-top-color: #00BFFF !important; }
-        div:has(#modulo-conformidade) [data-testid="stTabPanel"] { border-top-color: #FF69B4 !important; }
-        div:has(#modulo-apuracao) [data-testid="stTabPanel"] { border-top-color: #2ECC71 !important; }
 
+        /* Botão interno "Browse files" SEMPRE CINZA */
+        [data-testid="stFileUploader"] section button {
+            background-color: #6C757D !important; 
+            color: white !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        [data-testid="stFileUploader"] section button:hover {
+            background-color: #495057 !important;
+        }
+
+        /* Ícones e textos do upload em cinza neutro */
+        [data-testid="stFileUploader"] svg { fill: #6C757D !important; }
+        [data-testid="stFileUploader"] div { color: #6C757D !important; }
+
+        /* 6. PAINEL DAS ABAS (CONTAINER BRANCO) */
+        [data-testid="stTabPanel"] {
+            background: rgba(255, 255, 255, 0.9) !important;
+            backdrop-filter: blur(10px);
+            border-radius: 0 20px 20px 20px !important;
+            padding: 35px !important;
+            border: 1px solid #DEE2E6;
+        }
         </style>
     """, unsafe_allow_html=True)
