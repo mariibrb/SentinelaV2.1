@@ -11,6 +11,8 @@ from email.mime.multipart import MIMEMultipart
 from hashlib import sha256
 from style import aplicar_estilo_sentinela
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
+# IMPORTAÇÃO DO NOVO MÓDULO
+from modulo_sieg import exibir_interface_sieg
 
 # --- CONFIGURAÇÃO DE E-MAIL (FUNCIONALIDADE GMAIL) ---
 def enviar_email(destinatario, assunto, corpo):
@@ -451,7 +453,9 @@ if modo_adm:
         conn.close()
 
 elif emp_sel and not modo_adm:
-    c_aba1, c_aba2, c_aba3, c_aba4 = st.columns(4)
+    # CONFIGURADO PARA 5 COLUNAS PARA INCLUIR A ABA SIEG
+    c_aba1, c_aba2, c_aba3, c_aba4, c_aba5 = st.columns(5)
+    
     if c_aba1.button("GARIMPEIRO", use_container_width=True, type="primary" if st.session_state['modulo_atual'] == "GARIMPEIRO" else "secondary"):
         st.session_state['modulo_atual'] = "GARIMPEIRO"; st.rerun()
     if c_aba2.button("CONCILIADOR", use_container_width=True, type="primary" if st.session_state['modulo_atual'] == "CONCILIADOR" else "secondary"):
@@ -460,6 +464,9 @@ elif emp_sel and not modo_adm:
         st.session_state['modulo_atual'] = "AUDITOR"; st.rerun()
     if c_aba4.button("ESPELHO", use_container_width=True, type="primary" if st.session_state['modulo_atual'] == "ESPELHO" else "secondary"):
         st.session_state['modulo_atual'] = "ESPELHO"; st.rerun()
+    # NOVA ABA SIEG
+    if c_aba5.button("SIEG", use_container_width=True, type="primary" if st.session_state['modulo_atual'] == "SIEG" else "secondary"):
+        st.session_state['modulo_atual'] = "SIEG"; st.rerun()
     
     st.markdown("---")
     
@@ -487,7 +494,7 @@ elif emp_sel and not modo_adm:
             if u_xml:
                 with st.spinner("Auditando..."):
                     try:
-                        # CORREÇÃO: Adicionado 'for' na list comprehension abaixo
+                        # CORREÇÃO: Adicionado 'for' na list comprehension
                         u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
                         xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
                         buf = io.BytesIO()
@@ -561,6 +568,10 @@ elif emp_sel and not modo_adm:
             with tabs_verde[k]:
                 st.markdown(f"### 🟢 Conferência: {nome_trib}")
                 st.info(f"Veredito Final de {nome_trib}")
+
+    # CHAMADA DA NOVA ABA SIEG
+    elif st.session_state['modulo_atual'] == "SIEG":
+        exibir_interface_sieg(cnpj_limpo)
 
 else:
     st.info("👈 Selecione a empresa na barra lateral para começar a auditoria.")
