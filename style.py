@@ -5,108 +5,124 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;800&family=Plus+Jakarta+Sans:wght@400;700&display=swap');
 
-        /* 1. FUNDAÇÃO CHUMBO CLARO/PRATEADO */
+        /* 1. FUNDAÇÃO COM CLIMA REATIVO */
         [data-testid="stSidebar"] { background-color: #E9ECEF !important; border-right: 5px solid #ADB5BD !important; }
         header, [data-testid="stHeader"] { display: none !important; }
-        .stApp { background: radial-gradient(circle at top left, #F8F9FA 0%, #DEE2E6 100%) !important; }
         
+        /* Fundo base */
+        .stApp { transition: background 0.5s ease; }
+
+        /* MUDANÇA DE CLIMA POR MÓDULO (O segredo da separação) */
+        div:has(#modulo-xml) .stApp { background: radial-gradient(circle at top right, #EBF9FF 0%, #DEE2E6 100%) !important; }
+        div:has(#modulo-conformidade) .stApp { background: radial-gradient(circle at top right, #FFF0F5 0%, #DEE2E6 100%) !important; }
+        div:has(#modulo-apuracao) .stApp { background: radial-gradient(circle at top right, #F1FFF7 0%, #DEE2E6 100%) !important; }
+
         .titulo-principal { font-family: 'Montserrat', sans-serif !important; color: #6C757D !important; font-size: 0.9rem !important; font-weight: 800; text-transform: uppercase; padding: 5px 0 !important; letter-spacing: 2px; }
 
         /* =================================================================================
-           2. MENU MASTER - ABAS COM FLAG DE LED (BOLINHA INTERNA)
+           2. MENU MASTER - ESTILO "FLUXO DE TRABALHO"
         ================================================================================= */
-        [role="radiogroup"] { display: flex; justify-content: center; gap: 12px; padding-top: 30px !important; overflow: visible !important; }
+        [role="radiogroup"] { 
+            display: flex; 
+            justify-content: center; 
+            gap: 20px; 
+            padding: 30px 10px !important; 
+            background: rgba(255,255,255,0.3);
+            border-radius: 20px;
+            margin: 20px 0;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        }
         
-        /* Remove a bolinha original do Streamlit */
         [role="radiogroup"] label > div:first-child { display: none !important; }
 
         [role="radiogroup"] label {
-            background: linear-gradient(180deg, #FFFFFF 0%, #CED4DA 100%) !important;
-            border: 1px solid #ADB5BD !important;
-            border-radius: 12px 35px 0 0 !important; 
-            padding: 12px 25px !important;
-            min-width: 200px;
+            background: #FFFFFF !important;
+            border: 2px solid #ADB5BD !important;
+            border-radius: 15px !important; 
+            padding: 15px 30px !important;
+            min-width: 250px;
             font-family: 'Montserrat', sans-serif !important;
             font-weight: 800;
-            color: #6C757D !important;
+            color: #ADB5BD !important;
             cursor: pointer !important;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             text-align: center;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
+            box-shadow: 0 4px 0px #ADB5BD; /* Efeito 3D de botão */
         }
 
-        /* --- CRIAÇÃO DO FLAG (BOLINHA DE LED) --- */
-        [role="radiogroup"] label::before {
-            content: "";
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #ADB5BD; /* Cor desligada */
-            transition: 0.3s;
-        }
-
-        /* ELEVAÇÃO E BRILHO NO SELECIONADO */
-        [role="radiogroup"] label[data-checked="true"] {
-            transform: translateY(-10px) !important;
-            background: #FFFFFF !important;
-            color: #212529 !important;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-            border-bottom: none !important;
-        }
-
-        /* --- PINTANDO O LED POR MÓDULO --- */
-
-        /* 🟦 LED AZUL (XML) */
-        div:has(#modulo-xml) [role="radiogroup"] label[data-checked="true"]::before {
+        /* ESTADOS ATIVOS COM IDENTIFICAÇÃO ABSOLUTA */
+        
+        /* 🟦 AZUL (XML) */
+        div:has(#modulo-xml) [role="radiogroup"] label[data-checked="true"] {
             background: #00BFFF !important;
-            box-shadow: 0 0 10px #00BFFF, 0 0 20px #00BFFF !important;
+            color: white !important;
+            border-color: #0088CC !important;
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.4), 0 6px 0px #0088CC !important;
+            transform: translateY(-5px);
         }
-        div:has(#modulo-xml) [role="radiogroup"] label[data-checked="true"] { border-top: 4px solid #00BFFF !important; }
 
-        /* 🟥 LED ROSA (CONFORMIDADE) */
-        div:has(#modulo-conformidade) [role="radiogroup"] label[data-checked="true"]::before {
+        /* 🟥 ROSA (CONFORMIDADE) */
+        div:has(#modulo-conformidade) [role="radiogroup"] label[data-checked="true"] {
             background: #FF69B4 !important;
-            box-shadow: 0 0 10px #FF69B4, 0 0 20px #FF69B4 !important;
+            color: white !important;
+            border-color: #D6458F !important;
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.4), 0 6px 0px #D6458F !important;
+            transform: translateY(-5px);
         }
-        div:has(#modulo-conformidade) [role="radiogroup"] label[data-checked="true"] { border-top: 4px solid #FF69B4 !important; }
 
-        /* 🟩 LED VERDE (APURAÇÃO) */
-        div:has(#modulo-apuracao) [role="radiogroup"] label[data-checked="true"]::before {
+        /* 🟩 VERDE (APURAÇÃO) */
+        div:has(#modulo-apuracao) [role="radiogroup"] label[data-checked="true"] {
             background: #2ECC71 !important;
-            box-shadow: 0 0 10px #2ECC71, 0 0 20px #2ECC71 !important;
+            color: white !important;
+            border-color: #27AE60 !important;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.4), 0 6px 0px #27AE60 !important;
+            transform: translateY(-5px);
         }
-        div:has(#modulo-apuracao) [role="radiogroup"] label[data-checked="true"] { border-top: 4px solid #2ECC71 !important; }
 
         /* =================================================================================
-           3. RESTANTE DO VISUAL (ENVELOPES E PAINEL)
+           3. BANNER DE STATUS (A BÚSSOLA)
         ================================================================================= */
+        [data-testid="stTabPanel"]::before {
+            display: block;
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        div:has(#modulo-xml) [data-testid="stTabPanel"]::before { 
+            content: "🚀 MODO: GARIMPO E ANÁLISE DE XML"; 
+            color: #00BFFF; background: rgba(0, 191, 255, 0.1); border: 1px solid #00BFFF;
+        }
+        div:has(#modulo-conformidade) [data-testid="stTabPanel"]::before { 
+            content: "🏢 MODO: CONFORMIDADE E RELATÓRIOS"; 
+            color: #FF69B4; background: rgba(255, 105, 180, 0.1); border: 1px solid #FF69B4;
+        }
+        div:has(#modulo-apuracao) [data-testid="stTabPanel"]::before { 
+            content: "✅ MODO: APURAÇÃO FINAL DE TRIBUTOS"; 
+            color: #2ECC71; background: rgba(46, 204, 113, 0.1); border: 1px solid #2ECC71;
+        }
+
+        /* 4. ENVELOPES E PAINEL */
         .stTabs [data-baseweb="tab"] { border-radius: 8px 25px 0 0 !important; font-weight: 700; margin-right: 5px; }
         
-        /* Envelopes Lindinhos Restaurados */
-        [data-testid="stFileUploader"] {
-            padding: 45px 25px 25px 25px !important;
-            border-radius: 15px !important;
-            border: 2px dashed #ADB5BD !important;
-            background: #FFFFFF !important;
-            position: relative !important;
-            margin: 20px 0 !important;
-        }
-        [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 32px; z-index: 99; }
-
-        div:has(#modulo-xml) [data-testid="stFileUploader"] { background: #EBF9FF !important; border-color: #00BFFF !important; }
-        div:has(#modulo-conformidade) [data-testid="stFileUploader"] { background: #FFF0F5 !important; border-color: #FF69B4 !important; }
-        div:has(#modulo-apuracao) [data-testid="stFileUploader"] { background: #F1FFF7 !important; border-color: #2ECC71 !important; }
-
         [data-testid="stTabPanel"] {
             background: #FFFFFF !important;
-            border-radius: 0 15px 15px 15px !important;
-            padding: 30px !important;
-            border: 1px solid #DEE2E6;
-            border-top: 8px solid #DEE2E6;
+            border-radius: 20px !important;
+            padding: 40px !important;
+            border: 2px solid #DEE2E6;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
         }
-        div:has(#modulo-xml) [data-testid="stTabPanel"] { border-top-color: #00BFFF !important; }
-        div:has(#modulo-conformidade) [data-testid="stTabPanel"] { border-top-color: #FF69B4 !important; }
-        div:has(#modulo-apuracao) [data-testid="stTabPanel"] { border-top-color: #2ECC71 !important; }
+
+        /* Envelopes Reativos */
+        div:has(#modulo-xml) [data-testid="stFileUploader"] { background: #F0F9FF !important; border: 2px solid #00BFFF !important; }
+        div:has(#modulo-conformidade) [data-testid="stFileUploader"] { background: #FFF5F9 !important; border: 2px solid #FF69B4 !important; }
+        div:has(#modulo-apuracao) [data-testid="stFileUploader"] { background: #F5FFF9 !important; border: 2px solid #2ECC71 !important; }
 
         </style>
     """, unsafe_allow_html=True)
