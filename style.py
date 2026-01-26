@@ -124,19 +124,21 @@ def aplicar_estilo_sentinela():
             opacity: 1 !important;
         }
 
-        /* 6. PAINÉIS E ABAS INTERNAS */
+        /* 6. PAINÉIS E ABAS INTERNAS - AJUSTADO PARA SIMETRIA PROFISSIONAL */
         [data-testid="stTabPanel"] {
             background: rgba(255, 255, 255, 0.8) !important;
             backdrop-filter: blur(10px);
-            border-radius: 25px !important;
+            border-radius: 0px 25px 25px 25px !important; /* Conecta suavemente com a aba */
             padding: 40px !important;
             border: 1px solid #DEE2E6;
         }
         .stTabs [data-baseweb="tab"] {
-            border-radius: 10px 30px 0 0 !important;
+            border-radius: 12px 12px 0 0 !important; /* FORMATO SIMÉTRICO DE PASTA */
             font-weight: 700;
+            margin-right: 5px !important;
             color: #ADB5BD !important;
             background: rgba(255,255,255,0.5) !important;
+            padding: 10px 20px !important;
         }
         [data-testid="stFileUploader"] {
             border-radius: 20px !important;
