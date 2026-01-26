@@ -23,6 +23,13 @@ def aplicar_estilo_sentinela():
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
         }
 
+        /* EFEITO DE LEVANTAR NOS BOTÕES SUPERIORES */
+        div.stButton > button:hover {
+            transform: translateY(-5px) !important;
+            opacity: 1 !important;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+
         /* 3. BLOCOS DE CORES POR ZONA (ACIONAMENTO) */
 
         /* --- 🟦 ZONA AZUL (GARIMPEIRO) --- */
@@ -139,7 +146,7 @@ def aplicar_estilo_sentinela():
             opacity: 1 !important;
         }
 
-        /* 6. PAINÉIS E ABAS INTERNAS (CORRIGIDO: DEGRADÊ + BRILHO HOVER) */
+        /* 6. PAINÉIS E ABAS INTERNAS (DEGRADÊ + BRILHO HOVER + LEVANTAR) */
         [data-testid="stTabPanel"] {
             background: rgba(255, 255, 255, 0.8) !important;
             backdrop-filter: blur(10px);
@@ -148,7 +155,6 @@ def aplicar_estilo_sentinela():
             border: 1px solid #DEE2E6;
         }
         
-        /* Estilo base das abas (inativas) com degradê suave */
         .stTabs [data-baseweb="tab"] {
             border-radius: 12px 12px 0 0 !important; 
             font-weight: 700;
@@ -161,12 +167,12 @@ def aplicar_estilo_sentinela():
             transition: all 0.3s ease !important;
         }
 
-        /* EFEITO DE BRILHO (HOVER) NAS ABAS */
+        /* EFEITO DE LEVANTAR E BRILHO NAS ABAS (HOVER) */
         .stTabs [data-baseweb="tab"]:hover {
             color: #6C757D !important;
             background: #FFFFFF !important;
             box-shadow: 0 -4px 12px rgba(0,0,0,0.08) !important;
-            transform: translateY(-2px) !important;
+            transform: translateY(-3px) !important; /* LEVANTAR ABA */
         }
 
         [data-testid="stFileUploader"] {
