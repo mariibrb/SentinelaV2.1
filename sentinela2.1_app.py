@@ -261,6 +261,7 @@ if not st.session_state['user_data']:
                     if st.button("ENTRAR NO SISTEMA", use_container_width=True):
                         conn = sqlite3.connect('sentinela_usuarios.db')
                         c = conn.cursor()
+                        # AJUSTE NO LOGIN: Busca por usuário OU e-mail para permitir 'mariana'
                         c.execute("""SELECT nome, usuario, email, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret 
                                      FROM usuarios 
                                      WHERE (usuario=? OR email=?) AND senha=?""", 
@@ -294,6 +295,7 @@ if not st.session_state['user_data']:
                     if n_nome and n_email and n_pass:
                         try:
                             conn = sqlite3.connect('sentinela_usuarios.db')
+                            # AJUSTE: O e-mail agora é automaticamente o usuário
                             conn.execute("""INSERT INTO usuarios 
                                             (nome, usuario, email, senha, status, nivel, perm_xml, perm_icms, perm_difal, perm_pis, perm_ret) 
                                             VALUES (?, ?, ?, ?, 'PENDENTE', 'USER', 1, 0, 0, 0, 0)""", 
@@ -408,7 +410,7 @@ with st.sidebar:
     else:
         st.info("⚙️ Modo Administrativo Ativo.")
 
-# --- PAINEL ADM E ÁREA CENTRAL (MANTIDOS INTEGRALMENTE) ---
+# PAINEL ADM E ÁREA CENTRAL (MANTIDOS INTEGRALMENTE)
 if modo_adm:
     with st.container(border=True):
         st.subheader("🛠️ PAINEL DE CONTROLE DE USUÁRIOS")
@@ -541,20 +543,20 @@ elif emp_sel and not modo_adm:
             with d3: st.download_button("📦 DOWNLOAD COMPLETO", st.session_state['z_todos'], "completo.zip", use_container_width=True)
 
     # ----------------------------------------------------------------------
-    # 🟡 MÓDULO AMARELO: CONCILIADOR (ADICIONADO COM CAMINHÃOZINHO)
+    # 🟡 MÓDULO AMARELO: CONCILIADOR (ATUALIZADO: TRATOR DE OBRA E MENSAGEM DIRETA)
     # ----------------------------------------------------------------------
     elif modulo_selecionado == "CONCILIADOR":
         st.markdown('<div id="modulo-amarelo"></div>', unsafe_allow_html=True)
         st.markdown("""
             <div style="text-align: center; padding: 60px; background: rgba(255, 215, 0, 0.05); border: 2px dashed #FFD700; border-radius: 30px;">
-                <h1 style="font-size: 80px; margin-bottom: 0px;">🚚</h1>
-                <h2 style="color: #B8860B; font-weight: 800;">CONCILIADOR EM OBRAS</h2>
+                <h1 style="font-size: 100px; margin-bottom: 10px;">🏗️</h1>
+                <h2 style="color: #B8860B; font-weight: 800;">MÓDULO EM CONSTRUÇÃO PESADA</h2>
                 <p style="font-size: 22px; color: #555;">
-                    <b>Calma, Mariana!</b> O caminhão de itens ainda está sendo carregado.<br>
-                    Estamos treinando os robôs para o cruzamento <b>XML vs Escrituração Domínio</b>.
+                    Operação de terraplenagem fiscal iniciada. O motor de cruzamento <br>
+                    <b>XML vs Escrituração Domínio</b> está sendo montado.
                 </p>
-                <p style="font-style: italic; color: #B8860B; font-size: 18px;">
-                    🚧 Em breve: O terror das escriturações mal feitas. 🚧
+                <p style="font-style: italic; color: #B8860B; font-size: 18px; margin-top: 20px;">
+                    🚧 Status: Configuração de malha fina para NCM e Alíquotas. 🚧
                 </p>
             </div>
         """, unsafe_allow_html=True)
