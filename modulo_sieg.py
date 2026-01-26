@@ -7,99 +7,91 @@ import pandas as pd
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 
 def exibir_interface_sieg(cnpj_cliente):
-    st.markdown("### ⚡ Integração Executiva SIEG")
+    st.markdown("### ⚡ Conexão API V2 - Sistema Externo SIEG")
     
     if not cnpj_cliente:
         st.warning("⚠️ Selecione uma empresa na barra lateral.")
         return
 
     with st.container(border=True):
-        st.write(f"Conectado ao CNPJ: **{cnpj_cliente}**")
+        st.write(f"Empresa: **{cnpj_cliente}**")
         c1, c2 = st.columns(2)
         with c1:
-            data_ini = st.date_input("Início do Período", format="DD/MM/YYYY")
+            data_ini = st.date_input("Data Inicial", format="DD/MM/YYYY")
         with c2:
-            data_fim = st.date_input("Fim do Período", format="DD/MM/YYYY")
+            data_fim = st.date_input("Data Final", format="DD/MM/YYYY")
         
-        if st.button("🚀 SINCRONIZAR DADOS AGORA", use_container_width=True):
-            puxar_dados_executivo(cnpj_cliente, data_ini, data_fim)
+        doc_tipo = st.selectbox("Tipo Documento", ["nfe", "cte", "nfse"], index=0)
+        
+        if st.button("🚀 SINCRONIZAR VIA API V2", use_container_width=True):
+            executar_chamada_v2(cnpj_cliente, data_ini, data_fim, doc_tipo)
 
-def puxar_dados_executivo(cnpj_selecionado, inicio, fim):
+def executar_chamada_v2(cnpj, inicio, fim, tipo):
+    # Conforme sua nova documentação, a URL base para o HUB V2
+    url = "https://api.sieg.com/hub/v2/nfe/xml"
     api_key = st.secrets.get("SIEG_API_KEY")
-    cnpj_busca = "".join(filter(str.isdigit, cnpj_selecionado))
+    cnpj_limpo = "".join(filter(str.isdigit, cnpj))
     
-    # Rota 1: A mais moderna para Hub (v3)
-    # Rota 2: A clássica para download em lote
-    # Rota 3: A de consulta AWS
-    urls = [
-        "https://api.sieg.com/hub/v3/nfe/xml",
-        "https://api.sieg.com/api/Cofre/DownloadLote",
-        "https://api.sieg.com/aws/nfe/consultar"
-    ]
-
-    headers = {
-        "Content-Type": "application/json",
-        "apikey": api_key,
-        "Accept": "application/json"
-    }
-
+    # Payload ajustado para a V2
     payload = {
-        "Cnpj": cnpj_busca,
+        "Cnpj": cnpj_limpo,
         "DataInicio": inicio.strftime('%Y-%m-%d'),
         "DataFim": fim.strftime('%Y-%m-%d'),
-        "TipoDocumento": "nfe",
-        "IsEmissor": True # Busca as emitidas, como você faz no site
+        "TipoDocumento": tipo,
+        "IsEmissor": True # Busca as emitidas, conforme sua necessidade
+    }
+    
+    headers = {
+        "Content-Type": "application/json",
+        "apikey": api_key
     }
 
-    sucesso = False
-    with st.spinner("⏳ Estabelecendo conexão segura com o Cofre..."):
-        for url in urls:
-            try:
-                response = requests.post(url, json=payload, headers=headers, timeout=15)
-                if response.status_code == 200:
-                    dados = response.json()
-                    # A API pode retornar 'xmls' (lista) ou 'Arquivo' (zip b64)
-                    xmls_list = dados.get("xmls") or dados.get("Xmls")
-                    arquivo_zip = dados.get("Arquivo") or dados.get("arquivo")
+    with st.spinner("⏳ Consultando Sistema Externo SIEG..."):
+        try:
+            response = requests.post(url, json=payload, headers=headers)
+            
+            if response.status_code == 200:
+                dados = response.json()
+                # A V2 retorna uma lista de XMLs em base64 no campo 'xmls'
+                xmls_list = dados.get("xmls") or dados.get("Xmls") or []
+                
+                if not xmls_list:
+                    st.info("ℹ️ Nenhuma nota encontrada para este filtro.")
+                    return
 
-                    zip_buffer = io.BytesIO()
-                    
-                    if xmls_list:
-                        with zipfile.ZipFile(zip_buffer, "w") as z:
-                            for i, b in enumerate(xmls_list):
-                                z.writestr(f"nota_{i}.xml", base64.b64decode(b))
-                        sucesso = True
-                    elif arquivo_zip:
-                        zip_buffer = io.BytesIO(base64.b64decode(arquivo_zip))
-                        sucesso = True
-                    
-                    if sucesso:
-                        st.session_state['sieg_xmls_baixados'] = zip_buffer
-                        st.success(f"✅ Conexão estável! Dados capturados da rota: {url.split('/')[-2]}")
-                        st.rerun()
-                        break
-            except:
-                continue
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, "w") as z:
+                    for i, b in enumerate(xmls_list):
+                        z.writestr(f"nota_{i}.xml", base64.b64decode(b))
+                
+                st.session_state['sieg_xmls_baixados'] = zip_buffer
+                st.success(f"✅ {len(xmls_list)} Notas Sincronizadas!")
+                st.rerun()
+            
+            elif response.status_code == 404:
+                st.error("❌ Erro 404: Endpoint ou Empresa não localizada.")
+                st.info("💡 Como você é Admin, verifique se o CNPJ está habilitado em 'Sistemas Externos' no portal SIEG.")
+            else:
+                st.error(f"Erro {response.status_code}: {response.text}")
 
-    if not sucesso:
-        st.error("❌ O servidor da SIEG recusou a conexão automática.")
-        st.info("💡 Como você é ADMIN, verifique no portal se a sua chave tem a permissão 'API HuB' ativa. Algumas contas Admin precisam habilitar isso manualmente por empresa.")
+        except Exception as e:
+            st.error(f"Erro técnico: {e}")
 
 def processar_sieg_para_excel(cnpj_cliente):
-    # Chama o motor que já existe no seu sentinela_core
     try:
         zip_memoria = st.session_state['sieg_xmls_baixados']
         zip_memoria.seek(0)
         xe, xs = extrair_dados_xml_recursivo([zip_memoria], cnpj_cliente)
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            gerar_excel_final(xe, xs, cnpj_cliente, writer, "RELATORIO", False, None, None, None, "SIEG")
+            gerar_excel_final(xe, xs, cnpj_cliente, writer, "Auditoria", False, None, None, None, "SIEG_V2")
+        
         st.balloons()
-        st.download_button("💾 BAIXAR AUDITORIA COMPLETA", output.getvalue(), f"Auditoria_{cnpj_cliente}.xlsx", use_container_width=True)
+        st.download_button("💾 BAIXAR RELATÓRIO COMPLETO", output.getvalue(), f"Auditoria_SIEG_{cnpj_cliente}.xlsx", use_container_width=True)
     except Exception as e:
         st.error(f"Erro no motor: {e}")
 
 if st.session_state.get('sieg_xmls_baixados'):
     st.markdown("---")
-    if st.button("📊 GERAR RELATÓRIO EXECUTIVO", type="primary", use_container_width=True):
+    if st.button("📊 GERAR AUDITORIA EXECUTIVA", type="primary", use_container_width=True):
         processar_sieg_para_excel("CLIENTE")
