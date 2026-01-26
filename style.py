@@ -10,13 +10,13 @@ def aplicar_estilo_sentinela():
         
         .stApp { transition: background 0.8s ease-in-out !important; }
 
-        /* FUNDOS REATIVOS */
+        /* FUNDOS REATIVOS DO CONTEÚDO CENTRAL */
         div:has(#modulo-xml) .stApp { background: radial-gradient(circle at top right, #D6F2FF 0%, #F8F9FA 100%) !important; }
         div:has(#modulo-amarelo) .stApp { background: radial-gradient(circle at top right, #FFF9C4 0%, #F8F9FA 100%) !important; }
         div:has(#modulo-conformidade) .stApp { background: radial-gradient(circle at top right, #FFDEEF 0%, #F8F9FA 100%) !important; }
         div:has(#modulo-apuracao) .stApp { background: radial-gradient(circle at top right, #DFFFEA 0%, #F8F9FA 100%) !important; }
 
-        /* 2. BOTÕES DE MÓDULO (LÓGICA DE BRILHO PADRONIZADA) */
+        /* 2. BOTÕES DE MÓDULO - ESTADO INATIVO */
         div.stButton > button {
             color: white !important;
             border: none !important;
@@ -27,33 +27,35 @@ def aplicar_estilo_sentinela():
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
             text-transform: uppercase;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-            opacity: 0.7;
+            opacity: 0.7 !important;
         }
 
-        /* HOVER: LUZ BRANCA PARA TODOS */
+        /* HOVER: BRILHO BRANCO PARA TODOS */
         div.stButton > button:hover {
             opacity: 1 !important;
             transform: translateY(-5px) !important;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8) !important;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.9) !important;
         }
 
-        /* ESTADO SELECIONADO: BRILHO INTENSO E BORDA BRANCA */
+        /* 3. ESTADO ATIVO - VISIBILIDADE MÁXIMA */
+        
         /* 🟦 XML */
         div.stHorizontalBlock > div:nth-child(1) button { background: #00BFFF !important; }
         div:has(#modulo-xml) div.stHorizontalBlock > div:nth-child(1) button {
             opacity: 1 !important;
             transform: scale(1.1) translateY(-5px) !important;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.7), 0 0 40px rgba(0, 191, 255, 0.5) !important;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(0, 191, 255, 0.5) !important;
             border: 3px solid #FFFFFF !important;
         }
 
-        /* 🟨 CONCILIADOR (CORRIGIDO: AGORA BRILHA BRANCO) */
+        /* 🟨 CONCILIADOR - BRILHO BRANCO FORÇADO */
         div.stHorizontalBlock > div:nth-child(2) button { background: #FFD700 !important; color: #424242 !important; }
         div:has(#modulo-amarelo) div.stHorizontalBlock > div:nth-child(2) button {
             opacity: 1 !important;
             transform: scale(1.1) translateY(-5px) !important;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.9), 0 0 40px rgba(255, 215, 0, 0.6) !important;
-            border: 3px solid #FFFFFF !important;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 1) !important; /* BRILHO BRANCO PURO */
+            border: 3px solid #FFFFFF !important; /* BORDA BRANCA PURA */
+            color: #424242 !important;
         }
 
         /* 🟥 AUDITOR */
@@ -61,7 +63,7 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-conformidade) div.stHorizontalBlock > div:nth-child(3) button {
             opacity: 1 !important;
             transform: scale(1.1) translateY(-5px) !important;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.7), 0 0 40px rgba(255, 105, 180, 0.5) !important;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 105, 180, 0.5) !important;
             border: 3px solid #FFFFFF !important;
         }
 
@@ -70,11 +72,11 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-apuracao) div.stHorizontalBlock > div:nth-child(4) button {
             opacity: 1 !important;
             transform: scale(1.1) translateY(-5px) !important;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.7), 0 0 40px rgba(46, 204, 113, 0.5) !important;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(46, 204, 113, 0.5) !important;
             border: 3px solid #FFFFFF !important;
         }
 
-        /* 3. ABAS INTERNAS E PAINÉIS (MANTENDO AS CORES SAGRADAS) */
+        /* 4. ABAS INTERNAS E PAINÉIS */
         .stTabs [data-baseweb="tab"] {
             border-radius: 10px 30px 0 0 !important;
             font-weight: 700;
@@ -95,18 +97,11 @@ def aplicar_estilo_sentinela():
             border: 1px solid #DEE2E6;
         }
 
-        /* FILE UPLOADER */
-        [data-testid="stFileUploader"] {
-            border-radius: 20px !important;
-            border: 2px dashed #ADB5BD !important;
-            background: #FFFFFF !important;
-            padding: 30px !important;
-        }
-
-        div:has(#modulo-xml) [data-testid="stFileUploader"] { border-color: #00BFFF !important; }
-        div:has(#modulo-amarelo) [data-testid="stFileUploader"] { border-color: #FFD700 !important; }
-        div:has(#modulo-conformidade) [data-testid="stFileUploader"] { border-color: #FF69B4 !important; }
-        div:has(#modulo-apuracao) [data-testid="stFileUploader"] { border-color: #2ECC71 !important; }
+        /* FILE UPLOADER CORES REATIVAS */
+        div:has(#modulo-xml) [data-testid="stFileUploader"] { border: 2px dashed #00BFFF !important; }
+        div:has(#modulo-amarelo) [data-testid="stFileUploader"] { border: 2px dashed #FFD700 !important; }
+        div:has(#modulo-conformidade) [data-testid="stFileUploader"] { border: 2px dashed #FF69B4 !important; }
+        div:has(#modulo-apuracao) [data-testid="stFileUploader"] { border: 2px dashed #2ECC71 !important; }
 
         </style>
     """, unsafe_allow_html=True)
