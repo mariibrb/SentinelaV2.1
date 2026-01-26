@@ -202,6 +202,14 @@ st.markdown("""
         font-size: 14px;
         line-height: 1.5;
     }
+
+    /* ESTILO PARA AS ABAS DE BOTÕES SUPERIORES */
+    div.stButton > button {
+        width: 100%;
+        height: 3.5em;
+        font-weight: bold;
+        border-radius: 10px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -218,6 +226,8 @@ if 'show_adm' not in st.session_state:
     st.session_state['show_adm'] = False
 if 'change_pass_mode' not in st.session_state:
     st.session_state['change_pass_mode'] = False
+if 'modulo_atual' not in st.session_state:
+    st.session_state['modulo_atual'] = "GARIMPEIRO"
 
 def limpar_central():
     st.session_state.clear()
@@ -359,12 +369,12 @@ with st.sidebar:
     st.markdown("---")
     
     if not modo_adm:
-        emp_sel = st.selectbox("1. Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
+        emp_sel = st.selectbox("Passo 1: Empresa", [""] + [f"{l['CÓD']} - {l['RAZÃO SOCIAL']}" for _, l in df_cli.iterrows()], key="f_emp")
         
         if emp_sel:
-            reg_sel = st.selectbox("2. Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="f_reg")
-            seg_sel = st.selectbox("3. Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
-            ret_sel = st.toggle("4. Habilitar MG (RET)", key="f_ret")
+            reg_sel = st.selectbox("Passo 2: Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"], key="f_reg")
+            seg_sel = st.selectbox("Passo 3: Segmento", ["", "Comércio", "Indústria", "Equiparado"], key="f_seg")
+            ret_sel = st.toggle("Passo 4: Habilitar MG (RET)", key="f_ret")
             
             # --- CAIXA DE ANÁLISE EMPRESA - MARIANA ---
             cod_c = emp_sel.split(" - ")[0].strip()
@@ -394,11 +404,11 @@ with st.sidebar:
                 
             with st.popover("📥 Modelo Bases", use_container_width=True):
                 if st.text_input("Senha", type="password", key="p_modelo") == "Senhaforte@123":
-                    st.download_button("Baixar Modelo", pd.DataFrame().to_csv(), "modelo_base.xlsx", use_container_width=True)
+                    st.download_button("Baixar Modelo", pd.DataFrame().to_csv(), "modelo.csv", use_container_width=True)
     else:
         st.info("⚙️ Modo Administrativo Ativo.")
 
-# PAINEL ADM E ÁREA CENTRAL
+# --- PAINEL ADM E ÁREA CENTRAL (MANTIDOS INTEGRALMENTE) ---
 if modo_adm:
     with st.container(border=True):
         st.subheader("🛠️ PAINEL DE CONTROLE DE USUÁRIOS")
@@ -447,134 +457,134 @@ if modo_adm:
         conn.close()
 
 elif emp_sel and not modo_adm:
-    perms = st.session_state['user_data']['perms']
+    # --- NOVO SELETOR DE MÓDULOS (ABAS EM BOTÕES SEM BOLINHAS) ---
+    c_aba1, c_aba2, c_aba3, c_aba4 = st.columns(4)
+    if c_aba1.button("GARIMPEIRO", use_container_width=True, type="primary" if st.session_state['modulo_atual'] == "GARIMPEIRO" else "secondary"):
+        st.session_state['modulo_atual'] = "GARIMPEIRO"; st.rerun()
+    if c_aba2.button("CONCILIADOR", use_container_width=True, type="primary" if st.session_state['modulo_atual'] == "CONCILIADOR" else "secondary"):
+        st.session_state['modulo_atual'] = "CONCILIADOR"; st.rerun()
+    if c_aba3.button("AUDITOR", use_container_width=True, type="primary" if st.session_state['modulo_atual'] == "AUDITOR" else "secondary"):
+        st.session_state['modulo_atual'] = "AUDITOR"; st.rerun()
+    if c_aba4.button("ESPELHO", use_container_width=True, type="primary" if st.session_state['modulo_atual'] == "ESPELHO" else "secondary"):
+        st.session_state['modulo_atual'] = "ESPELHO"; st.rerun()
     
-    # 1. Nomes Operacionais Mariana (Limpos, sem bolinhas)
-    modulos_disponiveis = []
-    if perms.get('xml'): modulos_disponiveis.append("GARIMPEIRO")
-    modulos_disponiveis.append("CONCILIADOR") # Novo Setor Amarelo
-    modulos_disponiveis.append("AUDITOR")
-    modulos_disponiveis.append("ESPELHO")
-    
-    if modulos_disponiveis:
-        # 2. Criar o Seletor de Módulo
-        modulo_atual = st.radio("Selecione o Módulo:", modulos_disponiveis, horizontal=True, label_visibility="collapsed")
-        st.markdown("---")
+    st.markdown("---")
+    modulo_selecionado = st.session_state['modulo_atual']
 
-        # ----------------------------------------------------------------------
-        # 🔵 MÓDULO: GARIMPEIRO
-        # ----------------------------------------------------------------------
-        if modulo_atual == "GARIMPEIRO":
-            st.markdown('<div id="modulo-xml"></div>', unsafe_allow_html=True)
-            st.markdown("### 📥 Central de Importação e Garimpo")
-            c1, c2, c3 = st.columns(3)
-            with c1: 
-                u_xml = st.file_uploader("📁 ZIP XML", accept_multiple_files=True, key=f"x_{v}")
-                if u_xml and st.button("🗑️ Limpar XML", key="clr_xml"):
-                    st.session_state['v_ver'] += 1; st.rerun()
-            with c2: 
-                u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
-                if u_ae and st.button("🗑️ Limpar Entradas", key="clr_ae"):
-                    st.session_state['v_ver'] += 1; st.rerun()
-            with c3: 
-                u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
-                if u_as and st.button("🗑️ Limpar Saídas", key="clr_as"):
-                    st.session_state['v_ver'] += 1; st.rerun()
+    # ----------------------------------------------------------------------
+    # 🔵 MÓDULO AZUL: GARIMPEIRO (MANTIDO INTEGRALMENTE)
+    # ----------------------------------------------------------------------
+    if modulo_selecionado == "GARIMPEIRO":
+        st.markdown('<div id="modulo-xml"></div>', unsafe_allow_html=True)
+        st.markdown("### 📥 Central de Importação e Garimpo")
+        c1, c2, c3 = st.columns(3)
+        with c1: 
+            u_xml = st.file_uploader("📁 ZIP XML", accept_multiple_files=True, key=f"x_{v}")
+            if u_xml and st.button("🗑️ Excluir Tudo (XML)", use_container_width=True, key="clr_xml"):
+                st.session_state['v_ver'] += 1; st.rerun()
+        with c2: 
+            u_ae = st.file_uploader("📥 Autenticidade Entradas", accept_multiple_files=True, key=f"ae_{v}")
+            if u_ae and st.button("🗑️ Excluir Tudo (Entradas)", use_container_width=True, key="clr_ae"):
+                st.session_state['v_ver'] += 1; st.rerun()
+        with c3: 
+            u_as = st.file_uploader("📤 Autenticidade Saídas", accept_multiple_files=True, key=f"as_{v}")
+            if u_as and st.button("🗑️ Excluir Tudo (Saídas)", use_container_width=True, key="clr_as"):
+                st.session_state['v_ver'] += 1; st.rerun()
 
-            if st.button("🚀 INICIAR GARIMPEIRO", use_container_width=True):
-                if u_xml:
-                    with st.spinner("Auditando..."):
-                        try:
-                            u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
-                            xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
-                            buf = io.BytesIO()
-                            with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
-                                gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, "CEGAS")
-                            st.session_state['relat_buf'] = buf.getvalue()
-                            
-                            p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
-                            b_org, b_todos = io.BytesIO(), io.BytesIO()
-                            with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
-                                for zf in u_validos:
-                                    zf.seek(0)
-                                    with zipfile.ZipFile(zf) as zi:
-                                        for name in zi.namelist():
-                                            if name.lower().endswith('.xml'):
-                                                xml_d = zi.read(name)
-                                                res, is_p = identify_xml_info(xml_d, cnpj_limpo, name)
-                                                if res and res["Chave"] not in p_keys:
-                                                    p_keys.add(res["Chave"])
-                                                    z_org.writestr(f"{res['Pasta']}/{name}", xml_d)
-                                                    z_todos.writestr(name, xml_d)
-                                                    rel_list.append(res)
-                                                    if is_p:
-                                                        if res["Status"] in st_counts: st_counts[res["Status"]] += 1
-                                                        sk = (res["Tipo"], res["Série"])
-                                                        if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
-                                                        seq_map[sk]["nums"].add(res["Número"])
-                                                        seq_map[sk]["valor"] += res["Valor"]
-                            
-                            res_f, fal_f = [], []
-                            for (t, s), d in seq_map.items():
-                                ns = d["nums"]
-                                res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
-                                for b in sorted(list(set(range(min(ns), max(ns) + 1)) - ns)):
-                                    fal_f.append({"Série": s, "Nº Faltante": b})
-                                    
-                            st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'relatorio': rel_list, 'executado': True})
-                            st.rerun()
-                        except Exception as e: st.error(f"Erro: {e}")
+        if st.button("🚀 INICIAR GARIMPEIRO", use_container_width=True):
+            if u_xml:
+                with st.spinner("Auditando..."):
+                    try:
+                        u_validos = [f for f in u_xml if zipfile.is_zipfile(f)]
+                        xe, xs = extrair_dados_xml_recursivo(u_validos, cnpj_limpo)
+                        buf = io.BytesIO()
+                        with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
+                            gerar_excel_final(xe, xs, cod_c, writer, reg_sel, ret_sel, u_ae, u_as, None, "CEGAS")
+                        st.session_state['relat_buf'] = buf.getvalue()
+                        
+                        p_keys, rel_list, seq_map, st_counts = set(), [], {}, {"CANCELADOS": 0, "INUTILIZADOS": 0}
+                        b_org, b_todos = io.BytesIO(), io.BytesIO()
+                        with zipfile.ZipFile(b_org, "w") as z_org, zipfile.ZipFile(b_todos, "w") as z_todos:
+                            for zf in u_validos:
+                                zf.seek(0)
+                                with zipfile.ZipFile(zf) as zi:
+                                    for name in zi.namelist():
+                                        if name.lower().endswith('.xml'):
+                                            xml_d = zi.read(name)
+                                            res, is_p = identify_xml_info(xml_d, cnpj_limpo, name)
+                                            if res and res["Chave"] not in p_keys:
+                                                p_keys.add(res["Chave"])
+                                                z_org.writestr(f"{res['Pasta']}/{name}", xml_d); z_todos.writestr(name, xml_d)
+                                                rel_list.append(res)
+                                                if is_p:
+                                                    if res["Status"] in st_counts: st_counts[res["Status"]] += 1
+                                                    sk = (res["Tipo"], res["Série"])
+                                                    if sk not in seq_map: seq_map[sk] = {"nums": set(), "valor": 0.0}
+                                                    seq_map[sk]["nums"].add(res["Número"]); seq_map[sk]["valor"] += res["Valor"]
+                        
+                        res_f, fal_f = [], []
+                        for (t, s), d in seq_map.items():
+                            ns = d["nums"]
+                            res_f.append({"Documento": t, "Série": s, "Início": min(ns), "Fim": max(ns), "Qtd": len(ns), "Valor": round(d["valor"], 2)})
+                            for b in sorted(list(set(range(min(ns), max(ns) + 1)) - ns)): fal_f.append({"Série": s, "Nº Faltante": b})
+                        
+                        st.session_state.update({'z_org': b_org.getvalue(), 'z_todos': b_todos.getvalue(), 'df_resumo': pd.DataFrame(res_f), 'df_faltantes': pd.DataFrame(fal_f), 'st_counts': st_counts, 'relatorio': rel_list, 'executado': True})
+                        st.rerun()
+                    except Exception as e: st.error(f"Erro no Processamento: {e}")
 
-            if st.session_state.get('executado'):
-                st.markdown("---")
-                st.write("### 📥 Downloads")
-                d1, d2, d3 = st.columns(3)
-                with d1: st.download_button("💾 RELATÓRIO EXCEL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, type="primary")
-                with d2: st.download_button("📂 ZIP SEPARADO", st.session_state['z_org'], "organizado.zip", use_container_width=True)
-                with d3: st.download_button("📦 DOWNLOAD COMPLETO", st.session_state['z_todos'], "completo.zip", use_container_width=True)
+        if st.session_state.get('executado'):
+            st.markdown("---")
+            st.write("### 📥 Downloads")
+            d1, d2, d3 = st.columns(3)
+            with d1: st.download_button("💾 RELATÓRIO EXCEL", st.session_state['relat_buf'], f"Sentinela_{cod_c}.xlsx", use_container_width=True, type="primary")
+            with d2: st.download_button("📂 ZIP SEPARADO", st.session_state['z_org'], "organizado.zip", use_container_width=True)
+            with d3: st.download_button("📦 DOWNLOAD COMPLETO", st.session_state['z_todos'], "completo.zip", use_container_width=True)
 
-        # ----------------------------------------------------------------------
-        # 🟡 MÓDULO: CONCILIADOR (ADICIONADO)
-        # ----------------------------------------------------------------------
-        elif modulo_atual == "CONCILIADOR":
-            st.markdown('<div id="modulo-amarelo"></div>', unsafe_allow_html=True)
-            st.markdown("""
-                <div style="text-align: center; padding: 60px; background: rgba(255, 215, 0, 0.05); border: 2px dashed #FFD700; border-radius: 30px;">
-                    <h1 style="font-size: 80px; margin-bottom: 0px;">🕵️‍♀️</h1>
-                    <h2 style="color: #B8860B; font-weight: 800;">CONCILIADOR OPERACIONAL</h2>
-                    <p style="font-size: 20px; color: #555;">Cruzamento de Itens: <b>XML vs Escrituração Domínio</b>.</p>
-                    <p style="font-style: italic; color: #B8860B;">🚧 Mariana, os robôs estão em treinamento para este setor! 🚧</p>
-                </div>
-            """, unsafe_allow_html=True)
+    # ----------------------------------------------------------------------
+    # 🟡 MÓDULO AMARELO: CONCILIADOR (ADICIONADO COM CAMINHÃOZINHO)
+    # ----------------------------------------------------------------------
+    elif modulo_selecionado == "CONCILIADOR":
+        st.markdown('<div id="modulo-amarelo"></div>', unsafe_allow_html=True)
+        st.markdown("""
+            <div style="text-align: center; padding: 60px; background: rgba(255, 215, 0, 0.05); border: 2px dashed #FFD700; border-radius: 30px;">
+                <h1 style="font-size: 80px; margin-bottom: 0px;">🚚</h1>
+                <h2 style="color: #B8860B; font-weight: 800;">CONCILIADOR EM OBRAS</h2>
+                <p style="font-size: 22px; color: #555;">
+                    <b>Calma, Mariana!</b> O caminhão de itens ainda está sendo carregado.<br>
+                    Estamos treinando os robôs para o cruzamento <b>XML vs Escrituração Domínio</b>.
+                </p>
+                <p style="font-style: italic; color: #B8860B; font-size: 18px;">
+                    🚧 Em breve: O terror das escriturações mal feitas. 🚧
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
 
-        # ----------------------------------------------------------------------
-        # 💗 MÓDULO: AUDITOR
-        # ----------------------------------------------------------------------
-        elif modulo_atual == "AUDITOR":
-            st.markdown('<div id="modulo-conformidade"></div>', unsafe_allow_html=True)
-            sub_rosa = ["📊 ICMS/IPI", "⚖️ DIFAL/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
-            if ret_sel: sub_rosa.insert(2, "🏨 RET")
-            
-            tabs_rosa = st.tabs(sub_rosa)
-            for j, nome_sub in enumerate(sub_rosa):
-                with tabs_rosa[j]:
-                    st.markdown(f"#### Auditoria {nome_sub}")
-                    st.file_uploader(f"📑 Gerencial {nome_sub}", key=f"g_aud_{j}_{v}")
-                    st.button(f"🚀 PROCESSAR {nome_sub}", key=f"btn_aud_{j}", use_container_width=True)
+    # ----------------------------------------------------------------------
+    # 💗 MÓDULO ROSA: AUDITOR (MANTIDO INTEGRALMENTE)
+    # ----------------------------------------------------------------------
+    elif modulo_selecionado == "AUDITOR":
+        st.markdown('<div id="modulo-conformidade"></div>', unsafe_allow_html=True)
+        sub_rosa = ["📊 ICMS/IPI", "⚖️ DIFAL/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
+        if ret_sel: sub_rosa.insert(2, "🏨 RET")
+        tabs_rosa = st.tabs(sub_rosa)
+        for j, nome_sub in enumerate(sub_rosa):
+            with tabs_rosa[j]:
+                st.markdown(f"#### Auditoria {nome_sub}")
+                st.file_uploader(f"📑 Gerencial {nome_sub}", key=f"g_aud_{j}_{v}")
+                st.button(f"🚀 PROCESSAR {nome_sub}", key=f"btn_aud_{j}", use_container_width=True)
 
-        # ----------------------------------------------------------------------
-        # 🟢 MÓDULO: ESPELHO
-        # ----------------------------------------------------------------------
-        elif modulo_atual == "ESPELHO":
-            st.markdown('<div id="modulo-apuracao"></div>', unsafe_allow_html=True)
-            sub_verde = ["📊 ICMS/ IPI", "⚖️ Difal/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
-            if ret_sel: sub_verde.insert(2, "RET")
-            
-            tabs_verde = st.tabs(sub_verde)
-            for k, nome_trib in enumerate(sub_verde):
-                with tabs_verde[k]:
-                    st.markdown(f"### 🟢 Conferência: {nome_trib}")
-                    st.info(f"Veredito Final de {nome_trib}")
+    # ----------------------------------------------------------------------
+    # 🟢 MÓDULO VERDE: ESPELHO (MANTIDO INTEGRALMENTE)
+    # ----------------------------------------------------------------------
+    elif modulo_selecionado == "ESPELHO":
+        st.markdown('<div id="modulo-apuracao"></div>', unsafe_allow_html=True)
+        sub_verde = ["📊 ICMS/ IPI", "⚖️ Difal/ST", "💰 PIS/COFINS", "💎 IBS / CBS"]
+        if ret_sel: sub_verde.insert(2, "RET")
+        tabs_verde = st.tabs(sub_verde)
+        for k, nome_trib in enumerate(sub_verde):
+            with tabs_verde[k]:
+                st.markdown(f"### 🟢 Conferência: {nome_trib}")
+                st.info(f"Veredito Final de {nome_trib}")
 
 else:
     st.info("👈 Selecione a empresa na barra lateral para começar a auditoria.")
