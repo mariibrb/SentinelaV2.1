@@ -7,7 +7,6 @@ def aplicar_estilo_sentinela():
 
         /* 1. FUNDAÇÃO E CLIMA REATIVO */
         header, [data-testid="stHeader"] { display: none !important; }
-        
         .stApp { transition: background 0.8s ease-in-out !important; }
 
         /* FUNDOS REATIVOS */
@@ -38,7 +37,6 @@ def aplicar_estilo_sentinela():
         }
 
         /* ESTADO SELECIONADO: BRILHO INTENSO E BORDA BRANCA */
-        /* 🟦 XML */
         div.stHorizontalBlock > div:nth-child(1) button { background: #00BFFF !important; }
         div:has(#modulo-xml) div.stHorizontalBlock > div:nth-child(1) button {
             opacity: 1 !important;
@@ -47,7 +45,6 @@ def aplicar_estilo_sentinela():
             border: 3px solid #FFFFFF !important;
         }
 
-        /* 🟨 CONCILIADOR (CORRIGIDO: AGORA BRILHA BRANCO) */
         div.stHorizontalBlock > div:nth-child(2) button { background: #FFD700 !important; color: #424242 !important; }
         div:has(#modulo-amarelo) div.stHorizontalBlock > div:nth-child(2) button {
             opacity: 1 !important;
@@ -56,7 +53,6 @@ def aplicar_estilo_sentinela():
             border: 3px solid #FFFFFF !important;
         }
 
-        /* 🟥 AUDITOR */
         div.stHorizontalBlock > div:nth-child(3) button { background: #FF69B4 !important; }
         div:has(#modulo-conformidade) div.stHorizontalBlock > div:nth-child(3) button {
             opacity: 1 !important;
@@ -65,7 +61,6 @@ def aplicar_estilo_sentinela():
             border: 3px solid #FFFFFF !important;
         }
 
-        /* 🟩 ESPELHO */
         div.stHorizontalBlock > div:nth-child(4) button { background: #2ECC71 !important; }
         div:has(#modulo-apuracao) div.stHorizontalBlock > div:nth-child(4) button {
             opacity: 1 !important;
@@ -74,7 +69,7 @@ def aplicar_estilo_sentinela():
             border: 3px solid #FFFFFF !important;
         }
 
-        /* 3. ABAS INTERNAS E PAINÉIS (MANTENDO AS CORES SAGRADAS) */
+        /* 3. ABAS INTERNAS E PAINÉIS */
         .stTabs [data-baseweb="tab"] {
             border-radius: 10px 30px 0 0 !important;
             font-weight: 700;
@@ -95,7 +90,7 @@ def aplicar_estilo_sentinela():
             border: 1px solid #DEE2E6;
         }
 
-        /* FILE UPLOADER */
+        /* 4. FILE UPLOADER - AS BORDAS REATIVAS VOLTARAM */
         [data-testid="stFileUploader"] {
             border-radius: 20px !important;
             border: 2px dashed #ADB5BD !important;
@@ -107,6 +102,17 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-amarelo) [data-testid="stFileUploader"] { border-color: #FFD700 !important; }
         div:has(#modulo-conformidade) [data-testid="stFileUploader"] { border-color: #FF69B4 !important; }
         div:has(#modulo-apuracao) [data-testid="stFileUploader"] { border-color: #2ECC71 !important; }
+
+        /* AQUI ESTÁ A ÚNICA MUDANÇA: BOTAO BROWSE SEMPRE CINZA */
+        [data-testid="stFileUploader"] section button {
+            background-color: #6C757D !important;
+            color: white !important;
+            border: none !important;
+        }
+        [data-testid="stFileUploader"] section button:hover {
+            background-color: #495057 !important;
+        }
+        [data-testid="stFileUploader"] svg { fill: #6C757D !important; }
 
         </style>
     """, unsafe_allow_html=True)
