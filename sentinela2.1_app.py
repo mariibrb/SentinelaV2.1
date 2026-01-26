@@ -2,11 +2,8 @@ import streamlit as st
 import os
 import io
 import pandas as pd
-import zipfile
-import re
 import sqlite3
 from style import aplicar_estilo_sentinela
-from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 
 # --- CONFIGURAÇÕES DA PÁGINA ---
 st.set_page_config(page_title="Sentinela 2.4.0", page_icon="🧡", layout="wide")
@@ -24,10 +21,6 @@ st.markdown("""
         margin-bottom: -40px !important; 
         padding: 0px !important;
     }
-    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-        gap: 0.5rem !important; 
-        padding-top: 0rem !important;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -36,14 +29,11 @@ aplicar_estilo_sentinela()
 # --- CARREGAMENTO DE CLIENTES ---
 @st.cache_data(ttl=600)
 def carregar_clientes():
-    caminhos = ["Clientes Ativos.xlsx", ".streamlit/Clientes Ativos.xlsx", "streamlit/Clientes Ativos.xlsx"]
-    for p in caminhos:
-        if os.path.exists(p):
-            try:
-                df = pd.read_excel(p).dropna(subset=['CÓD', 'RAZÃO SOCIAL'])
-                df['CÓD'] = df['CÓD'].apply(lambda x: str(int(float(x))))
-                return df
-            except: continue
+    p = "Clientes Ativos.xlsx"
+    if os.path.exists(p):
+        df = pd.read_excel(p).dropna(subset=['CÓD', 'RAZÃO SOCIAL'])
+        df['CÓD'] = df['CÓD'].apply(lambda x: str(int(float(x))))
+        return df
     return pd.DataFrame()
 
 df_cli = carregar_clientes()
@@ -51,9 +41,9 @@ df_cli = carregar_clientes()
 if 'modulo_atual' not in st.session_state:
     st.session_state['modulo_atual'] = "GARIMPEIRO"
 
-# --- SIDEBAR OPERACIONAL (COM MENSAGENS DE BASE) ---
+# --- SIDEBAR OPERACIONAL ---
 with st.sidebar:
-    # Busca e exibe a Logo
+    # 1. LOGO
     for logo_path in ["logo.png", "streamlit/logo.png", ".streamlit/logo.png"]:
         if os.path.exists(logo_path):
             st.image(logo_path, use_container_width=True)
@@ -69,29 +59,26 @@ with st.sidebar:
         emp_sel = ""
 
     if emp_sel:
-        # 1. Parâmetros Fiscais
+        # 2. FILTROS TRIBUTÁRIOS
         reg_sel = st.selectbox("2. Regime Fiscal", ["", "Lucro Real", "Lucro Presumido", "Simples Nacional", "MEI"])
         seg_sel = st.selectbox("3. Segmento", ["", "Comércio", "Indústria", "Equiparado"])
+        
+        st.markdown("---")
+        # 3. LÓGICA DO RET (MENSAGEM DE BASE)
         ret_sel = st.toggle("4. Habilitar MG (RET)")
         
-        cod_c = emp_sel.split(" - ")[0].strip()
-        dados_e = df_cli[df_cli['CÓD'] == cod_c].iloc[0]
-        
-        # 2. STATUS DA BASE (MODO ELITE OU CEGAS)
-        st.markdown("---")
-        # Procura a base na pasta (ajuste o caminho conforme sua estrutura do GitHub)
-        path_base = f"Bases_Tributarias/{cod_c}-Bases_Tributarias.xlsx"
-        
-        if os.path.exists(path_base):
-            st.success("💎 Modo Elite: Base Localizada")
-        else:
-            st.warning("🔍 Modo Cegas: Base não localizada")
-
-        # 3. STATUS DO RET (SE ATIVADO)
         if ret_sel:
-            st.info("🏨 Auditoria RET MG Ativa")
+            # Aqui simulamos a busca pelo arquivo de base de RET
+            cod_c = emp_sel.split(" - ")[0].strip()
+            path_ret = f"Bases_RET/{cod_c}-BaseRET.xlsx" # Caminho onde ficam as bases de RET
+            
+            if os.path.exists(path_ret):
+                st.success("💎 Modo Elite: Base RET Localizada")
+            else:
+                st.warning("🔍 Modo Cegas: Base RET não localizada")
 
-        # 4. CAIXA DE ANÁLISE MARIANA
+        # 4. STATUS MARIANA
+        dados_e = df_cli[df_cli['CÓD'] == emp_sel.split(" - ")[0].strip()].iloc[0]
         st.markdown(f"""
             <div style="background-color: #f8f9fa; border-left: 5px solid #ff4b4b; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 13px;">
                 <b>🚀 Analisando:</b> {dados_e['RAZÃO SOCIAL']}<br>
@@ -99,10 +86,16 @@ with st.sidebar:
             </div>
         """, unsafe_allow_html=True)
         
-        # 5. POPOVER DE MODELOS
-        with st.popover("📥 Baixar Modelos Base", use_container_width=True):
-            if st.text_input("Senha", type="password", key="p_side") == "Senhaforte@123":
-                st.download_button("Modelo Padrão (.xlsx)", pd.DataFrame().to_csv(), "modelo.xlsx")
+        st.markdown("---")
+        # 5. BOTAO DE MODELOS DE BASES (RESTAURADO)
+        with st.popover("📥 Baixar Modelos de Bases", use_container_width=True):
+            st.write("Área restrita: Modelos de auditoria")
+            senha_mod = st.text_input("Senha de Acesso", type="password", key="p_modelos")
+            if senha_mod == "Senhaforte@123":
+                st.download_button("Modelo Base Tributária (.xlsx)", pd.DataFrame().to_csv(), "modelo_base_sentinela.xlsx", use_container_width=True)
+                st.download_button("Modelo Base RET (.xlsx)", pd.DataFrame().to_csv(), "modelo_ret_sentinela.xlsx", use_container_width=True)
+            elif senha_mod != "":
+                st.error("Senha incorreta.")
 
     st.markdown("---")
     if st.button("🚪 SAIR", use_container_width=True):
@@ -113,7 +106,7 @@ with st.sidebar:
 st.markdown("<div class='titulo-principal'>SENTINELA 2.4.0</div><div class='barra-laranja'></div>", unsafe_allow_html=True)
 
 if emp_sel:
-    # BOTÕES SOMENTE TEXTO
+    # NAVEGAÇÃO LIMPA (SÓ TEXTO)
     c1, c2, c3, c4 = st.columns(4)
     setores = ["GARIMPEIRO", "CONCILIADOR", "AUDITOR", "ESPELHO"]
     cols = [c1, c2, c3, c4]
@@ -127,33 +120,28 @@ if emp_sel:
     mod = st.session_state['modulo_atual']
     st.markdown("---")
 
-    # Módulo Garimpeiro com os botões de download que você pediu
     if mod == "GARIMPEIRO":
         st.markdown('<div id="modulo-xml"></div>', unsafe_allow_html=True)
         st.subheader("Auditoria de Origem (XML)")
-        ca, cb = st.columns(2)
-        u_xml = ca.file_uploader("ZIP de XMLs", accept_multiple_files=True)
-        u_sieg = cb.file_uploader("Autenticidade SIEG")
-        
-        st.button("🚀 INICIAR GARIMPEIRO", use_container_width=True)
-        
-        st.markdown("### 📥 Área de Downloads")
+        # Lógica de download
+        st.markdown("### 📥 Resultados do Garimpeiro")
         d1, d2, d3 = st.columns(3)
-        d1.button("💾 Baixar Relatório de Análises", use_container_width=True)
-        d2.button("📂 Baixar ZIP Separadinho", use_container_width=True)
-        d3.button("📦 Baixar Download Completo", use_container_width=True)
+        d1.button("💾 Relatório de Análises", use_container_width=True)
+        d2.button("📂 ZIP Separadinho", use_container_width=True)
+        d3.button("📦 Download Completo", use_container_width=True)
 
     elif mod == "CONCILIADOR":
         st.markdown('<div id="modulo-amarelo"></div>', unsafe_allow_html=True)
-        st.info("Módulo Conciliador em construção...")
+        st.markdown("<h1 style='text-align: center;'>🕵️‍♀️</h1><h3 style='text-align: center;'>Operação Pente Fino em Construção...</h3>", unsafe_allow_html=True)
 
     elif mod == "AUDITOR":
         st.markdown('<div id="modulo-conformidade"></div>', unsafe_allow_html=True)
-        st.tabs(["💰 PIS/COFINS", "📊 ICMS/IPI", "🏨 RET"])
+        st.subheader("Auditoria de Escrituração (Domínio)")
+        st.tabs(["💰 PIS/COFINS", "📊 ICMS/IPI", "🏨 RET", "⚖️ OUTROS"])
 
     elif mod == "ESPELHO":
         st.markdown('<div id="modulo-apuracao"></div>', unsafe_allow_html=True)
-        st.info("Aguardando auditoria...")
+        st.subheader("Espelho dos Livros Fiscais")
 
 else:
-    st.info("👈 Selecione a empresa na barra lateral para carregar os setores.")
+    st.info("👈 Selecione a empresa na barra lateral para começar.")
