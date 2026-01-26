@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;800&family=Plus+Jakarta+Sans:wght@400;700&display=swap');
 
-        /* 1. FUNDO DO APP */
+        /* 1. FUNDO REATIVO POR SETOR */
         header, [data-testid="stHeader"] { display: none !important; }
         .stApp { transition: background 0.8s ease-in-out !important; }
 
@@ -14,7 +14,7 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-conformidade) .stApp { background: radial-gradient(circle at top right, #FFDEEF 0%, #F8F9FA 100%) !important; }
         div:has(#modulo-apuracao) .stApp { background: radial-gradient(circle at top right, #DFFFEA 0%, #F8F9FA 100%) !important; }
 
-        /* 2. BOTÕES DO MENU SUPERIOR */
+        /* 2. MENU SUPERIOR (BOTÕES DE MÓDULO) COM BRILHO */
         div.stButton > button {
             color: white !important;
             border: none !important;
@@ -24,6 +24,7 @@ def aplicar_estilo_sentinela():
             height: 75px !important;
             text-transform: uppercase;
             opacity: 0.6 !important;
+            transition: all 0.4s ease !important;
         }
 
         /* BRILHO BRANCO NO MENU ATIVO */
@@ -37,7 +38,7 @@ def aplicar_estilo_sentinela():
             border: 3px solid #FFFFFF !important;
         }
 
-        /* 3. AS ABAS (PASTINHAS) - CORES VOLTARAM */
+        /* 3. AS ABAS (PASTINHAS) - CORES E ESTILO VOLTARAM */
         .stTabs [data-baseweb="tab"] {
             border-radius: 10px 30px 0 0 !important;
             font-weight: 700;
@@ -46,13 +47,13 @@ def aplicar_estilo_sentinela():
             color: #6C757D !important;
         }
 
-        /* CORES POR SETOR - RESTAURADO */
-        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background-color: #00BFFF !important; color: white !important; }
-        div:has(#modulo-amarelo) .stTabs [aria-selected="true"] { background-color: #FFD700 !important; color: #424242 !important; }
-        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background-color: #FF69B4 !important; color: white !important; }
-        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background-color: #2ECC71 !important; color: white !important; }
+        /* CORES ESPECÍFICAS DE CADA SETOR NAS ABAS */
+        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background-color: #00BFFF !important; color: white !important; box-shadow: 0 -5px 15px rgba(0, 191, 255, 0.3); }
+        div:has(#modulo-amarelo) .stTabs [aria-selected="true"] { background-color: #FFD700 !important; color: #424242 !important; box-shadow: 0 -5px 15px rgba(255, 215, 0, 0.3); }
+        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background-color: #FF69B4 !important; color: white !important; box-shadow: 0 -5px 15px rgba(255, 105, 180, 0.3); }
+        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background-color: #2ECC71 !important; color: white !important; box-shadow: 0 -5px 15px rgba(46, 204, 113, 0.3); }
 
-        /* 4. ÁREA DE UPLOAD - BLINDAGEM CINZA TOTAL */
+        /* 4. ÁREA DE UPLOAD - TOTALMENTE CINZA (BLINDADO) */
         [data-testid="stFileUploader"] {
             border: 2px dashed #ADB5BD !important;
             background: #FFFFFF !important;
@@ -60,7 +61,7 @@ def aplicar_estilo_sentinela():
         }
 
         [data-testid="stFileUploader"] section button {
-            background-color: #6C757D !important; /* CINZA FIXO */
+            background-color: #6C757D !important; /* CINZA ESCURO */
             color: white !important;
             border: none !important;
             box-shadow: none !important;
@@ -70,7 +71,6 @@ def aplicar_estilo_sentinela():
             background-color: #495057 !important;
         }
 
-        /* Ícones e textos internos do upload em cinza */
         [data-testid="stFileUploader"] svg { fill: #6C757D !important; }
         [data-testid="stFileUploader"] div { color: #6C757D !important; }
 
