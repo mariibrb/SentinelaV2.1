@@ -348,7 +348,7 @@ with st.sidebar:
     
     if st.session_state['user_data']['nivel'] == 'ADMIN':
         if not modo_adm:
-            if st.button("🛠️ ABRIR GESTÃO ADMINISTRATIVA", use_container_width=True):
+            if st.button("🛠️ ÁREA ADMINISTRATIVA", use_container_width=True):
                 st.session_state['show_adm'] = True
                 st.rerun()
         else:
