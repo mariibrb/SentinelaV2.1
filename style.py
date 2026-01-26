@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;800&family=Plus+Jakarta+Sans:wght@400;700&display=swap');
 
-        /* 1. FUNDO REATIVO (APENAS O FUNDO DO APP MUDARÁ) */
+        /* 1. FUNDO REATIVO */
         header, [data-testid="stHeader"] { display: none !important; }
         .stApp { transition: background 0.8s ease-in-out !important; }
 
@@ -38,14 +38,13 @@ def aplicar_estilo_sentinela():
             border: 3px solid #FFFFFF !important;
         }
 
-        /* 3. NEUTRALIZAÇÃO TOTAL DO UPLOAD (ADEUS COLORIDO) */
+        /* 3. NEUTRALIZAÇÃO DO UPLOAD (CINZA FIXO) */
         [data-testid="stFileUploader"] {
             border: 2px dashed #ADB5BD !important;
             background: #FFFFFF !important;
             border-radius: 20px !important;
         }
 
-        /* Botão Browse Files SEMPRE CINZA */
         [data-testid="stFileUploader"] section button {
             background-color: #6C757D !important;
             color: #FFFFFF !important;
@@ -57,15 +56,26 @@ def aplicar_estilo_sentinela():
             background-color: #495057 !important;
         }
 
-        /* 4. ABAS E PAINÉIS (PADRÃO ORIGINAL) */
+        /* 4. ABAS (TABS) COLORIDAS POR SETOR */
         .stTabs [data-baseweb="tab"] {
+            border-radius: 10px 30px 0 0 !important;
             font-weight: 700;
+            padding: 12px 25px !important;
+            background: rgba(255,255,255,0.5) !important;
+            transition: all 0.3s ease;
         }
 
+        /* Cor da aba ativa conforme o módulo */
+        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
+        div:has(#modulo-amarelo) .stTabs [aria-selected="true"] { background: #FFD700 !important; color: #424242 !important; }
+        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
+        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; }
+
+        /* Painel das abas */
         [data-testid="stTabPanel"] {
             background: rgba(255, 255, 255, 0.8) !important;
             backdrop-filter: blur(10px);
-            border-radius: 25px !important;
+            border-radius: 0 25px 25px 25px !important;
             padding: 40px !important;
             border: 1px solid #DEE2E6;
         }
