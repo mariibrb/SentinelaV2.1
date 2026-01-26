@@ -16,7 +16,7 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-conformidade) .stApp { background: radial-gradient(circle at top right, #FFDEEF 0%, #F8F9FA 100%) !important; }
         div:has(#modulo-apuracao) .stApp { background: radial-gradient(circle at top right, #DFFFEA 0%, #F8F9FA 100%) !important; }
 
-        /* 2. MENU MASTER - CORES FIXAS NOS BOTÕES SUPERIORES */
+        /* 2. MENU MASTER (BOTÕES SUPERIORES) - CORES DAS ZONAS MANTIDAS */
         div.stButton > button {
             color: white !important;
             border: none !important;
@@ -44,7 +44,7 @@ def aplicar_estilo_sentinela():
             border: 3px solid #FFFFFF !important;
         }
 
-        /* 3. AS ABAS (PASTINHAS) - CORES RESTAURADAS */
+        /* 3. AS ABAS (PASTINHAS) - CORES E BRILHOS MANTIDOS */
         .stTabs [data-baseweb="tab"] {
             border-radius: 10px 30px 0 0 !important;
             font-weight: 700;
@@ -58,7 +58,7 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background-color: #FF69B4 !important; color: white !important; }
         div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background-color: #2ECC71 !important; color: white !important; }
 
-        /* 4. ÁREA DE UPLOAD E BOTÃO BROWSE - TUDO CINZA (BLINDADO) */
+        /* 4. ÁREA DE UPLOAD - BOTÕES BROWSE SEMPRE CINZA (BLINDAGEM TOTAL) */
         [data-testid="stFileUploader"] {
             border: 2px dashed #ADB5BD !important;
             background: #FFFFFF !important;
@@ -66,23 +66,24 @@ def aplicar_estilo_sentinela():
             padding: 30px !important;
         }
 
-        /* AJUSTE DO BOTÃO "BROWSE FILES" - FORÇANDO CINZA */
-        [data-testid="stFileUploader"] section button {
-            background-color: #6C757D !important; 
+        /* REMOVE A MERDA DAS CORES DOS BOTÕES BROWSE */
+        [data-testid="stFileUploader"] section button, 
+        [data-testid="stFileUploader"] .st-emotion-cache-1ae8p9m e1bju1670 {
+            background-color: #5A6268 !important; 
             color: white !important;
             border: none !important;
             box-shadow: none !important;
         }
 
-        /* Efeito ao passar o mouse no browse files */
+        /* Efeito hover neutro */
         [data-testid="stFileUploader"] section button:hover {
-            background-color: #495057 !important;
+            background-color: #434a50 !important;
             color: white !important;
         }
 
-        /* Força o ícone de upload e textos auxiliares para cinza */
-        [data-testid="stFileUploader"] svg { fill: #6C757D !important; }
-        [data-testid="stFileUploader"] small { color: #6C757D !important; }
+        /* Neutraliza ícones e textos internos */
+        [data-testid="stFileUploader"] svg { fill: #5A6268 !important; }
+        [data-testid="stFileUploader"] small { color: #5A6268 !important; }
 
         /* 5. PAINEL DAS ABAS */
         [data-testid="stTabPanel"] {
