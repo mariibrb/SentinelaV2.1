@@ -5,14 +5,14 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;800&family=Plus+Jakarta+Sans:wght@400;700&display=swap');
 
-        /* 1. FUNDAÇÃO CHUMBO CLARO/PRATEADO */
+        /* 1. FUNDAÇÃO E SIDEBAR */
         [data-testid="stSidebar"] { background-color: #E9ECEF !important; border-right: 5px solid #ADB5BD !important; }
         header, [data-testid="stHeader"] { display: none !important; }
         .stApp { background: radial-gradient(circle at top left, #F8F9FA 0%, #DEE2E6 100%) !important; }
         
         .titulo-principal { font-family: 'Montserrat', sans-serif !important; color: #6C757D !important; font-size: 0.9rem !important; font-weight: 800; text-transform: uppercase; padding: 5px 0 !important; letter-spacing: 2px; }
 
-        /* 2. MENU MASTER (BOTÕES SUPERIORES) */
+        /* 2. MENU SUPERIOR (ABAS MASTER) - ESTILO PASTINHA ORIGINAL */
         div.stButton > button {
             background: linear-gradient(180deg, #FFFFFF 0%, #CED4DA 100%) !important;
             border: 1px solid #ADB5BD !important;
@@ -24,49 +24,52 @@ def aplicar_estilo_sentinela():
             transition: all 0.3s ease;
         }
 
-        /* --- PINTANDO O INDICADOR POR MÓDULO (INDEPENDENTE) --- */
+        /* --- IDENTIDADE POR ZONA (ABA SUPERIOR) --- */
         div:has(#modulo-xml) div.stHorizontalBlock > div:nth-child(1) button { border-top: 4px solid #00BFFF !important; color: #212529 !important; transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0, 191, 255, 0.3); }
         div:has(#modulo-amarelo) div.stHorizontalBlock > div:nth-child(2) button { border-top: 4px solid #FFD700 !important; color: #212529 !important; transform: translateY(-5px); box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3); }
         div:has(#modulo-conformidade) div.stHorizontalBlock > div:nth-child(3) button { border-top: 4px solid #FF69B4 !important; color: #212529 !important; transform: translateY(-5px); box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3); }
         div:has(#modulo-apuracao) div.stHorizontalBlock > div:nth-child(4) button { border-top: 4px solid #2ECC71 !important; color: #212529 !important; transform: translateY(-5px); box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); }
 
-        /* 3. AS ABAS (TABS) - VOLTANDO AO SEU ESTILO ORIGINAL */
-        .stTabs [data-baseweb="tab"] { border-radius: 8px 25px 0 0 !important; font-weight: 700; margin-right: 5px; }
+        /* 3. ABAS INTERNAS (TABS) - COR DO SETOR NO FUNDO E NO TEXTO */
+        .stTabs [data-baseweb="tab"] { border-radius: 8px 25px 0 0 !important; font-weight: 700; margin-right: 5px; background: #F1F3F5 !important; }
+        
+        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
+        div:has(#modulo-amarelo) .stTabs [aria-selected="true"] { background: #FFD700 !important; color: #212529 !important; }
+        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
+        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; }
 
-        /* 4. ENVELOPES DE UPLOAD (INDEPENDENTES POR COR) */
+        /* 4. ÁREA DE UPLOAD (ENVELOPES) - FUNDO E BORDA DA COR DO SETOR */
         [data-testid="stFileUploader"] {
             padding: 45px 25px 25px 25px !important;
             border-radius: 15px !important;
             border: 2px dashed #ADB5BD !important;
-            background: #FFFFFF !important;
             position: relative !important;
         }
-        [data-testid="stFileUploader"]::before { content: "📄"; position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 32px; z-index: 99; }
 
-        /* CORES DOS ENVELOPES POR SETOR (BASEADO NO SEU CÓDIGO ANTIGO) */
+        /* --- LÓGICA DE FUNDO E BORDA POR SETOR --- */
         div:has(#modulo-xml) [data-testid="stFileUploader"] { background: #EBF9FF !important; border-color: #00BFFF !important; }
+        div:has(#modulo-amarelo) [data-testid="stFileUploader"] { background: #FFFDEB !important; border-color: #FFD700 !important; }
         div:has(#modulo-conformidade) [data-testid="stFileUploader"] { background: #FFF0F5 !important; border-color: #FF69B4 !important; }
         div:has(#modulo-apuracao) [data-testid="stFileUploader"] { background: #F1FFF7 !important; border-color: #2ECC71 !important; }
 
-        /* --- O ÚNICO AJUSTE SOLICITADO: BOTÃO BROWSE SEMPRE CINZA --- */
+        /* BOTÃO BROWSE FILES (O ÚNICO CINZA) */
         [data-testid="stFileUploader"] section button {
-            background-color: #6C757D !important; /* CINZA CHUMBO */
+            background-color: #6C757D !important; 
             color: white !important;
             border: none !important;
         }
-        [data-testid="stFileUploader"] section button:hover { background-color: #495057 !important; }
 
-        /* 5. PAINEL DAS ABAS (CONTAINER) */
+        /* 5. PAINEL CENTRAL (CONTAINER) */
         [data-testid="stTabPanel"] {
             background: #FFFFFF !important;
             border-radius: 0 15px 15px 15px !important;
             padding: 30px !important;
             border: 1px solid #DEE2E6;
-            border-top: 8px solid #DEE2E6;
         }
-        div:has(#modulo-xml) [data-testid="stTabPanel"] { border-top-color: #00BFFF !important; }
-        div:has(#modulo-conformidade) [data-testid="stTabPanel"] { border-top-color: #FF69B4 !important; }
-        div:has(#modulo-apuracao) [data-testid="stTabPanel"] { border-top-color: #2ECC71 !important; }
+        div:has(#modulo-xml) [data-testid="stTabPanel"] { border-top: 8px solid #00BFFF !important; }
+        div:has(#modulo-amarelo) [data-testid="stTabPanel"] { border-top: 8px solid #FFD700 !important; }
+        div:has(#modulo-conformidade) [data-testid="stTabPanel"] { border-top: 8px solid #FF69B4 !important; }
+        div:has(#modulo-apuracao) [data-testid="stTabPanel"] { border-top: 8px solid #2ECC71 !important; }
 
         </style>
     """, unsafe_allow_html=True)
