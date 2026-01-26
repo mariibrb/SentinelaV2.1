@@ -5,7 +5,7 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;800&family=Plus+Jakarta+Sans:wght@400;700&display=swap');
 
-        /* 1. CLIMA REATIVO (APENAS FUNDO DO APP) */
+        /* 1. FUNDO DO APP (ÚNICA PARTE REATIVA) */
         header, [data-testid="stHeader"] { display: none !important; }
         .stApp { transition: background 0.8s ease-in-out !important; }
 
@@ -14,7 +14,7 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-conformidade) .stApp { background: radial-gradient(circle at top right, #FFDEEF 0%, #F8F9FA 100%) !important; }
         div:has(#modulo-apuracao) .stApp { background: radial-gradient(circle at top right, #DFFFEA 0%, #F8F9FA 100%) !important; }
 
-        /* 2. MENU SUPERIOR (BOTÕES DE MÓDULO) */
+        /* 2. MENU SUPERIOR (BOTÕES) */
         div.stButton > button {
             color: white !important;
             border: none !important;
@@ -24,87 +24,60 @@ def aplicar_estilo_sentinela():
             height: 75px !important;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
             text-transform: uppercase;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
             opacity: 0.6 !important;
         }
 
-        /* BRILHO BRANCO NO HOVER */
-        div.stButton > button:hover {
-            opacity: 1 !important;
-            transform: translateY(-5px) !important;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.9) !important;
-        }
-
-        /* ESTADOS ATIVOS - BRILHO BRANCO PADRONIZADO */
-        /* AZUL */
-        div.stHorizontalBlock > div:nth-child(1) button { background: #00BFFF !important; }
-        div:has(#modulo-xml) div.stHorizontalBlock > div:nth-child(1) button {
-            opacity: 1 !important; transform: scale(1.1) translateY(-5px) !important;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.8) !important;
-            border: 3px solid #FFFFFF !important;
-        }
-        /* AMARELO */
-        div.stHorizontalBlock > div:nth-child(2) button { background: #FFD700 !important; color: #424242 !important; }
-        div:has(#modulo-amarelo) div.stHorizontalBlock > div:nth-child(2) button {
-            opacity: 1 !important; transform: scale(1.1) translateY(-5px) !important;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 1) !important;
-            border: 3px solid #FFFFFF !important;
-        }
-        /* ROSA */
-        div.stHorizontalBlock > div:nth-child(3) button { background: #FF69B4 !important; }
-        div:has(#modulo-conformidade) div.stHorizontalBlock > div:nth-child(3) button {
-            opacity: 1 !important; transform: scale(1.1) translateY(-5px) !important;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.8) !important;
-            border: 3px solid #FFFFFF !important;
-        }
-        /* VERDE */
-        div.stHorizontalBlock > div:nth-child(4) button { background: #2ECC71 !important; }
+        /* ESTADOS ATIVOS DO MENU - BRILHO BRANCO */
+        div:has(#modulo-xml) div.stHorizontalBlock > div:nth-child(1) button,
+        div:has(#modulo-amarelo) div.stHorizontalBlock > div:nth-child(2) button,
+        div:has(#modulo-conformidade) div.stHorizontalBlock > div:nth-child(3) button,
         div:has(#modulo-apuracao) div.stHorizontalBlock > div:nth-child(4) button {
-            opacity: 1 !important; transform: scale(1.1) translateY(-5px) !important;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.8) !important;
+            opacity: 1 !important;
+            transform: scale(1.1) translateY(-5px) !important;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.9) !important;
             border: 3px solid #FFFFFF !important;
         }
 
-        /* 3. ÁREA DE UPLOAD (TOTALMENTE CINZA EM TODOS OS SETORES) */
+        /* 3. NEUTRALIZAÇÃO TOTAL DA ÁREA DE UPLOAD (SOLUÇÃO DEFINITIVA) */
+        
+        /* Força a borda pontilhada para cinza neutro */
         [data-testid="stFileUploader"] {
-            border-radius: 20px !important;
-            border: 2px dashed #ADB5BD !important; /* Cinza Neutro */
+            border: 2px dashed #ADB5BD !important;
             background: #FFFFFF !important;
-            padding: 30px !important;
+            border-radius: 20px !important;
         }
 
-        /* Forçar botão interno para cinza */
+        /* Força o botão "Browse files" para cinza escuro, removendo cores do setor */
         [data-testid="stFileUploader"] section button {
-            background-color: #6C757D !important; /* Cinza Chumbo */
-            color: white !important;
+            background-color: #6C757D !important;
+            color: #FFFFFF !important;
             border: none !important;
+            box-shadow: none !important;
         }
 
-        /* Remover qualquer cor de foco ou hover que o Streamlit injete */
-        [data-testid="stFileUploader"] section button:hover, 
-        [data-testid="stFileUploader"] section button:focus {
+        /* Garante que o hover do botão de upload não acenda colorido */
+        [data-testid="stFileUploader"] section button:hover {
             background-color: #495057 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* Remove brilhos (glows) coloridos que vazam para dentro do uploader */
+        [data-testid="stFileUploader"] * {
             box-shadow: none !important;
+            text-decoration: none !important;
         }
 
         /* 4. ABAS E PAINÉIS */
         .stTabs [data-baseweb="tab"] {
             border-radius: 10px 30px 0 0 !important;
             font-weight: 700;
-            padding: 12px 25px !important;
             background: rgba(255,255,255,0.5) !important;
         }
-        
-        div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
-        div:has(#modulo-amarelo) .stTabs [aria-selected="true"] { background: #FFD700 !important; color: #424242 !important; }
-        div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
-        div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; }
 
         [data-testid="stTabPanel"] {
             background: rgba(255, 255, 255, 0.8) !important;
             backdrop-filter: blur(10px);
             border-radius: 25px !important;
-            padding: 40px !important;
             border: 1px solid #DEE2E6;
         }
         </style>
