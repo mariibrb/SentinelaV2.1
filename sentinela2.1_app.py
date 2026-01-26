@@ -556,7 +556,7 @@ elif emp_sel and not modo_adm:
                     <b>XML e Escrituração Domínio.</b>
                 </p>
                 <p style="font-style: italic; color: #B8860B; font-size: 18px; margin-top: 20px;">
-                    🚧 Status: Configuração de malha fina para NCM e Alíquotas. 🚧
+                    🚧 Status: Implementação de protocolos para detecção de divergências fiscais. 🚧
                 </p>
             </div>
         """, unsafe_allow_html=True)
