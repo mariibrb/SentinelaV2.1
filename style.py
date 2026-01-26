@@ -47,7 +47,7 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; }
         div:has(#modulo-apuracao) [data-testid="stFileUploader"] { border-color: #2ECC71 !important; }
 
-        /* 4. A REGRA SAGRADA: BOTÃO BROWSE SEMPRE CINZA (BLINDADO) */
+        /* 4. A REGRA SAGRADA: UPLOADER 100% NEUTRO */
         [data-testid="stFileUploader"] section button {
             background-color: #6C757D !important;
             color: white !important;
@@ -56,9 +56,27 @@ def aplicar_estilo_sentinela():
             transform: none !important;
         }
         [data-testid="stFileUploader"] section button:hover { background-color: #495057 !important; }
+        
+        /* Mata o azul/colorido dos ícones e textos internos do uploader */
         [data-testid="stFileUploader"] svg { fill: #6C757D !important; }
+        [data-testid="stFileUploader"] section div div { color: #6C757D !important; }
 
-        /* 5. PAINÉIS E ABAS (ESTILO GERAL) */
+        /* 5. SIDEBAR - AJUSTE CINZA CHUMBO */
+        [data-testid="stSidebar"] .stButton > button {
+            color: #6C757D !important;
+            background-color: transparent !important;
+            border: 1px solid #CED4DA !important;
+            height: auto !important;
+            padding: 8px 15px !important;
+            font-size: 14px !important;
+            opacity: 1 !important;
+        }
+        [data-testid="stSidebar"] .stButton > button:hover {
+            border-color: #6C757D !important;
+            background-color: #F8F9FA !important;
+        }
+
+        /* 6. PAINÉIS E ABAS */
         [data-testid="stTabPanel"] {
             background: rgba(255, 255, 255, 0.8) !important;
             backdrop-filter: blur(10px);
