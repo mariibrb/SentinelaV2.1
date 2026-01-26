@@ -7,43 +7,41 @@ import pandas as pd
 from sentinela_core import extrair_dados_xml_recursivo, gerar_excel_final
 
 def exibir_interface_sieg(cnpj_cliente):
-    st.markdown('<div id="modulo-sieg"></div>', unsafe_allow_html=True)
-    st.markdown("### ⚡ Busca Global Cofre HUB - SIEG")
+    st.markdown("### ⚡ Conexão Administrativa SIEG")
     
     if not cnpj_cliente:
         st.warning("⚠️ Selecione uma empresa na barra lateral.")
         return
 
     with st.container(border=True):
-        st.write(f"🔍 Buscando notas para o CNPJ: **{cnpj_cliente}**")
-        
+        st.write(f"Empresa: **{cnpj_cliente}**")
         c1, c2 = st.columns(2)
         with c1:
-            data_ini = st.date_input("Início", format="DD/MM/YYYY")
+            data_ini = st.date_input("Data Inicial", format="DD/MM/YYYY")
         with c2:
-            data_fim = st.date_input("Fim", format="DD/MM/YYYY")
+            data_fim = st.date_input("Data Final", format="DD/MM/YYYY")
         
-        # Simulando a sua busca manual: busca o CNPJ em todas as pastas
-        tipo_doc = st.selectbox("Tipo", ["nfe", "cte", "nfse"], index=0)
+        # Filtro de busca
+        opcao = st.radio("Tipo de busca", ["Emitidas", "Recebidas"], horizontal=True)
+        tipo_doc = st.selectbox("Documento", ["nfe", "cte", "nfse"], index=0)
         
-        if st.button("🚀 EXECUTAR BUSCA NO COFRE", use_container_width=True):
-            executar_busca_global(cnpj_cliente, data_ini, data_fim, tipo_doc)
+        if st.button("🚀 PUXAR XMLS DIRETAMENTE", use_container_width=True):
+            puxar_dados_admin(cnpj_cliente, data_ini, data_fim, tipo_doc, opcao)
 
-def executar_busca_global(cnpj_selecionado, inicio, fim, tipo):
-    # Rota de consulta por filtro (é a que simula "digitar o cnpj" na busca)
-    url = "https://api.sieg.com/aws/nfe/consultar"
+def puxar_dados_admin(cnpj, inicio, fim, tipo, opcao):
+    # Rota mestre para quem tem permissão total
+    url = "https://api.sieg.com/hub/v2/nfe/xml"
     api_key = st.secrets.get("SIEG_API_KEY")
+    cnpj_limpo = "".join(filter(str.isdigit, cnpj))
     
-    # Limpamos o CNPJ (apenas números)
-    cnpj_busca = "".join(filter(str.isdigit, cnpj_selecionado))
-
-    # Montamos o pedido exatamente como a busca do site
+    # Payload formatado para busca total no cofre
     payload = {
-        "Cnpj": cnpj_busca,
-        "DataInicio": inicio.strftime('%Y-%m-%d'),
-        "DataFim": fim.strftime('%Y-%m-%d'),
+        "Cnpj": cnpj_limpo,
+        "DataInicio": inicio.strftime('%Y%m%d'),
+        "DataFim": fim.strftime('%Y%m%d'),
         "TipoDocumento": tipo,
-        "MetodoBusca": "Cnpj" # AQUI está o segredo: ele busca o CNPJ em todo o cofre
+        "IsEmissor": True if opcao == "Emitidas" else False,
+        "RecuperarXmls": True # Este comando força a busca em todo o cofre
     }
     
     headers = {
@@ -51,46 +49,56 @@ def executar_busca_global(cnpj_selecionado, inicio, fim, tipo):
         "apikey": api_key
     }
 
-    with st.spinner(f"⏳ Vasculhando pastas do Cofre por {cnpj_busca}..."):
+    with st.spinner("⏳ Sincronizando com o Cofre Administrativo..."):
         try:
             response = requests.post(url, json=payload, headers=headers)
             
-            # Se a busca global der 404, tentamos a rota de XML direto
+            # Se der 404, tentamos a última rota possível (AWS Cloud)
             if response.status_code == 404:
-                url_xml = "https://api.sieg.com/hub/v2/nfe/xml"
-                response = requests.post(url_xml, json=payload, headers=headers)
+                url = "https://api.sieg.com/aws/nfe/consultar"
+                payload["DataInicio"] = inicio.strftime('%Y-%m-%d')
+                payload["DataFim"] = fim.strftime('%Y-%m-%d')
+                response = requests.post(url, json=payload, headers=headers)
 
             if response.status_code == 200:
                 dados = response.json()
-                xmls_b64 = dados.get("xmls") or dados.get("Xmls") or []
+                xmls_list = dados.get("xmls") or dados.get("Xmls") or []
                 
-                if not xmls_b64:
-                    st.warning("ℹ️ O CNPJ foi aceito, mas não há arquivos nesse período.")
+                if not xmls_list:
+                    st.info(f"ℹ️ Conectado com sucesso, mas não há notas {'emitidas' if opcao == 'Emitidas' else 'recebidas'} neste período.")
                     return
 
                 zip_buffer = io.BytesIO()
                 with zipfile.ZipFile(zip_buffer, "w") as z:
-                    for i, b in enumerate(xmls_b64):
-                        z.writestr(f"sieg_{i}.xml", base64.b64decode(b))
+                    for i, xml_b64 in enumerate(xmls_list):
+                        try:
+                            z.writestr(f"sieg_{i}.xml", base64.b64decode(xml_b64))
+                        except: continue
                 
                 st.session_state['sieg_xmls_baixados'] = zip_buffer
-                st.success(f"✅ Sucesso! {len(xmls_b64)} notas encontradas.")
+                st.success(f"✅ {len(xmls_list)} notas localizadas!")
                 st.rerun()
             else:
-                st.error(f"❌ Erro {response.status_code}: A SIEG não autorizou a busca global.")
-                st.info("Isso pode significar que o CNPJ do cliente precisa ser 'vinculado' ao seu Token.")
+                st.error(f"Erro {response.status_code}: A SIEG não autorizou a requisição. Verifique se a Chave API está correta no Secrets.")
         except Exception as e:
-            st.error(f"💥 Erro técnico: {e}")
+            st.error(f"Erro técnico: {e}")
 
 def processar_sieg_para_excel(cnpj_cliente):
-    # (Mantém a mesma lógica de processamento anterior)
     try:
         zip_memoria = st.session_state['sieg_xmls_baixados']
         zip_memoria.seek(0)
         xe, xs = extrair_dados_xml_recursivo([zip_memoria], cnpj_cliente)
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            gerar_excel_final(xe, xs, cnpj_cliente, writer, "SIEG", False, None, None, None, "SIEG")
-        st.download_button("💾 BAIXAR EXCEL", output.getvalue(), f"Auditoria_SIEG_{cnpj_cliente}.xlsx", use_container_width=True)
+            gerar_excel_final(xe, xs, cnpj_cliente, writer, "Auditoria SIEG", False, None, None, None, "SIEG_API")
+        st.balloons()
+        st.download_button("💾 BAIXAR RELATÓRIO FINAL", output.getvalue(), f"Auditoria_SIEG_{cnpj_cliente}.xlsx", use_container_width=True)
     except Exception as e:
-        st.error(f"Erro: {e}")
+        st.error(f"Erro no motor: {e}")
+
+if st.session_state.get('sieg_xmls_baixados'):
+    st.markdown("---")
+    if st.button("📊 GERAR RELATÓRIO AGORA", type="primary", use_container_width=True):
+        # Como o cnpj_cliente vem da interface, precisamos garantir que ele exista aqui
+        # Se estiver usando dentro do app principal, a variável já existe
+        processar_sieg_para_excel(st.session_state.get('cnpj_atual_sieg', ''))
