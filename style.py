@@ -38,17 +38,15 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-xml) .stTabs [aria-selected="true"] { background: #00BFFF !important; color: white !important; }
         div:has(#modulo-xml) [data-testid="stFileUploader"] { border-color: #00BFFF !important; }
         
-        /* AJUSTE MESTRE: Botão Browse Files na Zona Azul (Fundo Azul + Borda Branca Neon) */
+        /* BOTAO BROWSE AZUL NEON */
         div:has(#modulo-xml) [data-testid="stFileUploader"] section button {
             background-color: #00BFFF !important; 
             color: white !important; 
-            border: 3px solid #FFFFFF !important; /* CONTORNO BRANCO NEON */
+            border: 3px solid #FFFFFF !important;
             font-weight: 700 !important;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.6), 0 0 25px rgba(0, 191, 255, 0.4) !important;
-            transform: scale(1.02) !important;
         }
         div:has(#modulo-xml) [data-testid="stFileUploader"] svg { fill: #00BFFF !important; }
-        div:has(#modulo-xml) [data-testid="stFileUploader"] section div div { color: #00BFFF !important; font-weight: 600; }
 
         /* --- 🟨 ZONA AMARELA (CONCILIADOR) --- */
         div:has(#modulo-amarelo) .stApp { background: radial-gradient(circle at top right, #FFF9C4 0%, #F8F9FA 100%) !important; }
@@ -75,6 +73,16 @@ def aplicar_estilo_sentinela():
         div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background: #FF69B4 !important; color: white !important; }
         div:has(#modulo-conformidade) [data-testid="stFileUploader"] { border-color: #FF69B4 !important; }
 
+        /* AJUSTE MESTRE: Botão Browse Files na Zona Rosa (Fundo Rosa + Borda Branca Neon) */
+        div:has(#modulo-conformidade) [data-testid="stFileUploader"] section button {
+            background-color: #FF69B4 !important; 
+            color: white !important; 
+            border: 3px solid #FFFFFF !important; /* CONTORNO BRANCO NEON */
+            font-weight: 700 !important;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.6), 0 0 25px rgba(255, 105, 180, 0.4) !important;
+        }
+        div:has(#modulo-conformidade) [data-testid="stFileUploader"] svg { fill: #FF69B4 !important; }
+
         /* --- 🟩 ZONA VERDE (ESPELHO) --- */
         div:has(#modulo-apuracao) .stApp { background: radial-gradient(circle at top right, #DFFFEA 0%, #F8F9FA 100%) !important; }
         div:has(#modulo-apuracao) div.stHorizontalBlock > div:nth-child(4) button { 
@@ -87,13 +95,12 @@ def aplicar_estilo_sentinela():
         }
         div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background: #2ECC71 !important; color: white !important; }
 
-        /* 4. REGRA GERAL UPLOADER (PADRÃO CINZA PARA OUTRAS ZONAS) */
+        /* 4. REGRA GERAL UPLOADER (PADRÃO PARA OUTRAS ZONAS) */
         [data-testid="stFileUploader"] section button {
             background-color: #6C757D !important;
             color: white !important;
             border: none !important;
             box-shadow: none !important;
-            transform: none !important;
         }
         [data-testid="stFileUploader"] section button:hover { background-color: #495057 !important; }
         [data-testid="stFileUploader"] svg { fill: #6C757D !important; }
