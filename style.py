@@ -5,18 +5,18 @@ def aplicar_estilo_sentinela():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;800&family=Plus+Jakarta+Sans:wght@400;700&display=swap');
 
-        /* 1. FUNDAÇÃO E SIDEBAR */
+        /* 1. CONFIGURAÇÃO DE BASE E SIDEBAR */
         [data-testid="stSidebar"] { background-color: #E9ECEF !important; border-right: 5px solid #ADB5BD !important; }
         header, [data-testid="stHeader"] { display: none !important; }
         .stApp { transition: background 0.8s ease-in-out !important; }
 
-        /* FUNDOS REATIVOS */
+        /* FUNDOS INDEPENDENTES POR SETOR */
         div:has(#modulo-xml) .stApp { background: radial-gradient(circle at top right, #D6F2FF 0%, #F8F9FA 100%) !important; }
         div:has(#modulo-amarelo) .stApp { background: radial-gradient(circle at top right, #FFF9C4 0%, #F8F9FA 100%) !important; }
         div:has(#modulo-conformidade) .stApp { background: radial-gradient(circle at top right, #FFDEEF 0%, #F8F9FA 100%) !important; }
         div:has(#modulo-apuracao) .stApp { background: radial-gradient(circle at top right, #DFFFEA 0%, #F8F9FA 100%) !important; }
 
-        /* 2. MENU MASTER (BOTÕES SUPERIORES) - CORES DAS ZONAS MANTIDAS */
+        /* 2. MENU MASTER - BOTÕES COM CORES INDEPENDENTES */
         div.stButton > button {
             color: white !important;
             border: none !important;
@@ -29,11 +29,13 @@ def aplicar_estilo_sentinela():
             transition: all 0.4s ease !important;
         }
 
+        /* Cores fixas para garantir a independência visual */
         div.stHorizontalBlock > div:nth-child(1) button { background-color: #00BFFF !important; }
         div.stHorizontalBlock > div:nth-child(2) button { background-color: #FFD700 !important; color: #424242 !important; }
         div.stHorizontalBlock > div:nth-child(3) button { background-color: #FF69B4 !important; }
         div.stHorizontalBlock > div:nth-child(4) button { background-color: #2ECC71 !important; }
 
+        /* Brilho de ativação independente */
         div:has(#modulo-xml) div.stHorizontalBlock > div:nth-child(1) button,
         div:has(#modulo-amarelo) div.stHorizontalBlock > div:nth-child(2) button,
         div:has(#modulo-conformidade) div.stHorizontalBlock > div:nth-child(3) button,
@@ -44,7 +46,7 @@ def aplicar_estilo_sentinela():
             border: 3px solid #FFFFFF !important;
         }
 
-        /* 3. AS ABAS (PASTINHAS) - CORES E BRILHOS MANTIDOS */
+        /* 3. ABAS (PASTINHAS) - CORES E REGRAS INDEPENDENTES */
         .stTabs [data-baseweb="tab"] {
             border-radius: 10px 30px 0 0 !important;
             font-weight: 700;
@@ -53,12 +55,13 @@ def aplicar_estilo_sentinela():
             color: #6C757D !important;
         }
 
+        /* Definição de cor por setor para a aba selecionada */
         div:has(#modulo-xml) .stTabs [aria-selected="true"] { background-color: #00BFFF !important; color: white !important; }
         div:has(#modulo-amarelo) .stTabs [aria-selected="true"] { background-color: #FFD700 !important; color: #424242 !important; }
         div:has(#modulo-conformidade) .stTabs [aria-selected="true"] { background-color: #FF69B4 !important; color: white !important; }
         div:has(#modulo-apuracao) .stTabs [aria-selected="true"] { background-color: #2ECC71 !important; color: white !important; }
 
-        /* 4. ÁREA DE UPLOAD - BOTÕES BROWSE SEMPRE CINZA (BLINDAGEM TOTAL) */
+        /* 4. ÁREA DE UPLOAD - NEUTRALIDADE (CINZA) EM TODOS OS SETORES */
         [data-testid="stFileUploader"] {
             border: 2px dashed #ADB5BD !important;
             background: #FFFFFF !important;
@@ -66,22 +69,19 @@ def aplicar_estilo_sentinela():
             padding: 30px !important;
         }
 
-        /* REMOVE A MERDA DAS CORES DOS BOTÕES BROWSE */
-        [data-testid="stFileUploader"] section button, 
-        [data-testid="stFileUploader"] .st-emotion-cache-1ae8p9m e1bju1670 {
+        /* Botão Browse Files forçado no Cinza Chumbo */
+        [data-testid="stFileUploader"] section button {
             background-color: #5A6268 !important; 
             color: white !important;
             border: none !important;
             box-shadow: none !important;
         }
 
-        /* Efeito hover neutro */
         [data-testid="stFileUploader"] section button:hover {
             background-color: #434a50 !important;
-            color: white !important;
         }
 
-        /* Neutraliza ícones e textos internos */
+        /* Ícones internos em cinza neutro */
         [data-testid="stFileUploader"] svg { fill: #5A6268 !important; }
         [data-testid="stFileUploader"] small { color: #5A6268 !important; }
 
